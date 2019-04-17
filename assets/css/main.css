@@ -3934,6 +3934,7 @@ input, select, textarea {
 		margin: 0 auto;
 		width: calc(100% - 4rem);
 		max-width: 72rem;
+
 		z-index: 2;
 	}
 
@@ -4094,14 +4095,17 @@ input, select, textarea {
 
 		#footer ul.icons li a.icon:hover:before {
 			color: #18bfef;
+
 		}
 
 		#footer ul.icons.alt li .icon:before {
 			box-shadow: inset 0 0 0 2px #e2e2e2;
+
 		}
 
 		#footer ul.icons.alt li a.icon:hover:before {
 			box-shadow: inset 0 0 0 2px #18bfef;
+
 		}
 
 		#footer header.major .date:before, #footer header.major .date:after {
@@ -4157,7 +4161,7 @@ input, select, textarea {
 		#footer .pagination span {
 			color: #e2e2e2;
 		}
-
+4
 		#footer > section {
 			-moz-flex-basis: 50%;
 			-webkit-flex-basis: 50%;
@@ -4202,7 +4206,7 @@ input, select, textarea {
 					}
 
 					#footer > section.split > section:last-child {
-						padding: 3rem 4rem 3rem 4rem ;
+						padding: 5rem 4rem 1rem 4rem ;
 					}
 
 				#footer > section.split.contact > section {
@@ -4261,6 +4265,7 @@ input, select, textarea {
 
 						#footer > section.split.contact > section.alt > :last-child {
 							margin-top: -0.325rem;
+
 						}
 
 		#footer form label,
