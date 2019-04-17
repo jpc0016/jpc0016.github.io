@@ -3298,6 +3298,7 @@ input, select, textarea {
 
 			#intro a:hover {
 				border-bottom-color: transparent;
+				background-color: orange;
 				color: #18bfef !important;
 			}
 
