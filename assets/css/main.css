@@ -2053,9 +2053,18 @@ input, select, textarea {
 	.box {
 		border: solid 2px;
 		margin-bottom: 2rem;
+		margin-left: auto;
+		margin-right: auto;
+		padding: 1.5rem;
+	}
+
+	.box.post {
+		border: solid 2px;
+		margin-bottom: 2rem;
 		margin-left: 18rem;
 		margin-right: 18rem;
 		padding: 1.5rem;
+		border-color: #eeeeee;
 	}
 
 		.box > :last-child,
@@ -2636,8 +2645,15 @@ input, select, textarea {
 
 			.image.post img{
 				display: block;
-				margin-left: center;
-				margin-right: center;
+				margin-left: auto;
+				margin-right: auto;
+				width: 70%;
+			}
+
+			.image.preview img{
+				display: block;
+				margin-left: auto;
+				margin-right: auto;
 				width: 100%;
 			}
 
