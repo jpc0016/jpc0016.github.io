@@ -221,8 +221,8 @@ input, select, textarea {
 	}
 
 	h6 {
-		font-size: 0.5rem;
-		margin: 0 0 0.3rem 1.2rem;
+		font-size: 0.7rem;
+		margin: 0.3rem 1rem 0 4rem;
 		text-align: justify;
 	}
 
@@ -2581,6 +2581,14 @@ input, select, textarea {
 		}
 
 /* Image */
+	.avatar {
+  	vertical-align: middle;
+  	width: 50px;
+  	height: 50px;
+  	border-radius: 50%;
+		float: left;
+		margin-bottom: 1rem;
+	}
 
 	.image {
 		border: 0;
@@ -2637,7 +2645,7 @@ input, select, textarea {
 				display: block;
 				margin-left: justify;
 				margin-right: justify;
-				width: 50%;
+				width: 10%;
 				border-radius: 50%;
 			}
 
