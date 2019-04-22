@@ -1,12 +1,12 @@
 <!DOCTYPE HTML>
 <!--
 	First post page: Cracking challenge on root-me.orange
-  The page template is posts.html
+  The page theme template is posts.html
   Page is called to from posts.html from the post preview Icons
 -->
 <html>
 	<head>
-		<title>The Set</title>
+		<title>The Post</title>
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="../assets/css/main.css" />
@@ -55,15 +55,38 @@
                       <article id="first-post">
                         <h2>Root-me Cracking Challenges (Part 1)</h2>
                         <div class="box">
-                          <p>This is part one of a series in reverse engineering binaries provided by <a href="https://www.root-me.org/?page=news&lang=en">root-me.org</a>.  Root-me is a French based
+                          <p>This is part one of a series in reverse engineering binaries provided by <a href="https://www.root-me.org/?page=news&lang=en" target="_blank" style="color:blue;">root-me.org</a>.  Root-me is a French based
                            computer security community that emphasizes hands-on learning.  I highly recommend creating an account for practice. If you are new to the field, you should read their
-                           Frequently Asked Questions <a href="https://www.root-me.org/?page=faq&lang=en">(FAQ)</a> page for a "learning path."  It includes links to textbooks, research papers, and
+                           Frequently Asked Questions <a href="https://www.root-me.org/?page=faq&lang=en" target="_blank" style="color:blue;">(FAQ)</a> page for a "learning path."  It includes links to textbooks, research papers, and
                          relevant challenges.</p>
 
-                         <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
-                         <center><div class="image post"><img src="../images/cracking_menu.png" alt="" /></div></center><br>
+                         <p>Since this is part 1 of the cracking challenges, a short primer on binary analysis is needed.  The purpose
+                         of binary analysis is to explore the behavior of executable files when source code may not be available.  This
+                         is typically done at the assembly code level but can involve Intermediate Representations (IRs) on a tool-by-tool basis.
+                         Most Linux machines ship with basic binary analysis tools such as <i>file</i>, <i>readelf</i>, <i>objdump</i>, <i>xxd</i>, and more.
+                         The basic GNU debugger tool also comes default with Linux.  Some problems can be solved with rudimentary knowledge of assembly language and decompilation; however, more advanced programs such as self-modifying
+                       malware requires in-depth knowledge of classes and structures.  For now we will only work with the beginner files.</p>
 
                          <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
+                         <center><div class="image post"><img src="../images/cracking_menu.png" width="400" alt="" /></div></center><br>
+
+                         <p>You are brought to a list of binary cracking challenges ordered by increasing difficulty.  Click on the first binary file labeled
+                            <b>ELF-0 protection</b>.  On the next page click <b>Start the challenge</b> to download the file as <i>ch1.zip</i>.  Unzip to
+                              to <i>ch1.bin</i> and prepare for disassembly.</p><br>
+                            <center><div class="image post"><img src="../images/elf-0-protection.png" width="700" alt="" /></div></center><br>
+                         <p>If not already done, ensure you have a software reverse engineering tool installed to aid your cracking.  You can elect to
+                         use the default GNU tools, but I prefer a visual tool suite for solving these files.  You will need all the help you can get while
+                         cracking more difficult binaries.  This isn't to say <i>objdump</i> and <i>file</i> are useless.  There is definitely a place for them and are
+                         great for initial "quick looks" as well as dynamic analysis.  </p>
+                         <p>I will use Ghidra to disassemble <i>ch1.bin</i>.  Ghidra is an open-source reverse engineering framework developed by the National
+                         Security Agency (NSA).  It provides support for a multitude of software architectures and instruction sets and ships with a wide
+                        array of analysis features.  Ghidra can be downloaded <a href="https://ghidra-sre.org/" target="_blank" style="color:blue;">here</a> and requires Java Development Kit (JDK)
+                      which can be downloaded <a href="https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html" target="_blank" style="color:blue;">here</a>.
+                    Installation is </p>
+
+
+
+
                         </div>
 
                       </article>
