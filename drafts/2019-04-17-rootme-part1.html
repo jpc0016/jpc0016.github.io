@@ -70,9 +70,9 @@
                          <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
                          <center><div class="image post"><img src="../images/cracking_menu.png" width="400" alt="" /></div></center><br>
 
-                         <p>You are brought to a list of binary cracking challenges ordered by increasing difficulty.  Click on the first binary file labeled
+                         <p>You are brought to a list of binary cracking challenges ordered by increasing difficulty.  Select the first binary file labeled
                             <b>ELF-0 protection</b>.  On the next page click <b>Start the challenge</b> to download the file as <i>ch1.zip</i>.  Unzip to
-                              to <i>ch1.bin</i> and prepare for disassembly.</p><br>
+                              <i>ch1.bin</i> and prepare for disassembly.</p><br>
                             <center><div class="image post"><img src="../images/elf-0-protection.png" width="700" alt="" /></div></center><br>
                          <p>If not already done, ensure you have a software reverse engineering tool installed to aid your cracking.  You can elect to
                          use the default GNU tools, but I prefer a visual tool suite for solving these files.  You will need all the help you can get while
@@ -81,8 +81,14 @@
                          <p>I will use Ghidra to disassemble <i>ch1.bin</i>.  Ghidra is an open-source reverse engineering framework developed by the National
                          Security Agency (NSA).  It provides support for a multitude of software architectures and instruction sets and ships with a wide
                         array of analysis features.  Ghidra can be downloaded <a href="https://ghidra-sre.org/" target="_blank" style="color:blue;">here</a> and requires Java Development Kit (JDK)
-                      which can be downloaded <a href="https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html" target="_blank" style="color:blue;">here</a>.
-                    Installation is </p>
+                      	version 11+ which can be downloaded <a href="https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html" target="_blank" style="color:blue;">here</a>.
+                    		Installation is pretty straight-forward once Java is set up.  Unzip the ghidra package, navigate to the root folder (typically <i>cd ghidra_
+												[$version-number]_PUBLIC_[$date-of-release]/ghidra_[$version-number]/</i>), and run:<br><br>
+												<i>sudo ./ghidraRun</i>.<br><br>
+												[insert command line picture here]<br><br>
+												You will run <i>ghidraRun.bat</i> if installing Ghidra on a Windows system.  When you first run this command, Ghidra will ask you for the specific path to
+												the JDK v11+ folder.
+												</p>
 
 
 
