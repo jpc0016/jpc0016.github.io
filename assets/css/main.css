@@ -178,6 +178,7 @@ input, select, textarea {
 	p {
 		text-align: justify;
 		margin: 0 0 2rem 0;
+		font-size: 80%
 	}
 
 	h1, h2, h3, h4, h5, h6 {
@@ -2080,7 +2081,7 @@ input, select, textarea {
 		}
 
 	.box {
-		border-color: #eeeeee;
+		border-color: #f5f5f5;
 	}
 
 /* Button */

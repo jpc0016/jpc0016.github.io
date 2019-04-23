@@ -55,30 +55,37 @@
                       <article id="first-post">
                         <h2>Root-me Cracking Challenges (Part 1)</h2>
                         <div class="box">
-                          <p>This is part one of a series in reverse engineering binaries provided by <a href="https://www.root-me.org/?page=news&lang=en" target="_blank" style="color:blue;">root-me.org</a>.  Root-me is a French based
+                          <p>This is part one of a series in reverse engineering binaries provided by <a href="https://www.root-me.org/?page=news&lang=en" target="_blank" style="color:blue;">root-me.org</a>.  Root-me is a French-based
                            computer security community that emphasizes hands-on learning.  I highly recommend creating an account for practice. If you are new to the field, you should read their
                            Frequently Asked Questions <a href="https://www.root-me.org/?page=faq&lang=en" target="_blank" style="color:blue;">(FAQ)</a> page for a "learning path."  It includes links to textbooks, research papers, and
                          relevant challenges.</p>
 
-                         <p>Since this is part 1 of the cracking challenges, a short primer on binary analysis is needed.  The purpose
+                         <p>Since this is part 1 of the cracking challenges, a brief primer on binary analysis is needed.  The purpose
                          of binary analysis is to explore the behavior of executable files when source code may not be available.  This
                          is typically done at the assembly code level but can involve Intermediate Representations (IRs) on a tool-by-tool basis.
-                         Most Linux machines ship with basic binary analysis tools such as <i>file</i>, <i>readelf</i>, <i>objdump</i>, <i>xxd</i>, and more.
-                         The basic GNU debugger tool also comes default with Linux.  Some problems can be solved with rudimentary knowledge of assembly language and decompilation; however, more advanced programs such as self-modifying
-                       malware requires in-depth knowledge of classes and structures.  For now we will only work with the beginner files.</p>
+                         Most Linux operating systems ship with basic command-line tools such as <i>file</i>, <i>readelf</i>, <i>objdump</i>, and <i>xxd</i> for analyzing binaries.
+                         The basic GNU debugger tool also comes default with Linux.  Some questions can be answered with rudimentary knowledge of assembly language and decompilation; however, more advanced programs such as self-modifying
+                       malware require in-depth knowledge of classes and structures.  For now we will analyze beginner files.</p>
 
                          <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
                          <center><div class="image post"><img src="../images/cracking_menu.png" width="400" alt="" /></div></center><br>
 
                          <p>You are brought to a list of binary cracking challenges ordered by increasing difficulty.  Select the first binary file labeled
-                            <b>ELF-0 protection</b>.  On the next page click <b>Start the challenge</b> to download the file as <i>ch1.zip</i>.  Unzip to
-                              <i>ch1.bin</i> and prepare for disassembly.</p><br>
+                            <b>ELF-0 protection</b>.  On the next page click <b>Start the challenge</b> to download the file as <i>ch1.zip</i> and unzip to
+                              <i>ch1.bin</i>.</p><br>
                             <center><div class="image post"><img src="../images/elf-0-protection.png" width="700" alt="" /></div></center><br>
                          <p>If not already done, ensure you have a software reverse engineering tool installed to aid your cracking.  You can elect to
                          use the default GNU tools, but I prefer a visual tool suite for solving these files.  You will need all the help you can get while
                          cracking more difficult binaries.  This isn't to say <i>objdump</i> and <i>file</i> are useless.  There is definitely a place for them and are
-                         great for initial "quick looks" as well as dynamic analysis.  </p>
-                         <p>I will use Ghidra to disassemble <i>ch1.bin</i>.  Ghidra is an open-source reverse engineering framework developed by the National
+                         great for initial "quick looks" as well as aiding dynamic analysis.  Speaking of quick-look, we can run the binary file to check for expected input values.  I received the input below when running <i>ch1.bin</i>, which translates
+												 to "please enter your password" in French.  </p>
+												 <center><div class="image post"><img src="../images/ch1bin_run.png" width="700" alt="" /></div></center><br>
+												 <p>So we know the file expects a password after execution.  Other challenge binaries might only execute with the passphrase as a parameter (e.g. <i>./binary foobar</i>).
+												 Let's test the field with <i>foobar</i> to see what outputs to the terminal.</p>
+												 <center><div class="image post"><img src="../images/ch1bin_test.png" width="700" alt="" /></div></center><br>
+												 <p>As expected, I got the wrong answer as indicated by the phrase "too bad, try again" in French.  The good news is I have strings to look for while dissecting the
+												 binary.  These are typically stored in the .rodata section.  At this point we can proceed with our reverse engineering tools to analyze the behavior. </p>
+												 <p>I will use Ghidra to disassemble <i>ch1.bin</i>.  Ghidra is an open-source reverse engineering framework developed by the National
                          Security Agency (NSA).  It provides support for a multitude of software architectures and instruction sets and ships with a wide
                         array of analysis features.  Ghidra can be downloaded <a href="https://ghidra-sre.org/" target="_blank" style="color:blue;">here</a> and requires Java Development Kit (JDK)
                       	version 11+ which can be downloaded <a href="https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html" target="_blank" style="color:blue;">here</a>.
@@ -87,11 +94,34 @@
 												<i>sudo ./ghidraRun</i>.<br><br>
 												[insert command line picture here]<br><br>
 												You will run <i>ghidraRun.bat</i> if installing Ghidra on a Windows system.  When you first run this command, Ghidra will ask you for the specific path to
-												the JDK v11+ folder.
-												</p>
-
-
-
+												the JDK v11+ folder.  Enter the folder path for Ghidra to complete startup.  The first window that appears is a project window with no active project.</p><br>
+												<center><div class="image post"><img src="../images/ghidra_home.png" width="500" alt="" /></div></center><br>
+												<p>This is Ghidra's home window from which you can use various tools.  Ghidra ships with CodeBrowser and Version Tracking tools by default.  A motivating
+												factor for open-sourcing Ghidra was for the development community to fill the Tool Chest and effectively reduce the NSA's workload (and identify talent for
+												recruitment).  My windows appear black because I changed the color theme.  This can be configured by going to <b>Edit</b> &gt&gt <b>Tool Options...</b> &gt&gt <b>Tool</b>
+											   , checking <b>Use Inverted Colors</b>, then restarting Ghidra.</p>
+												<p>The next step is to create a new project by selecting <b>File</b> &gt&gt <b>New Project...</b> Make it a <b>Non-Shared Project</b> then give it a
+												home directory and name.  Ghidra saves the project file using a .gpr extension.  When finished, an empty project will appear in the project window; however,
+												the project has no file.  Import a file to analyze using <b>File</b> &gt&gt <b>Import File...</b> or simply enter the "I" key. Navigate to where you
+												saved <i>ch1.bin</i> and import it.</p>
+												<center><div class="image post"><img src="../images/ghidra_import.png" width="500" alt="" /></div></center><br>
+												<p>Ghidra automatically detects the file as ELF executable and defaults to the gcc compiler.  Enter the destination folder and program name if you wish to
+												change.  Default options are usually sufficient in this window.  An import summary window will subsequently appear.  This shows various details such as file
+												size, executable format, required libraries, and others.  Some of this information can be obtained by running <i>readelf -h ch1.bin</i>.	Click OK then drag and drop
+												<i>ch1.bin</i> to the green dragon icon to open CodeBrowser.  The green dragon will enlarge and fade into the screen.  Exciting!</p>
+											<center><left><div class="image post"><img src="../images/little_dragon.png" width="600" alt="" /></div></left>
+											<right><div class="image post"><img src="../images/big_dragon.png" width="600" alt="" /></div></right></center><br><br><br>
+											<p>Once open, CodeBrowser will ask if you would like to analyze <i>ch1.bin</i>.  Select Yes to view Analysis Options in the window.  All analyzers are checked
+											by default except <i>Decompiler Parameter ID</i> and the prototypes highlighted in light blue.  Go ahead and click <b>Analyze</b>.  Ghidra will complete auto-analysis to
+											set up the user	for manual analysis.  </p><br><br>
+											<center><div class="image post"><img src="../images/ghidra_ch1bin_listing_home.png" width="1200" alt="" /></div></center><br>
+											<p>Take a minute to explore Ghidra windows such as <i>Program Trees</i> and <i>Listing</i>.  You can customize Ghidra in whichever way suits your analysis style.  The recommended setup is to have <i>Listing</i> and
+												<i>Decompiler</i> as main windows at a minimum.  These windows provide two levels of simultaneous analysis: one at assembly level and one at source code level.  Notice the ELF magic
+												number, 0x7F (followed by 0x454C46), is selected at the top of <i>Listing</i> and returns no function to the <i>Decompiler</i>.  Let's check out a function to see what is returned.
+												From CodeBrowser select <b>Window</b> &gt&gt <b>Functions</b> to retrieve a list of found functions.</p>
+												<p>Since this is a beginner challenge, we see common functions such as <i>_init</i>, <i>printf</i>, and <i>main</i>.  Double-clicking <i>main</i> in the Functions window
+													gives us interpreted C-code in the <i>Decompiler</i> window.  </p>
+													<center><div class="image post"><img src="../images/ch1bin_decompile_main.png" width="1200" alt="" /></div></center><br>
 
                         </div>
 
