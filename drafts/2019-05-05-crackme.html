@@ -1,0 +1,221 @@
+<!DOCTYPE HTML>
+<!--
+	First post page: Cracking challenge on root-me.orange
+  The page theme template is posts.html
+  Page is called to from posts.html from the post preview Icons
+-->
+<html>
+	<head>
+		<title>The Post</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a class="logo">The Defense</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="../index.html">Home</a></li>
+							<li class="active"><a href="../posts.html">Posts</a></li>
+							<li><a href="../research.html">Ideas</a></li>
+							<li><a href="../stories.html">Stories</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+							<li><a href="#" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://ghidra-community.slack.com/messages/DHTNST38D/team/UHXM8Q1HC/" class="icon fa-slack" target="_blank"><span class="label">Slack</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="wrapper">
+
+						<!-- Post -->
+
+									<!--
+									Post body goes here.
+									-->
+                  <!--
+                  Solving root-me.org cracking challenges using Ghidra
+                  -->
+                  <section class="post">
+                    <body>
+                      <article id="post">
+												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; The Holberton School Crackme and Introduction to GNU Debugger</h2>
+                        <div class="box">
+                          <p>Good afternoon, Tim.  For this post, I will be exploring the crackme repository "dont_hate_the_hacker_hate_the_code" from <a href="https://github.com/holbertonschool" target="_blank" style="color:blue;">Holberton School</a>.  Like
+														Root-me, these guys provide an alternative approach to mastering software engineering. From their home page:</p>
+														<p>Holberton School is a project-based alternative to college for the next generation of software engineers.</p>
+
+
+													<p>	This is part one of a series in reverse engineering binaries provided by <a href="https://www.root-me.org/?page=news&lang=en" target="_blank" style="color:blue;">root-me.org</a>.  Root-me is a French-based
+                           computer security community that emphasizes hands-on learning.  I highly recommend creating an account for quality practice. If you are new to the field, you should read their
+                           Frequently Asked Questions <a href="https://www.root-me.org/?page=faq&lang=en" target="_blank" style="color:blue;">(FAQ)</a> page for a "learning path."  It includes links to textbooks, research papers, and
+                         relevant challenges.  Be advised, I am running this exercise on Linux.  Terminal commands will be different than using Windows CMD.  I'd be stunned if you attempted this on Windows;
+												  therefore, I recommend downloading a Linux VM and a free version of VMware or OracleBox.  I'm partial to the Ubuntu family but any distribution will work!</p>
+
+
+                         <p>Since this is part 1 of the root-me cracking challenges, a brief primer on binary analysis is needed.  The purpose
+                         of binary analysis is to explore the behavior of executable files when source code may not be available.  This
+                         is typically done at the assembly code level but can involve Intermediate Representations (IRs) on a tool-by-tool basis.
+                         Most Linux operating systems ship with basic command-line tools such as <i>file</i>, <i>readelf</i>, <i>objdump</i>, and <i>xxd</i> for analyzing binaries.
+                         The basic GNU debugger tool also comes default with Linux.  Some questions can be answered with rudimentary knowledge of assembly language and decompilation; however, more advanced programs such as self-modifying
+                       malware require in-depth knowledge of classes and structures.  For now we will analyze a beginner file.</p>
+
+                         <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
+                         <center><div class="image post"><img src="../images/cracking_menu.png" width="400" alt="" /></div></center><br>
+
+                         <p>You are brought to a list of binary cracking challenges ordered by increasing difficulty.  Select the first binary file labeled
+                            <b>ELF-0 protection</b>.  On the next page click <b>Start the challenge</b> to download the file as <i>ch1.zip</i> and unzip to
+                              <i>ch1.bin</i>.</p><br>
+                            <center><div class="image post"><img src="../images/elf-0-protection.png" width="700" alt="" /></div></center><br>
+                         <p>If not already done, ensure you have a software reverse engineering tool installed to aid your cracking.  You can elect to
+                         use the default GNU tools, but I prefer a visual tool suite for solving these files.  You will need all the help you can get while
+                         cracking more difficult binaries.  This isn't to say <i>objdump</i> and <i>file</i> are useless.  There is definitely a place for them and are
+                         great for initial "quick looks" as well as aiding dynamic analysis.  Speaking of quick-look, we can run the binary file to check for expected input values.  I received the input below when running <i>ch1.bin</i>, which translates
+												 to "please enter your password" in French.  If you have trouble running <i>ch1.bin</i>, ensure you enabled execution permissions on the file: <i>[sudo] chmod +x ch1.bin</i>
+											 		&emsp; If you still have trouble executing, ensure you have <i>libc 32bit</i> installed. </p>
+												 <center><div class="image post"><img src="../images/ch1bin_run.png" width="700" alt="" /></div></center><br>
+												 <p>So we know the file expects a password after execution.  Other challenge binaries might only execute with the passphrase as a parameter (e.g. <i>./binary foobar</i>).
+												 Let's test the field with <i>foobar</i> to see what outputs to the terminal.</p>
+												 <center><div class="image post"><img src="../images/ch1bin_test.png" width="700" alt="" /></div></center><br>
+												 <p>As expected, I got the wrong answer as indicated by the phrase "too bad, try again" in French.  The good news is I have strings to look for while dissecting the
+												 binary.  These are typically stored in the .rodata section.  At this point we can proceed with our reverse engineering tools to analyze the behavior. </p>
+												 <p>I will use Ghidra to disassemble <i>ch1.bin</i>.  Ghidra is an open-source reverse engineering framework developed by the National
+                         Security Agency (NSA).  It provides support for a multitude of software architectures and instruction sets and ships with a wide
+                        array of analysis features.  Ghidra can be downloaded <a href="https://ghidra-sre.org/" target="_blank" style="color:blue;">here</a> and requires <a href="https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html" target="_blank" style="color:blue;">Java Development Kit (JDK)
+                      	version 11+</a>.
+                    		Installation is pretty straight-forward once Java is set up.  Unzip the ghidra package, navigate to the root folder (typically <i>cd ghidra_
+												[$version-number]_PUBLIC_[$date-of-release]/ghidra_[$version-number]/</i>), and run:<br><br>
+												<i>sudo ./ghidraRun</i>.<br><br>
+												You will run <i>ghidraRun.bat</i> if using Ghidra on a Windows system.  When you first run this command, Ghidra will ask you for the specific path to
+												the JDK v11+ folder.  Enter the folder path to complete startup.  The first window that appears is a project window with no active project.</p><br>
+												<center><div class="image post"><img src="../images/ghidra_home.png" width="500" alt="" /></div></center><br>
+												<p>This is Ghidra's home window from which you can use various tools.  Ghidra ships with CodeBrowser and Version Tracking tools by default.  CodeBrowser is the primary analysis tool
+												used dissecting executables.  Version Tracking is used in shared projects to track markup information such as function labels and comments among analysts. 	A motivating
+												factor for open-sourcing Ghidra was for the development community to fill the Tool Chest and effectively reduce the NSA's workload (and identify talent for
+												recruitment).  My windows appear black because I changed the color theme.  This can be configured by going to <b>Edit</b> &gt&gt <b>Tool Options...</b> &gt&gt <b>Tool</b>
+											   , checking <b>Use Inverted Colors</b>, then restarting Ghidra.</p>
+												<p>The next step is to create a new project by selecting <b>File</b> &gt&gt <b>New Project...</b> Make it a <b>Non-Shared Project</b> then give it a
+												home directory and name.  Ghidra saves the project file using a .gpr extension.  When finished, an empty project will appear in the project window; however,
+												the project has no file.  Import a file to analyze using <b>File</b> &gt&gt <b>Import File...</b> or simply enter the "I" key. Navigate to where you
+												saved <i>ch1.bin</i> and import it.</p>
+												<center><div class="image post"><img src="../images/ghidra_import.png" width="500" alt="" /></div></center><br>
+												<p>Ghidra automatically detects the file as ELF executable and defaults to the gcc compiler.  Enter the destination folder and program name if you wish to
+												change.  Default options are usually sufficient in this window.  An import summary window will subsequently appear.  This shows various details such as file
+												size, executable format, required libraries, and others.  Some of this information can be obtained by running <i>readelf -h ch1.bin</i>.	Click OK then drag and drop
+												<i>ch1.bin</i> to the green dragon icon to open CodeBrowser.  The green dragon will enlarge and fade outward.  Exciting!</p>
+											<center><left><div class="image post"><img src="../images/little_dragon.png" width="600" alt="" /></div></left>
+											<right><div class="image post"><img src="../images/big_dragon.png" width="600" alt="" /></div></right></center><br><br><br>
+											<p>Once open, CodeBrowser will ask if you would like to analyze <i>ch1.bin</i>.  Select Yes to view Analysis Options in the window.  All analyzers are checked
+											by default except <i>Decompiler Parameter ID</i> and the prototypes highlighted in light blue.  Go ahead and click <b>Analyze</b>.  Ghidra will complete auto-analysis to
+											set up the user	for manual analysis.  </p><br><br>
+											<center><div class="image post"><img src="../images/ghidra_ch1bin_listing_home.png" width="1200" alt="" /></div></center><br>
+											<p>Take a minute to explore Ghidra windows such as <i>Program Trees</i> and <i>Listing</i>.  You can customize Ghidra in whichever way suits your analysis style.  The recommended setup is to have <i>Listing</i> and
+												<i>Decompiler</i> as main windows at a minimum.  These windows provide two levels of simultaneous analysis: one at assembly level and one at source code level.  Notice the ELF magic
+												number, 0x7F (followed by 0x454C46), is selected at the top of <i>Listing</i> and returns no function to the <i>Decompiler</i> [since it's not a function].  Let's check out a function to see what is returned.
+												From CodeBrowser select <b>Window</b> &gt&gt <b>Functions</b> to retrieve a list of found functions.</p>
+												<p>Since this is a beginner challenge, we see common functions such as <i>_init</i>, <i>printf</i>, and <i>main</i>.  Double-clicking <i>main</i> in the Functions window
+													gives us interpreted C-code in the <i>Decompiler</i> window.  Here we see a couple familiar strings: the password prompt and the password fail message.  </p>
+													<center><div class="image post"><img src="../images/ch1bin_decompile_main.png" width="1200" alt="" /></div></center><br>
+												<p>When investigating the decompiled C code in <i>main</i>, we notice the password fail message is printed with a <i>puts</i> command when a certain condition is
+													not met; indicated by the <i>else</i> statement.  Working backwards through the <i>if</i>-statement, there is a comparison between <i>iVar1</i> and 0 along with the
+													desired passphrase printing when the condition is met.  Go up one statement to look at how <i>iVar1</i> is assigned.  The variable is assigned the output of <i>strcmp()</i>
+												 (string compare).  The function <a href="https://www.tutorialspoint.com/c_standard_library/c_function_strcmp.htm" target="_blank" style="color:blue;">works</a> by taking two
+											 	strings as input and returning zero if equal.  It also returns positive or negative values based on the strings' ASCII representation.  In our case, <i>__s1</i> is being compared
+												to "123456789".  Going up another statement, <i>getString()</i> indicates the entered passphrase is assigned to <i>__s1</i>.  </p>
+												<p>At this point we have a clear idea of what this binary is doing.  It stores your entered passphrase in a local variable, <i>__s1</i>, and compares it to "123456789".  If they
+												are equal, our desired string appears.  So obviously we enter "123456789" into the passphrase prompt to solve the binary. </p>
+												<center><div class="image post"><img src="../images/ch1bin_solve.png" width="700" alt="" /></div></center><br>
+												<p>We have our desired outcome with the phrase "123456789" without touching any assembly code!  A production grade executable file will never be this easy, but taking
+												the time to familiarize yourself with toolsets is key to solving tougher problems.  This was made possible by the correct passphrase existing in plaintext.  Even in <i>main's</i>
+						 						assembly listing, the passphrase appears in plaintext as a string call in line 080486F6. </p>
+												<center><div class="image post"><img src="../images/ch1bin_phrase.png" width="800" alt="" /></div></center><br>
+												<p>Now that the binary is solved, take some time to jump around between called functions.  This will help you understand how an executable is structured.  Try jumping from <i>main</i> to
+													 <i>getString</i> by double-clicking the function call in line 080486EB.  Return to <i>main</i> when finished by clicking the left arrow button in the upper left corner of
+												CodeBrowser.  </p>
+												<p>Later crackme files are more assembly language intensive.  Although we didn't use it, I strongly advise learning assembly going forward.  Ghidra also does not contain every method of reverse engineering binaries.  Further analysis
+												involves techniques to include symbolic execution, taint tracking, and software fuzzing.  I will cover those with more detail in later posts.</p>
+                        </div>
+
+                      </article>
+                    </body>
+                  </section>
+
+
+
+
+
+
+
+
+									<!--
+									End post body
+									-->
+
+									<!--
+									NEW POSTS GO ABOVE THIS LINE
+									-->
+
+
+
+
+
+
+									<!-- No pagination in posts
+							<div class="pagination"><a href="#"> 1 </a></div>
+							<div class="pagination"><a href="#"> 2 </a></div>
+							<div class="pagination"><a href="#"> 3 </a></div>
+							<div class="pagination"><a href="#"> 4 </a></div>
+							<div class="pagination"><a href="#"> 5 </a></div>-->
+							</div>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+
+						<section class="split contact">
+
+							<section>
+								<h3>Social</h3>
+								<ul class="icons alt">
+									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a href="#" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://ghidra-community.slack.com/messages/DHTNST38D/team/UHXM8Q1HC/" class="icon fa-slack" target="_blank"><span class="label">Slack</span></a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net" target="_blank">HTML5 UP</a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
