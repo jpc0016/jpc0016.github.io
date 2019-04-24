@@ -19,7 +19,7 @@
 
 				<!-- Header -->
 					<header id="header">
-						<a class="logo">Front End</a>
+						<a class="logo">The Defense</a>
 					</header>
 
 				<!-- Nav -->
@@ -53,19 +53,22 @@
                   <section class="post">
                     <body>
                       <article id="first-post">
-                        <h2>Root-me Cracking Challenges (Part 1)</h2>
+												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; Root-me Cracking Challenges (Part 1)</h2>
                         <div class="box">
                           <p>This is part one of a series in reverse engineering binaries provided by <a href="https://www.root-me.org/?page=news&lang=en" target="_blank" style="color:blue;">root-me.org</a>.  Root-me is a French-based
-                           computer security community that emphasizes hands-on learning.  I highly recommend creating an account for practice. If you are new to the field, you should read their
+                           computer security community that emphasizes hands-on learning.  I highly recommend creating an account for quality practice. If you are new to the field, you should read their
                            Frequently Asked Questions <a href="https://www.root-me.org/?page=faq&lang=en" target="_blank" style="color:blue;">(FAQ)</a> page for a "learning path."  It includes links to textbooks, research papers, and
-                         relevant challenges.</p>
+                         relevant challenges.  Be advised, I am running this exercise on Linux.  Terminal commands will be different than using Windows CMD.  I'd be stunned if you attempted this on Windows;
+												  therefore, I recommend downloading a Linux VM and a free version of VMware or OracleBox.  I'm partial to the Ubuntu family but any distribution will work!</p>
 
-                         <p>Since this is part 1 of the cracking challenges, a brief primer on binary analysis is needed.  The purpose
+
+                         <p>Since this is part 1 of the root-me cracking challenges, a brief primer on binary analysis is needed.  The purpose
                          of binary analysis is to explore the behavior of executable files when source code may not be available.  This
                          is typically done at the assembly code level but can involve Intermediate Representations (IRs) on a tool-by-tool basis.
                          Most Linux operating systems ship with basic command-line tools such as <i>file</i>, <i>readelf</i>, <i>objdump</i>, and <i>xxd</i> for analyzing binaries.
                          The basic GNU debugger tool also comes default with Linux.  Some questions can be answered with rudimentary knowledge of assembly language and decompilation; however, more advanced programs such as self-modifying
-                       malware require in-depth knowledge of classes and structures.  For now we will analyze beginner files.</p>
+                       malware require in-depth knowledge of classes and structures.  For now we will analyze a beginner file.</p>
 
                          <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
                          <center><div class="image post"><img src="../images/cracking_menu.png" width="400" alt="" /></div></center><br>
@@ -78,7 +81,8 @@
                          use the default GNU tools, but I prefer a visual tool suite for solving these files.  You will need all the help you can get while
                          cracking more difficult binaries.  This isn't to say <i>objdump</i> and <i>file</i> are useless.  There is definitely a place for them and are
                          great for initial "quick looks" as well as aiding dynamic analysis.  Speaking of quick-look, we can run the binary file to check for expected input values.  I received the input below when running <i>ch1.bin</i>, which translates
-												 to "please enter your password" in French.  </p>
+												 to "please enter your password" in French.  If you have trouble running <i>ch1.bin</i>, ensure you enabled execution permissions on the file: <i>[sudo] chmod +x ch1.bin</i>
+											 		&emsp; If you still have trouble executing, ensure you have <i>libc 32bit</i> installed. </p>
 												 <center><div class="image post"><img src="../images/ch1bin_run.png" width="700" alt="" /></div></center><br>
 												 <p>So we know the file expects a password after execution.  Other challenge binaries might only execute with the passphrase as a parameter (e.g. <i>./binary foobar</i>).
 												 Let's test the field with <i>foobar</i> to see what outputs to the terminal.</p>
@@ -92,11 +96,11 @@
                     		Installation is pretty straight-forward once Java is set up.  Unzip the ghidra package, navigate to the root folder (typically <i>cd ghidra_
 												[$version-number]_PUBLIC_[$date-of-release]/ghidra_[$version-number]/</i>), and run:<br><br>
 												<i>sudo ./ghidraRun</i>.<br><br>
-												[insert command line picture here]<br><br>
-												You will run <i>ghidraRun.bat</i> if installing Ghidra on a Windows system.  When you first run this command, Ghidra will ask you for the specific path to
+												You will run <i>ghidraRun.bat</i> if using Ghidra on a Windows system.  When you first run this command, Ghidra will ask you for the specific path to
 												the JDK v11+ folder.  Enter the folder path to complete startup.  The first window that appears is a project window with no active project.</p><br>
 												<center><div class="image post"><img src="../images/ghidra_home.png" width="500" alt="" /></div></center><br>
-												<p>This is Ghidra's home window from which you can use various tools.  Ghidra ships with CodeBrowser and Version Tracking tools by default.  A motivating
+												<p>This is Ghidra's home window from which you can use various tools.  Ghidra ships with CodeBrowser and Version Tracking tools by default.  CodeBrowser is the primary analysis tool
+												used dissecting executables.  Version Tracking is used in shared projects to track markup information such as function labels and comments among analysts. 	A motivating
 												factor for open-sourcing Ghidra was for the development community to fill the Tool Chest and effectively reduce the NSA's workload (and identify talent for
 												recruitment).  My windows appear black because I changed the color theme.  This can be configured by going to <b>Edit</b> &gt&gt <b>Tool Options...</b> &gt&gt <b>Tool</b>
 											   , checking <b>Use Inverted Colors</b>, then restarting Ghidra.</p>
@@ -108,7 +112,7 @@
 												<p>Ghidra automatically detects the file as ELF executable and defaults to the gcc compiler.  Enter the destination folder and program name if you wish to
 												change.  Default options are usually sufficient in this window.  An import summary window will subsequently appear.  This shows various details such as file
 												size, executable format, required libraries, and others.  Some of this information can be obtained by running <i>readelf -h ch1.bin</i>.	Click OK then drag and drop
-												<i>ch1.bin</i> to the green dragon icon to open CodeBrowser.  The green dragon will enlarge and fade into the screen.  Exciting!</p>
+												<i>ch1.bin</i> to the green dragon icon to open CodeBrowser.  The green dragon will enlarge and fade outward.  Exciting!</p>
 											<center><left><div class="image post"><img src="../images/little_dragon.png" width="600" alt="" /></div></left>
 											<right><div class="image post"><img src="../images/big_dragon.png" width="600" alt="" /></div></right></center><br><br><br>
 											<p>Once open, CodeBrowser will ask if you would like to analyze <i>ch1.bin</i>.  Select Yes to view Analysis Options in the window.  All analyzers are checked
@@ -138,14 +142,14 @@
 												<p>Now that the binary is solved, take some time to jump around between called functions.  This will help you understand how an executable is structured.  Try jumping from <i>main</i> to
 													 <i>getString</i> by double-clicking the function call in line 080486EB.  Return to <i>main</i> when finished by clicking the left arrow button in the upper left corner of
 												CodeBrowser.  </p>
-												<p>Later crackme files are more assembly language intensive.  Ghidra also does not contain every method of reverse engineering binaries.  Further analysis
-												involves techniques to include symbolic execution, taint tracking, and software fuzzing.  I will post more about those later.</p>
+												<p>Later crackme files are more assembly language intensive.  Although we didn't use it, I strongly advise learning assembly going forward.  Ghidra also does not contain every method of reverse engineering binaries.  Further analysis
+												involves techniques to include symbolic execution, taint tracking, and software fuzzing.  I will cover those with more detail in later posts.</p>
                         </div>
 
                       </article>
                     </body>
                   </section>
-                  <hr />
+
 
 
 
