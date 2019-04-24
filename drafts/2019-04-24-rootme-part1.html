@@ -87,14 +87,14 @@
 												 binary.  These are typically stored in the .rodata section.  At this point we can proceed with our reverse engineering tools to analyze the behavior. </p>
 												 <p>I will use Ghidra to disassemble <i>ch1.bin</i>.  Ghidra is an open-source reverse engineering framework developed by the National
                          Security Agency (NSA).  It provides support for a multitude of software architectures and instruction sets and ships with a wide
-                        array of analysis features.  Ghidra can be downloaded <a href="https://ghidra-sre.org/" target="_blank" style="color:blue;">here</a> and requires Java Development Kit (JDK)
-                      	version 11+ which can be downloaded <a href="https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html" target="_blank" style="color:blue;">here</a>.
+                        array of analysis features.  Ghidra can be downloaded <a href="https://ghidra-sre.org/" target="_blank" style="color:blue;">here</a> and requires <a href="https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html" target="_blank" style="color:blue;">Java Development Kit (JDK)
+                      	version 11+</a>.
                     		Installation is pretty straight-forward once Java is set up.  Unzip the ghidra package, navigate to the root folder (typically <i>cd ghidra_
 												[$version-number]_PUBLIC_[$date-of-release]/ghidra_[$version-number]/</i>), and run:<br><br>
 												<i>sudo ./ghidraRun</i>.<br><br>
 												[insert command line picture here]<br><br>
 												You will run <i>ghidraRun.bat</i> if installing Ghidra on a Windows system.  When you first run this command, Ghidra will ask you for the specific path to
-												the JDK v11+ folder.  Enter the folder path for Ghidra to complete startup.  The first window that appears is a project window with no active project.</p><br>
+												the JDK v11+ folder.  Enter the folder path to complete startup.  The first window that appears is a project window with no active project.</p><br>
 												<center><div class="image post"><img src="../images/ghidra_home.png" width="500" alt="" /></div></center><br>
 												<p>This is Ghidra's home window from which you can use various tools.  Ghidra ships with CodeBrowser and Version Tracking tools by default.  A motivating
 												factor for open-sourcing Ghidra was for the development community to fill the Tool Chest and effectively reduce the NSA's workload (and identify talent for
@@ -117,12 +117,29 @@
 											<center><div class="image post"><img src="../images/ghidra_ch1bin_listing_home.png" width="1200" alt="" /></div></center><br>
 											<p>Take a minute to explore Ghidra windows such as <i>Program Trees</i> and <i>Listing</i>.  You can customize Ghidra in whichever way suits your analysis style.  The recommended setup is to have <i>Listing</i> and
 												<i>Decompiler</i> as main windows at a minimum.  These windows provide two levels of simultaneous analysis: one at assembly level and one at source code level.  Notice the ELF magic
-												number, 0x7F (followed by 0x454C46), is selected at the top of <i>Listing</i> and returns no function to the <i>Decompiler</i>.  Let's check out a function to see what is returned.
+												number, 0x7F (followed by 0x454C46), is selected at the top of <i>Listing</i> and returns no function to the <i>Decompiler</i> [since it's not a function].  Let's check out a function to see what is returned.
 												From CodeBrowser select <b>Window</b> &gt&gt <b>Functions</b> to retrieve a list of found functions.</p>
 												<p>Since this is a beginner challenge, we see common functions such as <i>_init</i>, <i>printf</i>, and <i>main</i>.  Double-clicking <i>main</i> in the Functions window
-													gives us interpreted C-code in the <i>Decompiler</i> window.  </p>
+													gives us interpreted C-code in the <i>Decompiler</i> window.  Here we see a couple familiar strings: the password prompt and the password fail message.  </p>
 													<center><div class="image post"><img src="../images/ch1bin_decompile_main.png" width="1200" alt="" /></div></center><br>
-
+												<p>When investigating the decompiled C code in <i>main</i>, we notice the password fail message is printed with a <i>puts</i> command when a certain condition is
+													not met; indicated by the <i>else</i> statement.  Working backwards through the <i>if</i>-statement, there is a comparison between <i>iVar1</i> and 0 along with the
+													desired passphrase printing when the condition is met.  Go up one statement to look at how <i>iVar1</i> is assigned.  The variable is assigned the output of <i>strcmp()</i>
+												 (string compare).  The function <a href="https://www.tutorialspoint.com/c_standard_library/c_function_strcmp.htm" target="_blank" style="color:blue;">works</a> by taking two
+											 	strings as input and returning zero if equal.  It also returns positive or negative values based on the strings' ASCII representation.  In our case, <i>__s1</i> is being compared
+												to "123456789".  Going up another statement, <i>getString()</i> indicates the entered passphrase is assigned to <i>__s1</i>.  </p>
+												<p>At this point we have a clear idea of what this binary is doing.  It stores your entered passphrase in a local variable, <i>__s1</i>, and compares it to "123456789".  If they
+												are equal, our desired string appears.  So obviously we enter "123456789" into the passphrase prompt to solve the binary. </p>
+												<center><div class="image post"><img src="../images/ch1bin_solve.png" width="700" alt="" /></div></center><br>
+												<p>We have our desired outcome with the phrase "123456789" without touching any assembly code!  A production grade executable file will never be this easy, but taking
+												the time to familiarize yourself with toolsets is key to solving tougher problems.  This was made possible by the correct passphrase existing in plaintext.  Even in <i>main's</i>
+						 						assembly listing, the passphrase appears in plaintext as a string call in line 080486F6. </p>
+												<center><div class="image post"><img src="../images/ch1bin_phrase.png" width="800" alt="" /></div></center><br>
+												<p>Now that the binary is solved, take some time to jump around between called functions.  This will help you understand how an executable is structured.  Try jumping from <i>main</i> to
+													 <i>getString</i> by double-clicking the function call in line 080486EB.  Return to <i>main</i> when finished by clicking the left arrow button in the upper left corner of
+												CodeBrowser.  </p>
+												<p>Later crackme files are more assembly language intensive.  Ghidra also does not contain every method of reverse engineering binaries.  Further analysis
+												involves techniques to include symbolic execution, taint tracking, and software fuzzing.  I will post more about those later.</p>
                         </div>
 
                       </article>
@@ -149,12 +166,12 @@
 
 
 
-
+									<!-- No pagination in posts
 							<div class="pagination"><a href="#"> 1 </a></div>
 							<div class="pagination"><a href="#"> 2 </a></div>
 							<div class="pagination"><a href="#"> 3 </a></div>
 							<div class="pagination"><a href="#"> 4 </a></div>
-							<div class="pagination"><a href="#"> 5 </a></div>
+							<div class="pagination"><a href="#"> 5 </a></div>-->
 							</div>
 					</div>
 
