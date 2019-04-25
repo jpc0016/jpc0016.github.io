@@ -2067,8 +2067,7 @@ input, select, textarea {
 		margin-right: 18rem;
 		padding: 1.5rem;
 		border-color: #eeeeee;
-		align-content: center;
-		transform: scale();
+
 	}
 
 		.box > :last-child,
