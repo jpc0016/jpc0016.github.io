@@ -2067,7 +2067,7 @@ input, select, textarea {
 		margin-right: 18rem;
 		padding: 1.5rem;
 		border-color: #eeeeee;
-		max-width: 100%;
+		align-content: center;
 		transform: scale();
 	}
 
