@@ -2661,14 +2661,14 @@ input, select, textarea {
 				max-width: 100%;
 			}
 
-		@media screen and (max-width: 100%){
+		@media screen and (max-width: 480px){
 			.image.avatar img{
 				display: block;
 				margin-left: justify;
 				margin-right: justify;
 				width: 10%;
 				border-radius: 50%;
-				max-width: 100%;
+				
 			}
 		}
 
