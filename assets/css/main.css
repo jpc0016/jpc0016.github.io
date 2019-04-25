@@ -2593,6 +2593,7 @@ input, select, textarea {
 /* Image */
 	.avatar {
   	vertical-align: middle;
+		max-width: 100%;
   	width: 50px;
   	height: 50px;
   	border-radius: 50%;
@@ -2604,10 +2605,12 @@ input, select, textarea {
 		border: 0;
 		display: inline-block;
 		position: relative;
+		max-width: 100%;
 	}
 
 		.image img {
 			display: block;
+			max-width: 100%;
 		}
 
 		.image.left, .image.right {
