@@ -2068,6 +2068,7 @@ input, select, textarea {
 		padding: 1.5rem;
 		border-color: #eeeeee;
 		max-width: 100%;
+		transform: scale();
 	}
 
 		.box > :last-child,
