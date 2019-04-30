@@ -2082,8 +2082,8 @@ input, select, textarea {
 	.box.post {
 		border: solid 2px;
 		margin-bottom: 2rem;
-		margin-left: 18rem;
-		margin-right: 18rem;
+		margin-left: auto;
+		margin-right: auto;
 		padding: 1.5rem;
 		border-color: #eeeeee;
 
