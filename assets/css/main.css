@@ -336,6 +336,21 @@ input, select, textarea {
 		border-bottom-color: #eeeeee;
 	}
 
+/* Column */
+
+	.column {
+	  float: left;
+	}
+
+	.left, .right {
+	  width: 25%;
+	}
+
+	.middle {
+	  width: 50%;
+	}
+
+
 /* Row */
 
 	.row {
