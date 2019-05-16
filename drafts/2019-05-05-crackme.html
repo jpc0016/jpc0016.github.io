@@ -55,15 +55,27 @@
                     <body>
                       <article id="post">
 												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
-                        <h2>&emsp; The Holberton School Crackme and Introduction to GNU Debugger</h2>
+                        <h2>&emsp; Another Crackme and Introduction to GNU Debugger</h2>
                         <div class="box">
-                          <p>Good afternoon, Tim.  For this post, I will be exploring the crackme repository "dont_hate_the_hacker_hate_the_code" from <a href="https://github.com/holbertonschool" target="_blank" style="color:blue;">Holberton School</a>.  Like
-														Root-me, these guys provide an alternative approach to mastering software engineering. From their home page:</p>
-														<p>Holberton School is a project-based alternative to college for the next generation of software engineers.</p>
+                          <p>Good afternoon, Tim.  For this post, I will explore a crackme <a href="https://github.com/jpc0016/dont_hate_the_hacker_hate_the_code" target="_blank" style="color:blue;">repository</a> I did for an interview.  It contains four binary
+														files increasing in difficulty.  While I was only assigned the first crackme file, it was not the easiest of the group. </p>
+
+													<p>As stated in the title, I introduce the GNU Not Unix (GNU) debugger in this article since I used it to solve <i>crackme</i>.  This was the first crackme
+														I ever solved; therefore, my methodology was primative compared to current techniques I employ.  For example due to the turnaround time, I used <i>objdump</i>
+														to grab the disassembly and start hasty analysis.  You can use Ghidra to disassemble this file but I will instead focus on how to map a <b>basic</b> binary's behavior.
+													</p>
+													<p>
+														When ready, fork the provided repository and clone it to your local machine: <br>
+														<pre><code>git clone https://github.com/jpc0016/dont_hate_the_hacker_hate_the_code
+														</pre></code>
+													</p>
 
 
-													<p>	This is part one of a series in reverse engineering binaries provided by <a href="https://www.root-me.org/?page=news&lang=en" target="_blank" style="color:blue;">root-me.org</a>.  Root-me is a French-based
-                           computer security community that emphasizes hands-on learning.  I highly recommend creating an account for quality practice. If you are new to the field, you should read their
+
+
+
+														<p>
+														I highly recommend creating an account for quality practice. If you are new to the field, you should read their
                            Frequently Asked Questions <a href="https://www.root-me.org/?page=faq&lang=en" target="_blank" style="color:blue;">(FAQ)</a> page for a "learning path."  It includes links to textbooks, research papers, and
                          relevant challenges.  Be advised, I am running this exercise on Linux.  Terminal commands will be different than using Windows CMD.  I'd be stunned if you attempted this on Windows;
 												  therefore, I recommend downloading a Linux VM and a free version of VMware or OracleBox.  I'm partial to the Ubuntu family but any distribution will work!</p>
