@@ -59,8 +59,8 @@
                         <div class="box">
                           <p>Good afternoon, Tim.  For this post, I will explore a crackme <a href="https://github.com/jpc0016/dont_hate_the_hacker_hate_the_code" target="_blank" style="color:blue;">repository</a>
 														I did for an interview.  It contains four binary files increasing in difficulty [except for <i>crackme2</i>].  While I was
-														only assigned the first crackme	file, it was not the easiest of the group. I mentioned default GNU tools in the previous post
-														and their usefulness in quick debugging.
+														only assigned the first crackme	file, it was not the easiest of the group. I mentioned default GNU tools and their usefulness
+														 in quick debugging in the previous post.  They are even more useful in learning reverse engineering basics.
 													</p>
 
 													<p>As stated in the title, I introduce the GNU Not Unix (GNU) debugger in this article since I used it to solve <i>crackme</i>.  This was the first crackme
@@ -84,9 +84,25 @@
 														The file is an x86 64-bit ELF executable so <i>objdump</i> should work on it.  Enter the command below to output
 														x86 disassembly into a text file or <i>.s</i> file.  Since the output is relatively large, the text file helps to avoid manual
 														 inspection on the terminal.
-														 <pre><code>$ objdump -d -M x86-64 crackme > output.s
+														 <pre><code>$ objdump -d -M x86-64,intel crackme > output.s
 														 </pre></code>
+														I specified intel syntax with <i>-M</i> to make the output cleaner.  Atom has an assembly language package that highlights
+														syntax.  In Atom, go to <b>Edit</b> > <b>Preferences</b> > <b>Install</b> to open the package installer.  Search for "Assembly"
+														and install the first result.  The output should look like this:
 													</p>
+													<br><center><div class="image post"><img src="../images/crackme/output-assembly.png" width="700" alt="" /></div></center><br>
+													<p>
+														This may seem intimidating if you are not used to assembly language.  In the above code, <i>&lt;main&gt;</i> executes some jump
+														instructions and makes a couple of function calls to <i>printf</i> and <i>checksum</i>.  From here I manually mapped out
+														blocks of assembly code based on jump instructions.  I only wrote down important instructions such as comparisons (<i>cmp</i>),
+														function calls (<i>call</i>), conditional jumps (<i>je</i>), etc.  As evident in the output, there is a lot of movement among
+														registers in between the instructions of interest.  Below is what <i>&lt;main&gt;</i> looks like mapped out.
+													</p>
+													<br><center><div class="image post"><img src="../images/crackme/function-map.jpg" width="700" alt="" /></div></center><br>
+													<p>
+
+													</p>
+
 
 
 
@@ -95,13 +111,6 @@
                       </article>
                     </body>
                   </section>
-
-
-
-
-
-
-
 
 									<!--
 									End post body
