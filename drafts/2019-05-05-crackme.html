@@ -63,8 +63,8 @@
 														 in quick debugging in the previous post.  They are even more useful in learning reverse engineering basics.
 													</p>
 
-													<p>As stated in the title, I introduce the GNU Not Unix (GNU) debugger in this article since I used it to solve <i>crackme</i>.  This was the first crackme
-														I ever solved; therefore, my methodology was primative compared to my current techniques.  For example due to the turnaround time, I used <i>objdump</i>
+													<p>As stated in the title, I introduce the GNU Not Unix (GNU) debugger in this article since I used it to solve <i>crackme</i>.  This was the first reverse
+														engineering challenge binary I solved; therefore, my methodology was primative compared to current techniques.  For example due to the turnaround time, I used <i>objdump</i>
 														to grab the disassembly and start hasty analysis.  You can use Ghidra or Radare2 to disassemble this file but I will instead focus on how to map
 														a <b>basic</b> binary's behavior.
 													</p>
@@ -75,7 +75,7 @@
 													</p>
 
 													<p>
-														For simplicity I separated the working <i>crackme</i> from the other files.  First thing I do is execute a <i>file</i> command
+														For simplicity I isolated the working <i>crackme</i> into its own directory.  First thing I do is execute a <i>file</i> command
 														to extract pertinent header information.
 														<center><div class="image post"><img src="../images/crackme/file-command.png" width="1000" alt="" /></div></center><br>
                           </p>
@@ -96,11 +96,39 @@
 														instructions and makes a couple of function calls to <i>printf</i> and <i>checksum</i>.  From here I manually mapped out
 														blocks of assembly code based on jump instructions.  I only wrote down important instructions such as comparisons (<i>cmp</i>),
 														function calls (<i>call</i>), conditional jumps (<i>je</i>), etc.  As evident in the output, there is a lot of movement among
-														registers in between the instructions of interest.  Below is what <i>&lt;main&gt;</i> looks like mapped out.
+														registers in between the instructions of interest.  Below is the <i>&lt;main&gt;</i> function mapped out.
 													</p>
 													<br><center><div class="image post"><img src="../images/crackme/function-map.jpg" width="700" alt="" /></div></center><br>
 													<p>
+														Again these were very rudimentary steps due to learning x86 assembly.  Most disassemblers have built-in function graphing tools;
+														 however, this is only one step of the solution.	 I tested the binary to record observations before proceeding:
+														 <br><center><div class="image post"><img src="../images/crackme/crackme-test.png" width="700" alt="" /></div></center><br>
+														 It appears the binary expects an input parameter and returns usage instructions if not found.  When dummy input is used,
+														 I get a <i>wrong password</i> prompt as expected.  When cross-referenced with the function graph, the conditional <i>jump if equal</i>
+														 instructions determine if these messages appear by dictating control flow. If the program does not meet the required compare statements,
+														 it continues to statements that call print functions.
+													</p>
+													<p>
+														Moving on to the next block (cmp == 2 is satisfied), there is a local variable loaded into register <i>rax</i>.  It is also moved into
+														<i>rdi</i> and passed as a parameter to <i>&lt;checksum&gt;</i> although I did not write it down.  Whatever happens in
+														<i>&lt;checksum&gt;</i>, it is compared to 0xDEE to unlock the victory message.  This message can be seen using <i>strings</i>
+														on the file:
+														<pre><code>$ strings crackme
+....
+[]A\A]A^A_
+Usage: %s password
+Wrong password
+Tada! Congrats
+;*3$"
+....
+														</pre></code>
+													</p>
+													<p>
 
+
+
+														Many do not have dynamic debugging	capabilities.
+														Due to the nature of this <i>crackme</i>, dynamic analysis proves very useful.
 													</p>
 
 
