@@ -90,7 +90,7 @@
 														syntax.  In Atom, go to <b>Edit</b> > <b>Preferences</b> > <b>Install</b> to open the package installer.  Search for "Assembly"
 														and install the first result.  The output should look like this:
 													</p>
-													<br><center><div class="image post"><img src="../images/crackme/output-assembly.png" width="700" alt="" /></div></center><br>
+													<br><center><div class="image post"><img src="../images/crackme/output-assembly.png" width="600" alt="" /></div></center><br>
 													<p>
 														This may seem intimidating if you are not used to assembly language.  In the above code, <i>&lt;main&gt;</i> executes some jump
 														instructions and makes a couple of function calls to <i>printf</i> and <i>checksum</i>.  From here I manually mapped out
@@ -100,19 +100,20 @@
 													</p>
 													<br><center><div class="image post"><img src="../images/crackme/function-map.jpg" width="700" alt="" /></div></center><br>
 													<p>
-														Again these were very rudimentary steps due to learning x86 assembly.  Most disassemblers have built-in function graphing tools;
+														Again, these were very rudimentary steps due to learning x86 assembly.  Most disassemblers have built-in function graphing tools;
 														 however, this is only one step of the solution.	 I tested the binary to record observations before proceeding:
 														 <br><center><div class="image post"><img src="../images/crackme/crackme-test.png" width="700" alt="" /></div></center><br>
 														 It appears the binary expects an input parameter and returns usage instructions if not found.  When dummy input is used,
-														 I get a <i>wrong password</i> prompt as expected.  When cross-referenced with the function graph, the conditional <i>jump if equal</i>
-														 instructions determine if these messages appear by dictating control flow. If the program does not meet the required compare statements,
-														 it continues to statements that call print functions.
+														 I get a <i>wrong password</i> prompt as expected.  When cross-referenced with the function graph, the first <i>jump if equal</i>
+														 instruction checks for a password parameter.  The second one determines if the desired instruction block is displayed ("Tada! Congrats").
+														 This is how control flow is dictated. If certain compare statements are not as expected, the program continues to instruction
+														 blocks that print fail messages.
 													</p>
 													<p>
-														Moving on to the next block (cmp == 2 is satisfied), there is a local variable loaded into register <i>rax</i>.  It is also moved into
-														<i>rdi</i> and passed as a parameter to <i>&lt;checksum&gt;</i> although I did not write it down.  Whatever happens in
-														<i>&lt;checksum&gt;</i>, it is compared to 0xDEE to unlock the victory message.  This message can be seen using <i>strings</i>
-														on the file:
+														Moving on to the next block (cmp == 2 is satisfied), there is a local variable loaded into register <i>rax</i>.  It is
+														also moved into	<i>rdi</i> and passed as a parameter to <i>&lt;checksum&gt;</i>.  Whatever happens in
+														<i>&lt;checksum&gt;</i>, it is compared to 0xDEE to unlock the victory message.  This message can	be seen using
+														<i>strings</i>	on the file:
 														<pre><code>$ strings crackme
 ....
 []A\A]A^A_
@@ -124,16 +125,32 @@ Tada! Congrats
 														</pre></code>
 													</p>
 													<p>
-
-
-
-														Many do not have dynamic debugging	capabilities.
-														Due to the nature of this <i>crackme</i>, dynamic analysis proves very useful.
+														One way to bypass <i>&lt;checksum&gt;</i> is to patch the binary by setting <i>rax</i> to 0xDEE before it is loaded
+														onto the stack.  This does not technically solve the binary but merely patches the instruction.  This can be done in
+														 <i>GDB</i> with the following command:
+														 <pre><code>(gdb)	set $rax=0xdee
+ 														</pre></code>
 													</p>
 
 
 
 
+
+
+													<p>
+														<h2>Confirmation With Ghidra</h2>
+														When analyzing the <i>&lt;checksum&gt;</i> function in Ghidra, I verified its activity in the
+														decompiler window.  Below is its representative C code:
+													</p>
+<br><center><div class="image post"><img src="../images/crackme/decompile-checksum.png" width="500" alt="" /></div></center><br>
+
+													<p>
+														A local character array is initialized and set to the string <i>pcParm1</i>.  A string is a char array with a
+														null terminator '\0' at the end.  The null terminator is numerically equivalent to zero, which means the <i>while</i>
+														loop follows each character until reaching zero.  The local variable and character index are incremented in
+														loop body.
+
+													</p>
                         </div>
 
                       </article>
