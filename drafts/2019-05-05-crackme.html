@@ -131,9 +131,36 @@ Tada! Congrats
 														 <pre><code>(gdb)	set $rax=0xdee
  														</pre></code>
 													</p>
-
-
-
+													<p>So how can this problem best be approached?  This is where dynamic analysis is useful in determining how the binary
+													behaves.  The <i>&lt;checksum&gt;</i> function is clearly doing something that returns 0xDEE.  A breakpoint can be set
+													at the beginning of <i>&lt;checksum&gt;</i> so walkthrough can occur.  This helps determine step-by-step what the function
+													is actually doing.  Run the below command to open the crackme file in gdb.  Then set a breakpoint at the <i>&lt;checksum&gt;</i>
+													 address.</p>
+<br><center><div class="image post"><img src="../images/crackme/gdb-start.png" width="700" alt="" /></div></center><br>
+													<p>Next, type the following commands to run the program and set the disassembly syntax.
+														<pre><code>
+(gdb)	run foobar
+(gdb)	set disassembly-flavor intel
+														</pre></code>
+													</p>
+													<p>
+														GDB has a few commands that are extremely useful in navigating a binary.
+														<pre><code>
+(gdb)	info registers
+(gdb)	display/i $pc
+(gdb)	stepi
+(gdb)	continue
+														</pre></code>
+														The output of <i>&lt;info registers&gt;</i>
+														is shown below.  The command <i>&lt;display/i $pc&gt;</i> is particularly useful in showing the current assembly
+														instruction.  <i>&lt;stepi&gt;</i> steps through the program one instruction at a time and <i>&lt;continue&gt;</i>
+														moves through the program to the next breakpoint.
+													</p>
+<br><center><div class="image post"><img src="../images/crackme/info-registers.png" width="700" alt="" /></div></center><br>
+													<p>
+													Normally I execute a combination of <i>&lt;stepi&gt;</i> and <i>&lt;info registers&gt;</i>. Take note of
+													 changes in register values.  This can reveal patterns in the binary.  
+													</p>
 
 
 
@@ -153,7 +180,8 @@ Tada! Congrats
 													<p>
 														I highly recommend picking up at least one programming language if serious about reverse engineering.  C is the best choice
 														since it is closest to the hardware, thus better suited for low-level access to memory.  This is important since sophisticated binaries
-														are known to hide processes in memory.
+														are known to hide processes in memory.  Intermediate to advanced analysts should become familiar with C++ since class structures
+														are common in malware.
 													</p>
 
                         </div>
