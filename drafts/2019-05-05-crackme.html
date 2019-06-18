@@ -34,7 +34,7 @@
 						<ul class="icons">
 							<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
 							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
-							<li><a href="#" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://twitter.com/blackouttoaster" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
 							<li><a href="https://ghidra-community.slack.com/messages/DHTNST38D/team/UHXM8Q1HC/" class="icon fa-slack" target="_blank"><span class="label">Slack</span></a></li>
 						</ul>
 					</nav>
@@ -147,20 +147,45 @@ Tada! Congrats
 														GDB has a few commands that are extremely useful in navigating a binary.
 														<pre><code>
 (gdb)	info registers
-(gdb)	display/i $pc
 (gdb)	stepi
 (gdb)	continue
+(gdb)	display/i $pc
 														</pre></code>
-														The output of <i>&lt;info registers&gt;</i>
-														is shown below.  The command <i>&lt;display/i $pc&gt;</i> is particularly useful in showing the current assembly
-														instruction.  <i>&lt;stepi&gt;</i> steps through the program one instruction at a time and <i>&lt;continue&gt;</i>
-														moves through the program to the next breakpoint.
+														The output of <i>info registers</i>
+														is shown below.  <i>stepi</i> steps through the program one instruction at a time and <i>continue</i>
+														moves through the program to the next breakpoint.  The command <i>display/i $pc</i> is particularly
+														useful in showing the current assembly instruction.  The instruction shown is what will be executed
+														on the next step.  In the below screenshot, the instruction	<i>call 0x40057d	checksum</i> is executed
+														 next.
 													</p>
 <br><center><div class="image post"><img src="../images/crackme/info-registers.png" width="700" alt="" /></div></center><br>
 													<p>
-													Normally I execute a combination of <i>&lt;stepi&gt;</i> and <i>&lt;info registers&gt;</i>. Take note of
-													 changes in register values.  This can reveal patterns in the binary.  
+													Normally I execute a combination of <i>stepi</i> and <i>info registers</i>. Take note of
+													 changes in register values as this can reveal patterns in the binary.  Be sure to reference the assembly
+													 code of <i>&lt;checksum&gt;</i> when stepping through.  The first couple of instructions seem to load
+													 a parameter on the stack and initialize a number to zero.  It is not until after instruction 0x4005a3
+													 that real-time calculations can be observed.  Once instruction 0x4005aa is reached, register <i>rax</i>
+													 contains the value 0x66 which is the ASCII representation for <i>f</i>.  Refering to previous instructions,
+													 there is a change between 0x4005a3 and 0x4005a7 with respect to rax.  The address of rbp-0x18 was loaded
+													 into rax at instruction 0x4005a3.  Executing <code>x/s 0x7fffffffdeee</code> in GDB yields the password
+													 parameter, "<i>foobar</i>;" these are the <b>contents</b> of rax.  Instruction 0x4005a7 moves one byte of
+													 the contents of rax into eax and pads with zeros.  <i>f</i> is only one byte so the logic makes sense so far.
 													</p>
+<br><center><div class="image post"><img src="../images/crackme/gdb-first-register.png" width="700" alt="" /></div></center><br>
+													<p>
+														The program fails the first conditional branch at 0x4005aa and jumps to 0x4005af where 0x7fffffffdeee is
+														once again loaded into rax.  Moving through the next few instructions, rax alternates between its effective
+														address (0x7fffffffdeee) and its value (0x66).  Upon reaching instruction 0x4005a7, 0x6f is loaded into rax.
+														This is the value for character <i>o</i>.  There is now a clear pattern shown of stepping through each
+														character of the password parameter; however, more analysis is needed to determine what is happening to
+														the values.
+													</p>
+
+
+
+
+
+
 
 
 
@@ -222,7 +247,7 @@ Tada! Congrats
 								<ul class="icons alt">
 									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
 									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
-									<li><a href="#" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://twitter.com/blackouttoaster" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
 									<li><a href="https://ghidra-community.slack.com/messages/DHTNST38D/team/UHXM8Q1HC/" class="icon fa-slack" target="_blank"><span class="label">Slack</span></a></li>
 								</ul>
 							</section>
