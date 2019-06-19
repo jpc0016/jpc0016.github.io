@@ -132,7 +132,7 @@ Disassembly of section .text:
 --40058d:	eb 14                	jmp    4005a3 <checksum+0x26>       ; initial jump
 |
 | 40058f:	48 8b 45 e8          	mov    rax,QWORD PTR [rbp-0x18]     ; move rbp-18 into rax
-| 400593:	0f b6 00             	movzx  eax,BYTE PTR [rax]           ; move one byte of rax into eax and extend with zeros
+| 400593:	0f b6 00             	movzx  eax,BYTE PTR [rax]           ; move one byte of value at rax into eax and extend with zeros
 | 400596:	48 0f be c0          	movsx  rax,al                       ; move low 8 bits of eax (al) into rax and extend sign bits
 | 40059a:	48 01 45 f8          	add    QWORD PTR [rbp-0x8],rax      ; add rax into rbp-8
 | 40059e:	48 83 45 e8 01       	add    QWORD PTR [rbp-0x18],0x1     ; add 1 to rbp-18

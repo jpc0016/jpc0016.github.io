@@ -112,7 +112,7 @@
 													<p>
 														Moving on to the next block (cmp == 2 is satisfied), there is a local variable loaded into register <i>rax</i>.  It is
 														also moved into	<i>rdi</i> and passed as a parameter to <i>&lt;checksum&gt;</i>.  Whatever happens in
-														<i>&lt;checksum&gt;</i>, it is compared to 0xDEE to unlock the victory message.  This message can	be seen using
+														<i>&lt;checksum&gt;</i>, it is compared to 0xdee to unlock the victory message.  This message can	be seen using
 														<i>strings</i>	on the file:
 														<pre><code>$ strings crackme
 ....
@@ -125,14 +125,14 @@ Tada! Congrats
 														</pre></code>
 													</p>
 													<p>
-														One way to bypass <i>&lt;checksum&gt;</i> is to patch the binary by setting <i>rax</i> to 0xDEE before it is loaded
+														One way to bypass <i>&lt;checksum&gt;</i> is to patch the binary by setting <i>rax</i> to 0xdee before it is loaded
 														onto the stack.  This does not technically solve the binary but merely patches the instruction.  This can be done in
 														 <i>GDB</i> with the following command:
 														 <pre><code>(gdb)	set $rax=0xdee
  														</pre></code>
 													</p>
 													<p>So how can this problem best be approached?  This is where dynamic analysis is useful in determining how the binary
-													behaves.  The <i>&lt;checksum&gt;</i> function is clearly doing something that returns 0xDEE.  A breakpoint can be set
+													behaves.  The <i>&lt;checksum&gt;</i> function is clearly doing something that should return 0xdee.  A breakpoint can be set
 													at the beginning of <i>&lt;checksum&gt;</i> so walkthrough can occur.  This helps determine step-by-step what the function
 													is actually doing.  Run the below command to open the crackme file in gdb.  Then set a breakpoint at the <i>&lt;checksum&gt;</i>
 													 address.</p>
@@ -162,7 +162,11 @@ Tada! Congrats
 													<p>
 													Normally I execute a combination of <i>stepi</i> and <i>info registers</i>. Take note of
 													 changes in register values as this can reveal patterns in the binary.  Be sure to reference the assembly
-													 code of <i>&lt;checksum&gt;</i> when stepping through.  The first couple of instructions seem to load
+													 code of <i>&lt;checksum&gt;</i> when stepping through.  Below is its assembly output.
+												 </p>
+<br><center><div class="image post"><img src="../images/crackme/checksum-assembly.png" width="700" alt="" /></div></center><br>
+												 <p>
+													 The first couple of instructions seem to load
 													 a parameter on the stack and initialize a number to zero.  It is not until after instruction 0x4005a3
 													 that real-time calculations can be observed.  Once instruction 0x4005aa is reached, register <i>rax</i>
 													 contains the value 0x66 which is the ASCII representation for <i>f</i>.  Refering to previous instructions,
@@ -176,14 +180,39 @@ Tada! Congrats
 														The program fails the first conditional branch at 0x4005aa and jumps to 0x4005af where 0x7fffffffdeee is
 														once again loaded into rax.  Moving through the next few instructions, rax alternates between its effective
 														address (0x7fffffffdeee) and its value (0x66).  Upon reaching instruction 0x4005a7, 0x6f is loaded into rax.
-														This is the value for character <i>o</i>.  There is now a clear pattern shown of stepping through each
-														character of the password parameter; however, more analysis is needed to determine what is happening to
-														the values.
+														This is the value for character <i>o</i>.  There is now a clear pattern of stepping through each password
+														character; however, more analysis is needed to determine what is happening to	the values.  A closer inspection
+														of <i>&lt;checksum&gt;</i> reveals rax being added to rbp+0x8 at instruction 0x40059a.  This value was previously
+														initialized to 0 at instruction 0x400585.  Continuing this process to instruction 0x4005ae shows every character
+														in rax until the end of the password string.  I set a breakpoint and continued.
 													</p>
-
-
-
-
+													<br><center><div class="image post"><img src="../images/crackme/gdb-continue.png" width="700" alt="" /></div></center><br>
+													<p>
+														At this point, the next instructions will load rpb-0x8 into rax and return to <i>main()</i>.  Looking back
+														at the assembly, there is only one instance of rpb-0x8 besides its initialization.  The contents of rax are
+														added to it one byte at a time in instruction 0x40059a.  Armed with this knowledge, it appears the value of
+														rax in the below output is the sum of each character of <i>foobar</i>.
+													</p>
+													<br><center><div class="image post"><img src="../images/crackme/gdb-sum.png" width="700" alt="" /></div></center><br>
+													<p>
+														Character summation is confirmed when checking an ASCII table.
+														<pre><code>
+102(f) + 111(o) + 111(o) + 98(b) + 97(a) + 114(r) = 633 = 0x279
+														</pre></code>
+													</p>
+													<p>
+														After returning to <i>main()</i>, rax is again loaded into rbp-0x8 which is subsequently compared to 0xdee.  Based
+														on the activity in <i>&lt;checksum&gt;</i>, simply refer to the ASCII table for a character combination that adds
+														up to 0xdee.  This is equivalent to 3566 in decimal.  I used the highest character, '~' valued at 126, and two
+														capital 'Rs'.  Test the string with <i>./crackme</i>.
+														<br>
+														<br>
+														Tada! Congrats
+														<pre><code>
+(126(~) x 27) + (82(R) x 2) = 3566 = 0xdee
+														</pre></code>
+													</p>
+													<br><center><div class="image post"><img src="../images/crackme/crackme-solve.png" width="700" alt="" /></div></center><br>
 
 
 
@@ -205,7 +234,7 @@ Tada! Congrats
 													<p>
 														I highly recommend picking up at least one programming language if serious about reverse engineering.  C is the best choice
 														since it is closest to the hardware, thus better suited for low-level access to memory.  This is important since sophisticated binaries
-														are known to hide processes in memory.  Intermediate to advanced analysts should become familiar with C++ since class structures
+														are known to hide processes in memory.  Intermediate to advanced analysts should become very familiar with C++ since class structures
 														are common in malware.
 													</p>
 
