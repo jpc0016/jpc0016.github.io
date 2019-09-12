@@ -34,7 +34,7 @@
 						<ul class="icons">
 							<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
 							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
-							<li><a href="" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
 							<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
 						</ul>
 					</nav>
@@ -92,11 +92,11 @@
 												 binary.  These are typically stored in the .rodata section.  At this point we can proceed with our reverse engineering tools to analyze the behavior. </p>
 												 <p>I will use Ghidra to disassemble <i>ch1.bin</i>.  Ghidra is an open-source reverse engineering framework developed by the National
                          Security Agency (NSA).  It provides support for a multitude of software architectures and instruction sets and ships with a wide
-                        array of analysis features.  Ghidra can be downloaded <a href="https://ghidra-sre.org/" target="_blank" style="color:blue;">here</a> and requires <a href="https://www.oracle.com/technetwork/java/javase/downloads/jdk11-downloads-5066655.html" target="_blank" style="color:blue;">Java Development Kit (JDK)
+                        array of analysis features.  Ghidra can be downloaded <a href="https://ghidra-sre.org/" target="_blank" style="color:blue;">here</a> and requires <a href="https://docs.aws.amazon.com/corretto/latest/corretto-11-ug/downloads-list.html" target="_blank" style="color:blue;">Java Development Kit (JDK)
                       	version 11+</a>.
                     		Installation is pretty straight-forward once Java is set up.  Unzip the ghidra package, navigate to the root folder (typically <i>cd ghidra_
 												[$version-number]_PUBLIC_[$date-of-release]/ghidra_[$version-number]/</i>), and run:<br><br>
-												<i>sudo ./ghidraRun</i>.<br><br>
+												<i>./ghidraRun</i>.<br><br>
 												You will run <i>ghidraRun.bat</i> if using Ghidra on a Windows system.  When you first run this command, Ghidra will ask you for the specific path to
 												the JDK v11+ folder.  Enter the folder path to complete startup.  The first window that appears is a project window with no active project.</p><br>
 												<center><div class="image post"><img src="../images/ghidra_home.png" width="500" alt="" /></div></center><br>
@@ -104,7 +104,7 @@
 												used dissecting executables.  Version Tracking is used in shared projects to track markup information such as function labels and comments among analysts. 	A motivating
 												factor for open-sourcing Ghidra was for the development community to fill the Tool Chest and effectively reduce the NSA's workload (and identify talent for
 												recruitment).  My windows appear black because I changed the color theme.  This can be configured by going to <b>Edit</b> &gt&gt <b>Tool Options...</b> &gt&gt <b>Tool</b>
-											   , checking <b>Use Inverted Colors</b>, then restarting Ghidra.</p>
+											   , checking <b>Use Inverted Colors</b>, then restarting Ghidra.  Note: <b>Use Inverted Colors</b> checkbox only appears in Ghidra's home window.  You cannot change to inverted colors from the Listing tool.</p>
 												<p>The next step is to create a new project by selecting <b>File</b> &gt&gt <b>New Project...</b> Make it a <b>Non-Shared Project</b> then give it a
 												home directory and name.  Ghidra saves the project file using a .gpr extension.  When finished, an empty project will appear in the project window; however,
 												the project has no file.  Import a file to analyze using <b>File</b> &gt&gt <b>Import File...</b> or simply enter the "I" key. Navigate to where you
@@ -190,7 +190,7 @@
 								<ul class="icons alt">
 									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
 									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
-									<li><a href="" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
 									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
 								</ul>
 							</section>
