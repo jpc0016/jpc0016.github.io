@@ -77,7 +77,7 @@
 													<p>
 														For simplicity I isolated the working <i>crackme</i> into its own directory.  First thing I do is execute a <i>file</i> command
 														to extract pertinent header information.
-														<center><div class="image post"><img src="../images/crackme/file-command.png" width="1000" alt="" /></div></center><br>
+														<center><div class="image post"><img src="../images/crackme-2/file-command.png" width="1000" alt="" /></div></center><br>
                           </p>
 													<br>
 													<p>
@@ -90,7 +90,7 @@
 														syntax.  In Atom, go to <b>Edit</b> > <b>Preferences</b> > <b>Install</b> to open the package installer.  Search for "Assembly"
 														and install the first result.  The output should look like this:
 													</p>
-													<br><center><div class="image post"><img src="../images/crackme/output-assembly.png" width="600" alt="" /></div></center><br>
+													<br><center><div class="image post"><img src="../images/crackme-2/output-assembly.png" width="600" alt="" /></div></center><br>
 													<p>
 														This may seem intimidating if you are not used to assembly language.  In the above code, <i>&lt;main&gt;</i> executes some jump
 														instructions and makes a couple of function calls to <i>printf</i> and <i>checksum</i>.  From here I manually mapped out
@@ -98,11 +98,11 @@
 														function calls (<i>call</i>), conditional jumps (<i>je</i>), etc.  As evident in the output, there is a lot of movement among
 														registers in between the instructions of interest.  Below is the <i>&lt;main&gt;</i> function mapped out.
 													</p>
-													<br><center><div class="image post"><img src="../images/crackme/function-map.jpg" width="700" alt="" /></div></center><br>
+													<br><center><div class="image post"><img src="../images/crackme-2/function-map.jpg" width="700" alt="" /></div></center><br>
 													<p>
 														Again, these were very rudimentary steps due to learning x86 assembly.  Most disassemblers have built-in function graphing tools;
 														 however, this is only one step of the solution.	 I tested the binary to record observations before proceeding:
-														 <br><center><div class="image post"><img src="../images/crackme/crackme-test.png" width="700" alt="" /></div></center><br>
+														 <br><center><div class="image post"><img src="../images/crackme-2/crackme-test.png" width="700" alt="" /></div></center><br>
 														 It appears the binary expects an input parameter and returns usage instructions if not found.  When dummy input is used,
 														 I get a <i>wrong password</i> prompt as expected.  When cross-referenced with the function graph, the first <i>jump if equal</i>
 														 instruction checks for a password parameter.  The second one determines if the desired instruction block is displayed ("Tada! Congrats").
@@ -136,7 +136,7 @@ Tada! Congrats
 													at the beginning of <i>&lt;checksum&gt;</i> so walkthrough can occur.  This helps determine step-by-step what the function
 													is actually doing.  Run the below command to open the crackme file in gdb.  Then set a breakpoint at the <i>&lt;checksum&gt;</i>
 													 address.</p>
-<br><center><div class="image post"><img src="../images/crackme/gdb-start.png" width="700" alt="" /></div></center><br>
+<br><center><div class="image post"><img src="../images/crackme-2/gdb-start.png" width="700" alt="" /></div></center><br>
 													<p>Next, type the following commands to run the program and set the disassembly syntax.
 														<pre><code>
 (gdb)	run foobar
@@ -158,13 +158,13 @@ Tada! Congrats
 														on the next step.  In the below screenshot, the instruction	<i>call 0x40057d	checksum</i> is executed
 														 next.
 													</p>
-<br><center><div class="image post"><img src="../images/crackme/info-registers.png" width="700" alt="" /></div></center><br>
+<br><center><div class="image post"><img src="../images/crackme-2/info-registers.png" width="700" alt="" /></div></center><br>
 													<p>
 													Normally I execute a combination of <i>stepi</i> and <i>info registers</i>. Take note of
 													 changes in register values as this can reveal patterns in the binary.  Be sure to reference the assembly
 													 code of <i>&lt;checksum&gt;</i> when stepping through.  Below is its assembly output.
 												 </p>
-<br><center><div class="image post"><img src="../images/crackme/checksum-assembly.png" width="700" alt="" /></div></center><br>
+<br><center><div class="image post"><img src="../images/crackme-2/checksum-assembly.png" width="700" alt="" /></div></center><br>
 												 <p>
 													 The first couple of instructions seem to load
 													 a parameter on the stack and initialize a number to zero.  It is not until after instruction 0x4005a3
@@ -175,7 +175,7 @@ Tada! Congrats
 													 parameter, "<i>foobar</i>;" these are the <b>contents</b> of rax.  Instruction 0x4005a7 moves one byte of
 													 the contents of rax into eax and pads with zeros.  <i>f</i> is only one byte so the logic makes sense so far.
 													</p>
-<br><center><div class="image post"><img src="../images/crackme/gdb-first-register.png" width="700" alt="" /></div></center><br>
+<br><center><div class="image post"><img src="../images/crackme-2/gdb-first-register.png" width="700" alt="" /></div></center><br>
 													<p>
 														The program fails the first conditional branch at 0x4005aa and jumps to 0x4005af where 0x7fffffffdeee is
 														once again loaded into rax.  Moving through the next few instructions, rax alternates between its effective
@@ -186,14 +186,14 @@ Tada! Congrats
 														initialized to 0 at instruction 0x400585.  Continuing this process to instruction 0x4005ae shows every character
 														in rax until the end of the password string.  I set a breakpoint and continued.
 													</p>
-													<br><center><div class="image post"><img src="../images/crackme/gdb-continue.png" width="700" alt="" /></div></center><br>
+													<br><center><div class="image post"><img src="../images/crackme-2/gdb-continue.png" width="700" alt="" /></div></center><br>
 													<p>
 														At this point, the next instructions will load rpb-0x8 into rax and return to <i>main()</i>.  Looking back
 														at the assembly, there is only one instance of rpb-0x8 besides its initialization.  The contents of rax are
 														added to it one byte at a time in instruction 0x40059a.  Armed with this knowledge, it appears the value of
 														rax in the below output is the sum of each character of <i>foobar</i>.
 													</p>
-													<br><center><div class="image post"><img src="../images/crackme/gdb-sum.png" width="700" alt="" /></div></center><br>
+													<br><center><div class="image post"><img src="../images/crackme-2/gdb-sum.png" width="700" alt="" /></div></center><br>
 													<p>
 														Character summation is confirmed when checking an ASCII table.
 														<pre><code>
@@ -212,7 +212,7 @@ Tada! Congrats
 (126(~) x 27) + (82(R) x 2) = 3566 = 0xdee
 														</pre></code>
 													</p>
-													<br><center><div class="image post"><img src="../images/crackme/crackme-solve.png" width="700" alt="" /></div></center><br>
+													<br><center><div class="image post"><img src="../images/crackme-2/crackme-solve.png" width="700" alt="" /></div></center><br>
 
 
 
@@ -223,7 +223,7 @@ Tada! Congrats
 														When analyzing the <i>&lt;checksum&gt;</i> function in Ghidra, I verified its activity in the
 														decompiler window.  Below is its representative C code:
 													</p>
-<br><center><div class="image post"><img src="../images/crackme/decompile-checksum.png" width="500" alt="" /></div></center><br>
+<br><center><div class="image post"><img src="../images/crackme-2/decompile-checksum.png" width="500" alt="" /></div></center><br>
 
 													<p>
 														A local character array is initialized and set to the string <i>pcParm1</i>.  A string is a char array with a

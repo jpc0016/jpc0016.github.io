@@ -61,7 +61,7 @@
                            computer security community that emphasizes hands-on learning.  I highly recommend creating an account for quality practice. If you are new to the field, you should read their
                            Frequently Asked Questions <a href="https://www.root-me.org/?page=faq&lang=en" target="_blank" style="color:blue;">(FAQ)</a> page for a "learning path."  It includes links to textbooks, research papers, and
                          relevant challenges.  Be advised, I am running this exercise on Linux.  Terminal commands will be different than using Windows CMD.  I'd be stunned if you attempted this on Windows;
-												  therefore, I recommend downloading a Linux VM and a free version of VMware or OracleBox.  I'm partial to the Ubuntu family but any distribution will work!</p>
+												  therefore, I recommend downloading a Linux VM and a free version of VMware or OracleBox.  I'm partial to the Ubuntu family but any distribution will work.</p>
 
 
                          <p>Since this is part 1 of the cracking challenges, a brief primer on binary analysis is needed.  The purpose
@@ -72,22 +72,22 @@
                        malware require in-depth knowledge of classes and structures.  For now we will analyze a beginner file.</p>
 
                          <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
-                         <center><div class="image post"><img src="../images/cracking_menu.png" width="400" alt="" /></div></center><br>
+                         <center><div class="image post"><img src="../images/rootme-1/cracking_menu.png" width="400" alt="" /></div></center><br>
 
                          <p>You are brought to a list of binary cracking challenges ordered by increasing difficulty.  Select the first binary file labeled
                             <b>ELF-0 protection</b>.  On the next page click <b>Start the challenge</b> to download the file as <i>ch1.zip</i> and unzip to
                               <i>ch1.bin</i>.</p><br>
-                            <center><div class="image post"><img src="../images/elf-0-protection.png" width="700" alt="" /></div></center><br>
+                            <center><div class="image post"><img src="../images/rootme-1/elf-0-protection.png" width="700" alt="" /></div></center><br>
                          <p>If not already done, ensure you have a software reverse engineering tool installed to aid your cracking.  You can elect to
                          use the default GNU tools, but I prefer a visual tool suite for solving these files.  You will need all the help you can get while
                          cracking more difficult binaries.  This isn't to say <i>objdump</i> and <i>file</i> are useless.  There is definitely a place for them and are
                          great for initial "quick looks" as well as aiding dynamic analysis.  Speaking of quick-look, we can run the binary file to check for expected input values.  I received the input below when running <i>ch1.bin</i>, which translates
 												 to "please enter your password" in French.  If you have trouble running <i>ch1.bin</i>, ensure you enabled execution permissions on the file: <i>[sudo] chmod +x ch1.bin</i>
 											 		&emsp; If you still have trouble executing, ensure you have <i>libc 32bit</i> installed. </p>
-												 <center><div class="image post"><img src="../images/ch1bin_run.png" width="700" alt="" /></div></center><br>
+												 <center><div class="image post"><img src="../images/rootme-1/ch1bin_run.png" width="700" alt="" /></div></center><br>
 												 <p>So we know the file expects a password after execution.  Other challenge binaries might only execute with the passphrase as a parameter (e.g. <i>./binary foobar</i>).
 												 Let's test the field with <i>foobar</i> to see what outputs to the terminal.</p>
-												 <center><div class="image post"><img src="../images/ch1bin_test.png" width="700" alt="" /></div></center><br>
+												 <center><div class="image post"><img src="../images/rootme-1/ch1bin_test.png" width="700" alt="" /></div></center><br>
 												 <p>As expected, I got the wrong answer as indicated by the phrase "too bad, try again" in French.  The good news is I have strings to look for while dissecting the
 												 binary.  These are typically stored in the .rodata section.  At this point we can proceed with our reverse engineering tools to analyze the behavior. </p>
 												 <p>I will use Ghidra to disassemble <i>ch1.bin</i>.  Ghidra is an open-source reverse engineering framework developed by the National
@@ -99,7 +99,7 @@
 												<i>./ghidraRun</i>.<br><br>
 												You will run <i>ghidraRun.bat</i> if using Ghidra on a Windows system.  When you first run this command, Ghidra will ask you for the specific path to
 												the JDK v11+ folder.  Enter the folder path to complete startup.  The first window that appears is a project window with no active project.</p><br>
-												<center><div class="image post"><img src="../images/ghidra_home.png" width="500" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/rootme-1/ghidra_home.png" width="500" alt="" /></div></center><br>
 												<p>This is Ghidra's home window from which you can use various tools.  Ghidra ships with CodeBrowser and Version Tracking tools by default.  CodeBrowser is the primary analysis tool
 												used dissecting executables.  Version Tracking is used in shared projects to track markup information such as function labels and comments among analysts. 	A motivating
 												factor for open-sourcing Ghidra was for the development community to fill the Tool Chest and effectively reduce the NSA's workload (and identify talent for
@@ -109,24 +109,24 @@
 												home directory and name.  Ghidra saves the project file using a .gpr extension.  When finished, an empty project will appear in the project window; however,
 												the project has no file.  Import a file to analyze using <b>File</b> &gt&gt <b>Import File...</b> or simply enter the "I" key. Navigate to where you
 												saved <i>ch1.bin</i> and import it.</p>
-												<center><div class="image post"><img src="../images/ghidra_import.png" width="500" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/rootme-1/ghidra_import.png" width="500" alt="" /></div></center><br>
 												<p>Ghidra automatically detects the file as ELF executable and defaults to the gcc compiler.  Enter the destination folder and program name if you wish to
 												change.  Default options are usually sufficient in this window.  An import summary window will subsequently appear.  This shows various details such as file
 												size, executable format, required libraries, and others.  Some of this information can be obtained by running <i>readelf -h ch1.bin</i>.	Click OK then drag and drop
 												<i>ch1.bin</i> to the green dragon icon to open CodeBrowser.  The green dragon will enlarge and fade outward.  Exciting!</p>
-											<center><left><div class="image post"><img src="../images/little_dragon.png" width="600" alt="" /></div></left>
-											<right><div class="image post"><img src="../images/big_dragon.png" width="600" alt="" /></div></right></center><br><br><br>
+											<center><left><div class="image post"><img src="../images/rootme-1/little_dragon.png" width="600" alt="" /></div></left>
+											<right><div class="image post"><img src="../images/rootme-1/big_dragon.png" width="600" alt="" /></div></right></center><br><br><br>
 											<p>Once open, CodeBrowser will ask if you would like to analyze <i>ch1.bin</i>.  Select Yes to view Analysis Options in the window.  All analyzers are checked
 											by default except <i>Decompiler Parameter ID</i> and the prototypes highlighted in light blue.  Go ahead and click <b>Analyze</b>.  Ghidra will complete auto-analysis to
 											set up the user	for manual analysis.  </p><br><br>
-											<center><div class="image post"><img src="../images/ghidra_ch1bin_listing_home.png" width="1200" alt="" /></div></center><br>
+											<center><div class="image post"><img src="../images/rootme-1/ghidra_ch1bin_listing_home.png" width="1200" alt="" /></div></center><br>
 											<p>Take a minute to explore Ghidra windows such as <i>Program Trees</i> and <i>Listing</i>.  You can customize Ghidra in whichever way suits your analysis style.  The recommended setup is to have <i>Listing</i> and
 												<i>Decompiler</i> as main windows at a minimum.  These windows provide two levels of simultaneous analysis: one at assembly level and one at source code level.  Notice the ELF magic
 												number, 0x7F (followed by 0x454C46), is selected at the top of <i>Listing</i> and returns no function to the <i>Decompiler</i> [since it's not a function].  Let's check out a function to see what is returned.
 												From CodeBrowser select <b>Window</b> &gt&gt <b>Functions</b> to retrieve a list of found functions.</p>
 												<p>Since this is a beginner challenge, we see common functions such as <i>_init</i>, <i>printf</i>, and <i>main</i>.  Double-clicking <i>main</i> in the Functions window
 													gives us interpreted C-code in the <i>Decompiler</i> window.  Here we see a couple familiar strings: the password prompt and the password fail message.  </p>
-													<center><div class="image post"><img src="../images/ch1bin_decompile_main.png" width="1200" alt="" /></div></center><br>
+													<center><div class="image post"><img src="../images/rootme-1/ch1bin_decompile_main.png" width="1200" alt="" /></div></center><br>
 												<p>When investigating the decompiled C code in <i>main</i>, we notice the password fail message is printed with a <i>puts</i> command when a certain condition is
 													not met; indicated by the <i>else</i> statement.  Working backwards through the <i>if</i>-statement, there is a comparison between <i>iVar1</i> and 0 along with the
 													desired passphrase printing when the condition is met.  Go up one statement to look at how <i>iVar1</i> is assigned.  The variable is assigned the output of <i>strcmp()</i>
@@ -135,11 +135,11 @@
 												to "123456789".  Going up another statement, <i>getString()</i> indicates the entered passphrase is assigned to <i>__s1</i>.  </p>
 												<p>At this point we have a clear idea of what this binary is doing.  It stores your entered passphrase in a local variable, <i>__s1</i>, and compares it to "123456789".  If they
 												are equal, our desired string appears.  So obviously we enter "123456789" into the passphrase prompt to solve the binary. </p>
-												<center><div class="image post"><img src="../images/ch1bin_solve.png" width="700" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/rootme-1/ch1bin_solve.png" width="700" alt="" /></div></center><br>
 												<p>We have our desired outcome with the phrase "123456789" without touching any assembly code!  A production grade executable file will never be this easy, but taking
 												the time to familiarize yourself with toolsets is key to solving tougher problems.  This was made possible by the correct passphrase existing in plaintext.  Even in <i>main's</i>
 						 						assembly listing, the passphrase appears in plaintext as a string call in line 080486F6. </p>
-												<center><div class="image post"><img src="../images/ch1bin_phrase.png" width="800" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/rootme-1/ch1bin_phrase.png" width="800" alt="" /></div></center><br>
 												<p>Now that the binary is solved, take some time to jump around between called functions.  This will help you understand how an executable is structured.  Try jumping from <i>main</i> to
 													 <i>getString</i> by double-clicking the function call in line 080486EB.  Return to <i>main</i> when finished by clicking the left arrow button in the upper left corner of
 												CodeBrowser.  </p>
