@@ -5,5 +5,4 @@ Add side panel for certain posts or post categories.  This panel would only be v
 
   * This is extremely hard.  Archived posts by year could be organized at bottom of posts.html page.
 
-<!-- On posts.html, have links to separate posts.  The post will have the same template as index.html.  
-The links will be kind of large and have a preview picture similar to Medium.com -->
+Need to draft a "Binary Cracking Challenges (Part 2)" post
