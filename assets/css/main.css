@@ -3010,7 +3010,7 @@ input, select, textarea {
 		}
 
 		header.major {
-			margin: 0 0 4rem 0;
+			margin: 0 4 4rem 0;
 			text-align: center;
 		}
 
@@ -3063,6 +3063,7 @@ input, select, textarea {
 
 	header.major .date:before, header.major .date:after {
 		border-top-color: #eeeeee;
+		margin: 0 -1rem 2rem -1rem;
 	}
 
 /* Table */
@@ -3826,7 +3827,7 @@ input, select, textarea {
 
 		#main > * {
 			padding: 4rem 4rem 2rem 4rem ;
-			border-top: solid 2px #eeeeee;
+			border-top: solid 2px #ffffff;
 			margin: 0;
 		}
 
