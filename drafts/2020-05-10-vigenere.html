@@ -58,8 +58,9 @@
                         <h2>&emsp;The Vigenere Cipher</h2>
                         <div class="box">
                           <p>
-													&emsp; &emsp; Hello, Tim and Aaron! &nbsp;I got a perfect score on my school assignment so I decided to share it. &nbsp;I cannot
-													go into anything specific about the class, instructor, or even parts of the program so I'll omit those. &nbsp;
+													&emsp; &emsp; Hello, Tim and Aaron! &nbsp;It's been a while since I posted since I've been busy tackling the CISSP and
+													other class assignments while simultaneously dodging coronavirus! &nbsp;I got a perfect score on my school assignment
+													so I decided to share it. &nbsp;I cannot go into specifics about the class or instructor so I'll omit those. &nbsp;
 													At the high level, it is a generic cybersecurity graduate course with coding assignments as homework. &nbsp;This
 													 particular	project is about cracking the Vigenere cipher.</p>
 
@@ -71,9 +72,9 @@
 														after 'Z', it will start from the beginning of the alphabet. &nbsp;So a character 'Y' with the same key will shift
 														by <i>3</i> to make 'B'. &nbsp;This is a very simple mechanism that is scaled in the Vigenere cipher.<br>
 														&emsp; &emsp; The Vigenere cipher is an advancement of the Caeser cipher in that it uses a word or phrase as its
-														 key. &nbsp;Instead of shifting every letter in "I love dogs" by a simple number, each letter is shifted based on its
-														 position relative to the key. &nbsp;Let's say the key is "hello", each letter of "hello" would be superimposed on the
-														 phrase "I love dogs" and shifted based on the letter value of the key:
+														 key. &nbsp;Instead of shifting every letter in "I love dogs" by a simple number, each letter is shifted based on
+														 the letter of the key it lines up with. &nbsp;Let's say the key is "hello", each letter of "hello" would be superimposed
+														 on the phrase "I love dogs" and shifted based on the letter value of the key:
 													</p>
 													<code style=display:block;white-space:pre-wrap>
   I L O V E D O G S
@@ -81,16 +82,24 @@
 + -----------------
   P P Z G S K S R D
 													</code>
+
+													<br>
 													<p>
-													In the above, 'I' has a value <i>8</i> (starting at index 0) and 'H' has a value of <i>7</i>.
-												  </p>
+													In the above, 'I' has a value <i>8</i> (starting at index 0) and 'H' has a value of <i>7</i>. &nbsp;Adding the two values
+													 gives <i>15</i>, which is letter 'P'. &nbsp;Repeat for the remaining numbers to get string <i>P P Z G S K S R D</i>. &nbsp;This
+													 string is the ciphertext. &nbsp;To decrypt the ciphertext, subtract the key from the ciphertext.
+								 			 		</p>
+
+													<code style=display:block;white-space:pre-wrap>
+    P P Z G S K S R D
+    H E L L O H E L L
+(-) -----------------
+    I L O V E D O G S
+													</code>
 													<!-- Throw something in about a certain company at BlackHat 2019 -->
 
-                         <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
-												 <!-- Placeholder image -->
-                         <center><div class="image post"><img src="../images/vigenere-4/cracking_menu.png" alt="" /></div></center><br>
-
-                         <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
+												<h3>&emsp; Breaking the Cipher</h3>
+                         <p>What happens if we want to break the encryption? &nbsp;</p>
 
 												 <!--
 												 Organization notes:
