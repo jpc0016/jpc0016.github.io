@@ -261,9 +261,9 @@ input, select, textarea {
 	code {
 		border: solid 2px;
 		font-family: "Courier New", monospace;
-		font-size: 0.9rem;
+		font-size: 0.8rem;
 		margin: 0 0.25rem;
-		padding: 0.25rem 0.65rem;
+		padding: 0.15rem 0.55rem;
 	}
 
 	pre {

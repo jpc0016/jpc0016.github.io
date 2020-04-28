@@ -1,0 +1,343 @@
+<!DOCTYPE HTML>
+<!--
+	This is the default template for all
+  posts pages.
+-->
+<html>
+	<head>
+		<link rel="icon" href="images/favicon.ico">
+		<title>Vigenere Cipher (part 1)</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/atom-one-dark-reasonable.min.css">
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<script src="../assets/js/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a class="logo">The Defense</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="../index.html">Home</a></li>
+							<li class="active"><a href="../posts.html">Posts</a></li>
+							<li><a href="../research.html">Ideas</a></li>
+							<li><a href="../stories.html">Stories</a></li>
+							<li><a href="../references.html">Links</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+							<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="wrapper">
+
+						<!-- Post -->
+
+									<!--
+									Post body goes here.
+									-->
+                  <!--
+                  First draft of assignment 1 post
+                  -->
+                  <section class="post">
+                    <body>
+                      <article id="first-post">
+												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp;The Vigenere Cipher (part 1)</h2>
+                        <div class="box">
+                          <p>
+													<b>UPDATE: I had to break this post into two parts because it became too long. &nbsp;Vigenere cypher cryptanalysis
+													and code explanation will be covered in part 2!</b>
+													<br><br>
+													&emsp; &emsp; Hello, Tim and Aaron! &nbsp;It's been a while since I posted since I've been busy tackling the CISSP and
+													other class assignments while simultaneously dodging coronavirus! &nbsp;I got a perfect score on my school assignment
+													so I decided to share it. &nbsp;I cannot go into specifics about the class or instructor so I'll omit those. &nbsp;
+													At the high level, it is a generic cybersecurity graduate course with coding assignments as homework. &nbsp;This
+													 particular	project is about encryption and decryption with the Vigenere cipher using Python.
+											 	</p>
+
+												<h3>&emsp; Quick Primer</h3>
+													<p>
+														&emsp; &emsp; A brief introduction to the Caeser cipher is needed to understand the Vigenere cipher. &nbsp;The Caeser cipher
+														uses the alphabet as its list of possible values and one number as its key. &nbsp;So a phrase "I love dogs" with
+														a key of <i>3</i> will shift each letter of "ILOVEDOGS" by three to make "LORYHGRJV". &nbsp;If a letter is shifted
+														after 'Z', it will start from the beginning of the alphabet. &nbsp;So a character 'Y' with the same key will shift
+														by <i>3</i> to make 'B'. &nbsp;This is a very simple mechanism that is scaled in the Vigenere cipher.<br>
+														&emsp; &emsp; The Vigenere cipher is an advancement of the Caeser cipher in that it uses a word or phrase as its
+														 key. &nbsp;Instead of shifting every letter in "I love dogs" by a simple number, each letter is shifted based on
+														 the letter of the key it lines up with. &nbsp;Let's say the key is "hello", each letter of "hello" would be superimposed
+														 on the phrase "I love dogs" and shifted based on the letter value of the key:
+													</p>
+													<code style=display:block;white-space:pre-wrap;font-size:0.9rem>
+    						I L O V E D O G S
+    						H E L L O H E L L
+				              + -----------------
+    						P P Z G S K S R D
+													</code>
+
+													<br>
+													<p>
+													&emsp; &emsp; In the above, 'I' has a value <i>8</i> (starting at index 0) and 'H' has a value of <i>7</i>. &nbsp;Adding the two values
+													 gives <i>15</i>, which is letter 'P'. &nbsp;Repeat for the remaining numbers to get string <i>P P Z G S K S R D</i>.&nbsp;This
+													 string is the ciphertext. &nbsp;Note that a sum greater than 25 must be modular divided by 26 due to letter shift. &nbsp;For
+													 example, V (<i>21</i>) + L (<i>11</i>) = <i>32</i> and <i>32 mod 26 = 6</i> which is 'G'. &nbsp;To decrypt the ciphertext,
+													 subtract the key from the ciphertext.
+								 			 		</p>
+
+													<code style=display:block;white-space:pre-wrap;font-size:0.9rem>
+    						P P Z G S K S R D
+    						H E L L O H E L L
+					    (-) -----------------
+    						I L O V E D O G S
+	</code>
+													<!-- Throw something in about a certain company (Time AI) at BlackHat 2019 -->
+													<br>
+													<h3>&emsp; Encryption/Decryption Code</h3>
+													<p>&emsp; &emsp; So far this has been straighforward. &nbsp;Putting everything above into code will take some patience. &nbsp;The assignment calls
+													for encrypting a plaintext string into ciphertext then decrypting it back to plaintext. &nbsp;Drawing this out looks like:
+												  </p>
+													<center><div class="image post"><img src="../images/vigenere-4/vigenere-algo.png" width="1000" alt="" /></div></center><br>
+													<p>
+														&emsp; &emsp; Two functions are required with two inputs each: one for encryption and one for decryption, both use the same key as
+														input. &nbsp;As seen in the <i>Quick Primer</i> section, it is clear the decryption function will be the reverse of encryption. &nbsp;In order to apply
+														encryption, we need to enumerate both the plaintext and key. &nbsp;Enumeration requires a mapping of each letter to its integer value
+														so a Python dictionary works perfectly. &nbsp;Blank lists are initialized for both the plaintext and Vigenere key as <code>plain_keys</code>
+														and <code>vigenere_keys</code> respectively. &nbsp;I apologize in advance for the name confusion. &nbsp;Each list is filled using a
+														nested for-loop to iterate over each key-value pair in <code>character_key</code> while iterating over each letter in the
+														plaintext or Vigenere key. &nbsp;If the value is a match, it is appended to its respective list: <code>plain_keys</code> or
+														<code>vigenere_keys</code>. &nbsp;Below is the code generated so far.
+													</p>
+
+										<!-- <div class="container"> -->
+												<pre>
+													<code class="language-python" style=display:block;white-space:pre-wrap>
+# Initialize character key dictionary to be used in encryption and decryption
+character_key = {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'H', 8: 'I', 9: 'J', 10: 'K', 11: 'L', 12: 'M', 13: 'N', 14: 'O', 15: 'P', 16: 'Q', 17: 'R', 18: 'S', 19: 'T', 20: 'U', 21: 'V', 22: 'W', 23: 'X', 24: 'Y', 25: 'Z'}
+
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~ SNIP OUT OTHER CODE ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+# ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+# Enumerate characters of plaintext and store in plain_keys
+plain_keys = []
+
+
+for char in plaintext:
+  # use uppercase char
+  for value, letter in character_key.items():
+    if char.upper() == letter:
+      plain_key = value
+      plain_keys.append(plain_key)
+
+# Enumerate characters of the key and store in vigenere_keys.  Enumerated
+# key's length should match plain_keys length
+vigenere_keys = []
+
+for item in vigenere:
+  for value, letter in character_key.items():
+      if item.upper() == letter:
+        vigenere_key = value
+        vigenere_keys.append(vigenere_key)
+													</code>
+												</pre>
+										<!-- </div> -->
+
+										<p>
+											&emsp; &emsp; Once the plaintext and Vigenere key are loaded into lists, both must be the same length
+											in order to execute the cipher. &nbsp;This can be checked with an if-statement to see if <code>vigenere_keys</code> is
+											shorter than <code>plain_keys</code>. &nbsp;If the opposite is true, no repetition of the Vigenere key is
+											 required and operation will stop at the end of the plaintext. &nbsp;A discrete number of iterations is calculated to
+											 determine how many times the Vigenere key will cleanly fit into the plaintext. &nbsp;This number is expressed by
+											 <code>(length of plaintext - (length of plaintext mod length of Vigenere key)) / length of Vigenere key</code>. &nbsp;It
+											 is important to note the number of iterations starts from 0 to account for the remainder of the Vigenere key that
+											 must be filled. &nbsp;This means if <code>iterations = 0</code> is calculated, at least one loop will occur because
+											 that means the plaintext and Vigenere key are the same length thanks to the if-statement. &nbsp;The inner loop
+											 cycles through each character of <code>vigenere_keys</code> and appends it to its own list. &nbsp;This occurs
+											 for as many iterations as expressed by the outer loop until the end of plaintext is reached. &nbsp;Below is the
+											 code excerpt.
+										</p>
+
+										<!-- <div class="container"> -->
+												<pre>
+													<code class="language-python" style=display:block;white-space:pre-wrap>
+# These are required calculations prior to extending vigenere_keys
+len_plain = len(plain_keys)
+len_vig = len(vigenere_keys)
+mod = len_plain % len_vig
+
+# Extend vigenere_keys to match plain_keys in length.  Check if
+# vigenere_keys is shorter than plain_keys
+if len_vig < len_plain:
+  iterations =  (len_plain - mod) / len_vig
+
+  for iter in range(0, int(iterations)):
+    for j in range(0, len_vig):
+      # Exit loop when end is reached
+      if len(vigenere_keys) == len(plain_keys):
+         break
+      else:
+         vigenere_keys.append(vigenere_keys[j])
+													</code>
+												</pre>
+										<!-- </div> -->
+											<p>
+											&emsp; &emsp;We're almost there, Tim! &nbsp;With plaintext and extended Vigenere key the same length, simply add their values
+											 as described in the <i>Quick Primer</i> section. &nbsp;Don't forget to modular divide by <i>26</i>! &nbsp;A new list,
+											 <code>encrypted_numbers</code> holds the result of each character. &nbsp;Then use the dictionary key to convert from values
+											 to characters similar to what was done at the beginning. &nbsp;Then return the encrypted string: <code>encrypted</code>.
+											</p>
+											<pre>
+												<code class="language-python" style=display:block;white-space:pre-wrap>
+# Add the elements of each array together and mod 26.  If len(vigenere) is
+# less than len(plaintext), restart at begining of key.  If len(vigenere)
+# is greater than len(plaintext), stop at end of plaintext
+# Result is encrypted_numbers list
+encrypted_numbers = []
+for i in range(0, len(plain_keys)):
+  new = (plain_keys[i] + vigenere_keys[i]) % 26
+  encrypted_numbers.append(new)
+
+# Convert enumerated plaintext + key into ciphertext string by referencing
+# the character_key dictionary
+# Initialize empty string
+encrypted = ""
+for number in encrypted_numbers:
+  for key, value in character_key.items():
+    if key == number:
+      encrypted += value
+
+# Result of encrypt()
+return encrypted
+												</code>
+											</pre>
+
+
+												<h3>&emsp; Bringing It Together</h3>
+												<p>
+													&emsp; &emsp; Finally, everything above can be placed into the body of function <code>def encrypt(plaintext, vigenere):</code>; except
+													for the dictionary because it is globally defined. &nbsp;The <code>decrypt()</code> function is basically the same as
+													<code>encrypt()</code> except backwards and uses the ciphertext instead of the plaintext.
+												</p>
+												<pre>
+													<code class="language-python" style=display:block;white-space:pre-wrap>
+# Encrypt plaintext
+crypto = encrypt(plaintext, vigenere)
+print("\n####################################")
+print("\nEncrypted text: " + crypto)
+print("\n####################################")
+													</code>
+												</pre>
+													<!-- SECOND HALF: BREAKING CIPHER-->
+
+												<h3>&emsp; Breaking the Cipher</h3>
+                         <p>&emsp; &emsp; Encryption and decryption are interesting, but breaking the cipher is what matters. &nbsp;This can be done using exhaustive
+													 search (brute force) or statistical analysis methods. &nbsp;Exhaustive search is useful when the key size is small enough. &nbsp;Statistical
+													 analysis is interesting because it can reveal key length when used correctly; however in this assignment, the key length is
+													 known so sophisticated statistical analysis is not required. &nbsp;If interested in decrypting ciphertext WITHOUT knowing key
+													  length, <a href="https://nostarch.com/crackingcodes" target="_blank" style="color:blue;">Al Sweigart's book</a> walks through
+													 a more comprehensive approach in chapter 18. &nbsp;Regardless of sophistication, both statistical analysis procedures require frequency
+													 analysis of the key characters. &nbsp;Certain
+													 letters occur more frequently in the English language than others. &nbsp;Below is a frequency table expressed in decimal form.
+
+													 <!-- Need to show character frequencies table from slides (#14)
+
+															Reference youtube video: https://www.youtube.com/watch?v=LaWp_Kq0cKs -->
+												 </p>
+												 <center><div class="image post"><img src="../images/vigenere-4/freq-analysis.png" width="500" alt="" /></div></center><br>
+
+												 <!--
+												 Organization notes:
+
+												 *	(briefly) Who is Vigenere?  Where did this cipher come from?
+												 *	Need mathematical principle behind why I chose my algorithm
+
+												 Need to make the code repository private move it to avoid unwanted distribution and class identification
+												 -->
+
+
+
+                        </div>
+
+                      </article>
+                    </body>
+                  </section>
+
+
+
+
+
+
+
+
+									<!--
+									End post body
+									-->
+
+									<!--
+									NEW POSTS GO ABOVE THIS LINE
+									-->
+
+
+
+
+
+
+									<!-- Remove Pagination
+							<div class="pagination"><a href="#"> 1 </a></div>
+							<div class="pagination"><a href="#"> 2 </a></div>
+							<div class="pagination"><a href="#"> 3 </a></div>
+							<div class="pagination"><a href="#"> 4 </a></div>
+							<div class="pagination"><a href="#"> 5 </a></div>-->
+							</div>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+
+						<section class="split contact">
+
+							<section>
+								<h3>Social</h3>
+								<ul class="icons alt">
+									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net" target="_blank">HTML5 UP</a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
