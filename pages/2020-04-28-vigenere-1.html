@@ -57,18 +57,16 @@
                   <section class="post">
                     <body>
                       <article id="first-post">
-												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
+												<a href="index.html"><img src="../images/rome.png" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp;The Vigenere Cipher (part 1)</h2>
                         <div class="box">
                           <p>
-													<b>UPDATE: I had to break this post into two parts because it became too long. &nbsp;Vigenere cypher cryptanalysis
-													and code explanation will be covered in part 2!</b>
-													<br><br>
-													&emsp; &emsp; Hello, Tim and Aaron! &nbsp;It's been a while since I posted since I've been busy tackling the CISSP and
-													other class assignments while simultaneously dodging coronavirus! &nbsp;I got a perfect score on my school assignment
-													so I decided to share it. &nbsp;I cannot go into specifics about the class or instructor so I'll omit those. &nbsp;
+													&emsp; &emsp; Hello, Tim and Aaron! &nbsp;It's been a while since I posted due to tackling the CISSP and
+													other class assignments while simultaneously dodging coronavirus! &nbsp;I made a perfect score on my school assignment
+													so I decided to share it. &nbsp;I cannot go into specifics about the class or instructor so I'll omit that information. &nbsp;
 													At the high level, it is a generic cybersecurity graduate course with coding assignments as homework. &nbsp;This
-													 particular	project is about encryption and decryption with the Vigenere cipher using Python.
+													particular project is about analyzing the Vigenere cipher. &nbsp; &nbsp;Part 1 is about Vigenere cipher encryption
+													and decryption using Python 3.
 											 	</p>
 
 												<h3>&emsp; Quick Primer</h3>
@@ -77,11 +75,13 @@
 														uses the alphabet as its list of possible values and one number as its key. &nbsp;So a phrase "I love dogs" with
 														a key of <i>3</i> will shift each letter of "ILOVEDOGS" by three to make "LORYHGRJV". &nbsp;If a letter is shifted
 														after 'Z', it will start from the beginning of the alphabet. &nbsp;So a character 'Y' with the same key will shift
-														by <i>3</i> to make 'B'. &nbsp;This is a very simple mechanism that is scaled in the Vigenere cipher.<br>
+														by <i>3</i> to make 'B'. &nbsp;This is mathematically expressed by <i>x mod 26</i>. &nbsp;It is a very simple mechanism
+														that is scaled in the Vigenere cipher.<br>
 														&emsp; &emsp; The Vigenere cipher is an advancement of the Caeser cipher in that it uses a word or phrase as its
-														 key. &nbsp;Instead of shifting every letter in "I love dogs" by a simple number, each letter is shifted based on
+														 key. &nbsp;Instead of shifting every letter in "I love dogs" by a simple number (3 in the example), each letter is shifted based on
 														 the letter of the key it lines up with. &nbsp;Let's say the key is "hello", each letter of "hello" would be superimposed
-														 on the phrase "I love dogs" and shifted based on the letter value of the key:
+														 on each letter of "I love dogs" and the plaintext phrase is shifted based on the letter value of each character. &nbsp;A
+														 visualization is depicted below:
 													</p>
 													<code style=display:block;white-space:pre-wrap;font-size:0.9rem>
     						I L O V E D O G S
@@ -92,9 +92,9 @@
 
 													<br>
 													<p>
-													&emsp; &emsp; In the above, 'I' has a value <i>8</i> (starting at index 0) and 'H' has a value of <i>7</i>. &nbsp;Adding the two values
+													&emsp; &emsp; The letter 'I' has a value <i>8</i> (starting at index 0) and 'H' has a value of <i>7</i>. &nbsp;Adding the two values
 													 gives <i>15</i>, which is letter 'P'. &nbsp;Repeat for the remaining numbers to get string <i>P P Z G S K S R D</i>.&nbsp;This
-													 string is the ciphertext. &nbsp;Note that a sum greater than 25 must be modular divided by 26 due to letter shift. &nbsp;For
+													 string is the ciphertext. &nbsp;As stated earlier, a sum greater than 25 must be modular divided by 26 due to letter shift. &nbsp;For
 													 example, V (<i>21</i>) + L (<i>11</i>) = <i>32</i> and <i>32 mod 26 = 6</i> which is 'G'. &nbsp;To decrypt the ciphertext,
 													 subtract the key from the ciphertext.
 								 			 		</p>
@@ -113,11 +113,11 @@
 												  </p>
 													<center><div class="image post"><img src="../images/vigenere-4/vigenere-algo.png" width="1000" alt="" /></div></center><br>
 													<p>
-														&emsp; &emsp; Two functions are required with two inputs each: one for encryption and one for decryption, both use the same key as
-														input. &nbsp;As seen in the <i>Quick Primer</i> section, it is clear the decryption function will be the reverse of encryption. &nbsp;In order to apply
+														&emsp; &emsp; Two functions are required with two inputs each: one for encryption and one for decryption. &nbsp;Both use the same key as its second
+														input parameter. &nbsp;As seen in the <i>Quick Primer</i> section, it is clear the decryption function will be the reverse of encryption. &nbsp;In order to apply
 														encryption, we need to enumerate both the plaintext and key. &nbsp;Enumeration requires a mapping of each letter to its integer value
 														so a Python dictionary works perfectly. &nbsp;Blank lists are initialized for both the plaintext and Vigenere key as <code>plain_keys</code>
-														and <code>vigenere_keys</code> respectively. &nbsp;I apologize in advance for the name confusion. &nbsp;Each list is filled using a
+														and <code>vigenere_keys</code> respectively. &nbsp;I apologize in advance for the naming confusion. &nbsp;Each list is filled using a
 														nested for-loop to iterate over each key-value pair in <code>character_key</code> while iterating over each letter in the
 														plaintext or Vigenere key. &nbsp;If the value is a match, it is appended to its respective list: <code>plain_keys</code> or
 														<code>vigenere_keys</code>. &nbsp;Below is the code generated so far.
@@ -135,7 +135,6 @@ character_key = {0: 'A', 1: 'B', 2: 'C', 3: 'D', 4: 'E', 5: 'F', 6: 'G', 7: 'H',
 
 # Enumerate characters of plaintext and store in plain_keys
 plain_keys = []
-
 
 for char in plaintext:
   # use uppercase char
@@ -159,7 +158,7 @@ for item in vigenere:
 
 										<p>
 											&emsp; &emsp; Once the plaintext and Vigenere key are loaded into lists, both must be the same length
-											in order to execute the cipher. &nbsp;This can be checked with an if-statement to see if <code>vigenere_keys</code> is
+											in order to execute the cipher. &nbsp;This is checked with an if-statement to see if <code>vigenere_keys</code> is
 											shorter than <code>plain_keys</code>. &nbsp;If the opposite is true, no repetition of the Vigenere key is
 											 required and operation will stop at the end of the plaintext. &nbsp;A discrete number of iterations is calculated to
 											 determine how many times the Vigenere key will cleanly fit into the plaintext. &nbsp;This number is expressed by
@@ -197,7 +196,7 @@ if len_vig < len_plain:
 										<!-- </div> -->
 											<p>
 											&emsp; &emsp;We're almost there, Tim! &nbsp;With plaintext and extended Vigenere key the same length, simply add their values
-											 as described in the <i>Quick Primer</i> section. &nbsp;Don't forget to modular divide by <i>26</i>! &nbsp;A new list,
+											 and modular divide by <i>26</i>. &nbsp;A new list,
 											 <code>encrypted_numbers</code> holds the result of each character. &nbsp;Then use the dictionary key to convert from values
 											 to characters similar to what was done at the beginning. &nbsp;Then return the encrypted string: <code>encrypted</code>.
 											</p>
@@ -230,8 +229,9 @@ return encrypted
 												<h3>&emsp; Bringing It Together</h3>
 												<p>
 													&emsp; &emsp; Finally, everything above can be placed into the body of function <code>def encrypt(plaintext, vigenere):</code>; except
-													for the dictionary because it is globally defined. &nbsp;The <code>decrypt()</code> function is basically the same as
-													<code>encrypt()</code> except backwards and uses the ciphertext instead of the plaintext.
+													the dictionary because it is globally defined. &nbsp;The <code>decrypt()</code> function is basically the same as
+													<code>encrypt()</code> except backwards and uses the ciphertext as input instead of the plaintext. &nbsp;Once everything is placed
+													under the function, call it and print the result.
 												</p>
 												<pre>
 													<code class="language-python" style=display:block;white-space:pre-wrap>
@@ -242,34 +242,26 @@ print("\nEncrypted text: " + crypto)
 print("\n####################################")
 													</code>
 												</pre>
-													<!-- SECOND HALF: BREAKING CIPHER-->
 
-												<h3>&emsp; Breaking the Cipher</h3>
-                         <p>&emsp; &emsp; Encryption and decryption are interesting, but breaking the cipher is what matters. &nbsp;This can be done using exhaustive
-													 search (brute force) or statistical analysis methods. &nbsp;Exhaustive search is useful when the key size is small enough. &nbsp;Statistical
-													 analysis is interesting because it can reveal key length when used correctly; however in this assignment, the key length is
-													 known so sophisticated statistical analysis is not required. &nbsp;If interested in decrypting ciphertext WITHOUT knowing key
-													  length, <a href="https://nostarch.com/crackingcodes" target="_blank" style="color:blue;">Al Sweigart's book</a> walks through
-													 a more comprehensive approach in chapter 18. &nbsp;Regardless of sophistication, both statistical analysis procedures require frequency
-													 analysis of the key characters. &nbsp;Certain
-													 letters occur more frequently in the English language than others. &nbsp;Below is a frequency table expressed in decimal form.
+												<p>
+													&emsp; &emsp; That's basically it for Vigener encryption and decryption functions. &nbsp;Add lines to handle input strings and add additional print
+													statements. &nbsp;The final code is <a href="https://github.com/jpc0016/Vigenere/blob/master/project/vigenere.py" target="_blank" style="color:blue;">here</a>.
+													 &nbsp;You should see similar results below when running the code.
+												</p>
+												<br>
+										<center><div class="image post"><img src="../images/vigenere-4/TC1.png" width="1000" alt="" /></div></center><br>
 
-													 <!-- Need to show character frequencies table from slides (#14)
-
-															Reference youtube video: https://www.youtube.com/watch?v=LaWp_Kq0cKs -->
-												 </p>
-												 <center><div class="image post"><img src="../images/vigenere-4/freq-analysis.png" width="500" alt="" /></div></center><br>
-
-												 <!--
-												 Organization notes:
-
-												 *	(briefly) Who is Vigenere?  Where did this cipher come from?
-												 *	Need mathematical principle behind why I chose my algorithm
-
-												 Need to make the code repository private move it to avoid unwanted distribution and class identification
-												 -->
+											<h3>&emsp; To Be Continued</h3>
+											<p>
+												&emsp; &emsp; Due to its length, this project is divided into two blog posts. &nbsp;Part 2 will cover the meat of the project: Vigenere cypher cryptanalysis
+												and code explanation in which a ciphertext is decrypted without knowing its key. &nbsp;It is more in-depth than Part 1 and involves statistical
+												analysis of letter frequencies. &nbsp;Several test cases will be provided as examples. &nbsp;In the meantime, continue reviewing and digesting the code since
+												cryptanalysis contains many similarities. &nbsp;Until next time!
+												<br><br>
+											</p>
 
 
+										<!-- FIN -->
 
                         </div>
 
