@@ -1,0 +1,369 @@
+<!DOCTYPE HTML>
+<!--
+	This is the default template for all
+  posts pages.
+-->
+<html>
+	<head>
+		<link rel="icon" href="../images/favicon.ico">
+		<title>Vigenere Cipher (part 2)</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/atom-one-dark-reasonable.min.css">
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<script src="../assets/js/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a class="logo">The Defense</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="../index.html">Home</a></li>
+							<li class="active"><a href="../posts.html">Posts</a></li>
+							<li><a href="../research.html">Ideas</a></li>
+							<li><a href="../stories.html">Stories</a></li>
+							<li><a href="../references.html">Links</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+							<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="wrapper">
+
+						<!-- Post -->
+
+									<!--
+									Post body goes here.
+									-->
+                  <!--
+                  First draft of assignment 1 post
+                  -->
+                  <section class="post">
+                    <body>
+                      <article id="first-post">
+												<a href="index.html"><img src="../images/rome.png" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp;The Vigenere Cipher (part 2)</h2>
+                        <div class="box">
+                          <p>
+
+														<!-- NEED TO LINK TO PART 1 IN THIS PARAGRAPH -->
+													&emsp; &emsp; Good morning everyone! &nbsp; This post is a continuation of <a href="../pages/vigenere.html" target="_blank" style="color:blue;">Part 1</a>
+													in which Vigenere encryption and decryption were constructed, tested, and evaluated using Python. &nbsp;The remaining project consists of cracking
+													the Vigenere cipher with cryptanalysis via statistical methods. &nbsp;Two goals are achieved. &nbsp;The first is determining the key used. &nbsp;The second
+													goal is recovery of the plaintext. &nbsp;Python is still involved!
+											 	</p>
+
+
+													<!-- SECOND HALF: BREAKING CIPHER-->
+
+												<h3>&emsp; Starting With Frequency Analysis</h3>
+                         <p>&emsp; &emsp; Encryption and decryption are interesting, but breaking the cipher matters more. &nbsp;This can be done using exhaustive
+													 search (brute force) or statistical analysis methods. &nbsp;Exhaustive search is useful when the key size is small enough. &nbsp;Statistical
+													 analysis is interesting because it can reveal key length when used correctly; however in this assignment, the key length is
+													 known so sophisticated statistical analysis is not required. &nbsp;If interested in decrypting ciphertext WITHOUT knowing key
+													  length, <a href="https://nostarch.com/crackingcodes" target="_blank" style="color:blue;">Al Sweigart's book</a> walks through
+													 a more comprehensive approach in chapter 18. &nbsp;Regardless of knowing key length, statistical analysis requires frequency
+													 analysis of the encryption key's characters. &nbsp;Certain letters occur more frequently in the English language than others. &nbsp;Below
+													 is a frequency table expressed in decimal form.
+
+
+												 </p>
+												 <center><div class="image post"><img src="../images/vigenere-5/freq-analysis.PNG" width="500" alt="" /></div></center><br>
+
+												 <p>&emsp; &emsp; We clearly see vowels occur more often and <i>E</i> is by far used the most; its frequency is 0.130, while
+													 <i>A</i> and <i>O</i> are both
+													0.080. &nbsp;Determining where these vowels occur in ciphertext will not be a problem. &nbsp;Challenges begin when analyzing
+													the remaining letters since they are relatively close together in frequency. &nbsp;This is where a neat mathematical principle
+													is used (credit goes to YouTuber <i>Theoretically</i> in this <a href="https://youtu.be/LaWp_Kq0cKs?t=342" target="_blank" style="color:blue;">video</a>).
+													<br>&emsp; &emsp;Suppose a key, <i>ABC</i>, is represented by <i>(0, 1, 2)</i> which denotes each letter's position in the
+													English alphabet. &nbsp;Multiplying each value by itself and summing everything yields the largest possible value. &nbsp;This is done by
+													multiplying the largest values together and the smallest values together. &nbsp;Below is an illustration of the concept:
+												</p>
+												<center><div class="image post"><img src="../images/vigenere-5/coincidence.PNG" width="700" alt="" /></div></center><br>
+												<p>&emsp; &emsp; As <i>Theoretically</i> stated, the largest possible value occurs when each number lines up. &nbsp;This means the largest
+													possible value occurs when key values to create ciphertext align with key values to decrypt the ciphertext. &nbsp;A rough sketch looks
+													like this:
+												</p>
+												<center><div class="image post"><img src="../images/vigenere-5/visual.PNG" width="700" alt="" /></div></center><br>
+												<p>
+													&emsp; &emsp; Notice the placement of key characters in both processes (encrypt and decrypt). &nbsp;Since the key has the same starting point
+													in both encryption and decryption, its characters do not change position. &nbsp;Using the alignment principle from earlier, the key can be
+													recovered with relatively high confidence. &nbsp;A number spike means it is very likely the key is correctly aligned with ciphertext characters
+													to accurately decrypt it to plaintext. &nbsp;So how is this principle applied in code?
+													<br>
+													&emsp; &emsp; Knowing the length of the Vigenere key means the hard work is already done. &nbsp;We can split the ciphertext into groups of
+													text equal to the period (key length). &nbsp;So for a period of <i>4</i>, split the ciphertext into <i>4</i> groups of text. &nbsp;Each
+													group corresponds to a character position in the key. &nbsp;Continuing the example (period <i>4</i>), the first group of text represents
+													the first letter of the key. &nbsp;The second group represents the second letter of the key and so on. &nbsp;Below is a microcosmic illustration
+													followed by its Python implementation.
+												</p>
+												<center><div class="image post"><img src="../images/vigenere-5/groups.PNG" width="700" alt="" /></div></center><br>
+
+												<pre>
+													<code class="language-python" style=display:block;white-space:pre-wrap>
+# groups is the list that holds each group of strings.
+groups = []
+
+# String splicing loop
+# value for each character in range, step over the string at an offset 'period'
+for i in range(0, period):
+    groups.append(cipherText[i: len(cipherText): period])
+
+# Print each text group
+print(" ")
+for j in range(0, period):
+    print(groups[j])
+print(" ")
+													</code>
+												</pre>
+
+												<p>
+													&emsp; &emsp; Each text group above is colored by position. &nbsp;Group 1 contains the first, fifth, ninth, and thirteenth characters. &nbsp;Group
+													2 has the same offset starting at the second letter. &nbsp;Groups 3 and 4 repeat the same pattern starting at third and fourth letters respectively.
+													 &nbsp;Once groups of text are allocated, frequency analysis needs to be done on each group. &nbsp;So we need to determine where large number spikes
+													 occur. &nbsp;This happens by superimposing the dictionary of letter counts (<i>letterFrequency</i>) on top of the frequency table of English
+													 letters (englishFrequency). &nbsp;The latter is simply the frequency table above in dictionary form. &nbsp;As illustrated earlier, multiply each
+													 corresponding key-value pair and sum them all up. &nbsp;This needs to be repeated 25 more times after shifting the dictionary by one place. &nbsp;
+													 Because dictionary key-values need to wrap around, the shifted dictionary must be an <i>OrderedDict()</i>. &nbsp;Shifts are also handled by a custom
+													 function outside the scope of <i>frequency_analysis</i>. &nbsp;At the end of each loop, each sum is appended to a comprehensive list which ends
+													 up being 26 numbers long. &nbsp;Below are the functions depicting everything above.
+												</p>
+												<pre>
+													<code class="language-python" style=display:block;white-space:pre-wrap>
+# Custom dictionary shift function
+def shift_dict(dict, shift):
+    shift %= len(dict)
+    return OrderedDict(
+        (k, v)
+        for k, v in zip(dict.keys(), islice(cycle(dict.values()), shift, None))
+    )
+
+# Create frequency analysis function.  Send each group of text through
+# function as input. Returns a list of 26 sums for each letter position in
+# the alphabet. Each letter frequency in the group string is multiplied by the
+# corresponding position of englishFrequency.
+#
+# Example:
+# For unshifted dictionary, suppose it is OrderedDict([('A', 0.0), ('B', 0.0789), ('C', 0.0)])
+# and englishFrequency is static: englishFrequency = {'A': 0.080, 'B': 0.015, 'C': 0.030}
+#
+# then sum = (0.0 * 0.080) + (0.0789 * 0.015) + (0.0 * 0.030)
+#
+# The ordered dictionary is shifted in the next step:
+# OrderedDict([('B', 0.0789), ('C', 0.0), ('A', 0.0)])
+def frequency_analysis(text, totalCharacters):
+    """
+    Count number of times a letter appears in the cipherText. This function returns
+    the most likely shift value for the key at a given index. The shift value
+    corresponds to a letter in character_key
+    """
+    # Initialize frequency count
+    letterCount = {'A': 0, 'B': 0, 'C': 0, 'D': 0, 'E': 0, 'F': 0, 'G': 0, 'H': 0, 'I': 0, 'J': 0, 'K': 0, 'L': 0, 'M': 0, 'N': 0, 'O': 0, 'P': 0, 'Q': 0, 'R': 0, 'S': 0, 'T': 0, 'U': 0, 'V': 0, 'W': 0, 'X': 0, 'Y': 0, 'Z': 0}
+
+    # Static dictionary of English letters by frequency. 'E' is most common. 'Z' is most
+    # uncommon.
+    englishFrequency = {'A': 0.080, 'B': 0.015, 'C': 0.030, 'D': 0.040, 'E': 0.130, 'F': 0.020, 'G': 0.015, 'H': 0.060, 'I': 0.065, 'J': 0.005, 'K': 0.005, 'L': 0.035, 'M': 0.030, 'N': 0.070, 'O': 0.080, 'P': 0.020, 'Q': 0.002, 'R': 0.065, 'S': 0.060, 'T': 0.090, 'U': 0.030, 'V': 0.010, 'W': 0.015, 'X': 0.005, 'Y': 0.020, 'Z': 0.002}
+
+    # Count letters in cipherText group
+    for char in text:
+        letterCount[char.upper()] += 1
+
+    # Find letter frequency from letterCount.  Divide each letter by
+    # total number of letters.  Round to 4 decimal places
+    letterFrequency = OrderedDict()
+    for key, value in letterCount.items():
+        letterFrequency[key] = round((value/totalCharacters), 4)
+
+    # Multiply each letter of letterFrequency by englishFrequency and sum
+    # them all up.  Do this 26 times after shifting each entry of letterFrequency.
+    # Highest sum is the most likely character of the key
+    all_sums = []
+    for number in range(0,26):
+
+        sum = 0
+        for key, value in letterFrequency.items():
+            sum += englishFrequency[key] * value
+
+        # Add to list of sums
+        all_sums.append(sum)
+
+        # Shift letterFrequency dictionary by 1
+        letterFrequency = shift_dict(letterFrequency, 1)
+
+    return all_sums
+													</code>
+												</pre>
+
+												<p>
+													&emsp; &emsp; Now that the main frequency analysis function is developed, a list of the top 3 most likely characters is needed. &nbsp;This is
+													because the highest calculated sum is not always correct; however, the complete answer is typically in the top 3 highest calculated
+													sums. &nbsp;The calculation uses a ratio of letters found to
+													letters in its group; NOT the entire ciphertext. &nbsp;In order to retrieve the highest values, the list of 26 sums from <i>frequency_analysis()</i> needs to be sorted and spliced
+													by <i>[:3]</i>. &nbsp;Since <i>frequency_analysis()</i> takes a character group as input, a small list can be made for each character of the
+													key. &nbsp;After converting the values back to letters, a list of lists is created. &nbsp;The master top 3 list (<i>list_of_top3</i>) is made
+													 out of each small list. &nbsp;Continuing our simple test case, the ciphertext 'SECGLEYWAMNRJUOT...............................' produces the master top 3 list:
+													 <code>[['S', 'H', 'O'], ['T', 'S', 'M'], ['U', 'Y', 'E'], ['N', 'A', 'Y']]</code>. &nbsp;The key is 'STUN' as seen from the first letter of each
+													 small list. &nbsp;Below is the code to create <i>list_of_top3</i>:
+												</p>
+												<pre>
+													<code class="language-python" style=display:block;white-space:pre-wrap>
+# Create an array of lists of the top 3 sums of each key character
+# Example: [[A,B,C], [D,E,F], [G,H,I]] for a key length/period of 3
+#
+# Implement all steps for each key character.  Loop from 0 to period
+list_of_top3 = []
+for num in range(0, period):
+
+    # Retrieve the list of all sums (all_sums)
+    counts = frequency_analysis(groups[num], len(groups[num]))
+
+    # Sort list of sums from highest to lowest
+    sorted_sums = sorted(counts, reverse=True)
+
+    # Take the highest 3 sums from the sorted list
+    first_3 = sorted_sums[:3]
+    top_3 = []
+
+    # Convert top 3 sums from numbers to letters and add to top_3 characters list
+    for item in first_3:
+        top_3.append(character_key[counts.index(item)])
+
+    # Add top_3 characters list to total top 3 list.  This is a list of lists.
+    list_of_top3.append(top_3)
+													</code>
+												</pre>
+												<p>
+													&emsp; &emsp; All that's left is to brute force each key combination by testing plaintext output against the number of English words found. &nbsp;To do this,
+													we open a dictionary text document as a file and compare its words to decryption results. &nbsp;Two arrays are initialized for this process: one to hold each
+													 decrypted string (<i>plaintext_array</i>) and one to hold each string's corresponding English word count (<i>table_of_counts</i>). &nbsp;The winner is the plaintext string corresponding to
+													 the highest English word count. &nbsp;The decryption function is the same from <i>vigenere.py</i>. &nbsp;The function definition is not in this file but imported as a
+													 module. &nbsp;Below is the code to cycle through each decryption attempt. &nbsp;<i>joined_keys</i> is just a pre-formatted list of all
+													 possible key combinations.
+												</p>
+												<pre>
+													<code class="language-python" style=display:block;white-space:pre-wrap>
+# Brute force the ciphertext with each possible key in joined_keys
+# Open dictionary.txt for word search in each decrypted string
+# Initialize table of dictionary word counts (table_of_counts).  The index
+# with the highest count will return its corresponding recovered plaintext
+# indexed in plaintext_array. The plaintext_array will be referenced when
+# printing the solution
+filename = 'doc/dictionary.txt'
+table_of_counts = []
+plaintext_array = []
+
+for attempt in joined_keys:
+
+    with open(filename) as f:
+        english_word_count = 0
+        words = f.read().splitlines()
+
+        # Call decrypt function from vigenere and add it to plaintext_array
+        plain = decrypt(cipherText, attempt)
+        plaintext_array.append(plain)
+
+        # Iterate over each word in dictionary.txt
+        # If the dictionary word is in the string, increment english_word_count
+        for word in words:
+            if plain.count(word) > 0:
+                english_word_count += 1
+
+        # Add total english word count to table when done searching all words
+        table_of_counts.append(english_word_count)
+        f.close()
+													</code>
+												</pre>
+												<p>
+													&emsp; &emsp; The remaining code consists of properly printing the output. &nbsp;This could be simplified by turning
+													the previous code snippet into a function. &nbsp;Basically call the proper index values.
+												</p>
+												<pre>
+													<code class="language-python" style=display:block;white-space:pre-wrap>
+# Show index of max English word count to retrieve proper plaintext
+print(table_of_counts.index(max(table_of_counts)))
+
+# Display recovered plaintext and key used
+print("\n####################################")
+print("\nRecovered Plaintext: " + plaintext_array[table_of_counts.index(max(table_of_counts))])
+print("\nKey used: " + joined_keys[table_of_counts.index(max(table_of_counts))])
+print("\n####################################")
+													</code>
+												</pre>
+
+												<p>
+													&emsp; &emsp;Below are the results of decrypting the full ciphertext with a period <i>4</i>. &nbsp;Most printed output is displayed for
+													troubleshooting purposes and can be omitted. &nbsp;I included wall clock and CPU clock times to assess decryption speed. &nbsp;The recovered plaintext starts with
+													<a href="https://youtu.be/o-I8igPh_aI?t=7869" target="_blank" style="color:blue;">"A little jitterbug!! Jerron Seymour gives Vanderbilt the lead!
+													Look at the defense Tim, STUNNED."</a>
+												</p>
+
+												<center><div class="image post"><img src="../images/vigenere-5/TC2.PNG" width="1200" alt="" /></div></center><br>
+												<p>
+													&emsp; &emsp; Vigenere's cipher is a novel update to the Caesar cipher which makes use of variable length keys instead of static rotation
+													values. &nbsp;Although very weak by modern standards, the encryption scheme is worth investigating in beginner cryptography and computer security courses; especially implementing
+													it in code. &nbsp;The <a href="https://github.com/jpc0016/Vigenere/blob/master/project/cryptanalysis.py" target="_blank" style="color:blue;">full code</a> above and the
+													repository for the entire project can be found <a href="https://github.com/jpc0016/Vigenere/tree/master/project" target="_blank" style="color:blue;">here</a>.
+													 &nbsp;For further reading, the test case document in <code>/doc/Test_Cases.odt</code> includes a test in which the highest calculated values do NOT recover the key; thus validating the need for
+													 calculating top 3 values. &nbsp;Please reach out if you have questions!
+												</p>
+
+                        </div>
+
+                      </article>
+                    </body>
+                  </section>
+
+							</div>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+
+						<section class="split contact">
+
+							<section>
+								<h3>Social</h3>
+								<ul class="icons alt">
+									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net" target="_blank">HTML5 UP</a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
