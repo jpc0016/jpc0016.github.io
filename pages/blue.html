@@ -1,0 +1,261 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<link rel="icon" href="../images/favicon.ico">
+		<title>Blue</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a class="logo">The Defense</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="../index.html">Home</a></li>
+							<li class="active"><a href="../posts.html">Posts</a></li>
+							<li><a href="../research.html">Ideas</a></li>
+							<li><a href="../stories.html">Stories</a></li>
+							<li><a href="../references.html">Links</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+							<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="wrapper">
+
+						<!-- Post -->
+                  <section class="post">
+                    <body>
+                      <article id="first-post">
+												<a href="index.html"><img src="../images/rome.PNG" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; Blue Writeup</h2>
+                        <div class="box">
+                          <p>&emsp; &emsp; Good morning again Tim and Aaron, here is another <a href="https://www.hackthebox.eu/" target="_blank" style="color:blue;">HackTheBox (HTB)</a> writeup on
+														"Blue". &nbsp;I am enjoying these easy systems for now because it will not always be like this. &nbsp;Eventually these machines will require exploit scripting to
+														successfully crack. &nbsp;There were a lot of issues working this machine because it would randomly disconnect. &nbsp;Little did I know this was the least of my
+														 inconveniences involving this box.
+                           </p>
+
+													 <center><div class="image post"><img src="../images/blue/blue.png" alt="" /></div></center><br>
+
+													 <br><h2>Contents</h2>
+													 <a href="#Enumeration" style="color:blue;">Initial Enumeration</a><br>
+													 <a href="#RPC" style="color:blue;">Recon with Microsoft RPC</a><br>
+													 <a href="#SMB" style="color:blue;">Researching SMB</a><br>
+													 <a href="#Selection" style="color:blue;">Making the Selection</a><br>
+													 <a href="#Trouble" style="color:blue;">Trouble Ahead</a><br>
+													 <a href="#Post-Exploitation" style="color:blue;">Post-Exploitation</a><br>
+													 <a href="#Thoughts" style="color:blue;">Thoughts</a><br><br><br>
+
+
+
+								<br><section id="Enumeration"><h2>Initial Enumeration</h2></section>
+													 <p>
+														&emsp; &emsp;After watching TCM's "Lame" machine walkthrough, I executed separate nmap scans in the interest of speed as he mentioned. &nbsp;The first scan picked up all open ports without scanning
+														for OS extras. &nbsp;Once I found open ports, I ran the <code>-A</code> option on those ports: <code>nmap -T4 -A -p 135,139,445,49152,49153,49154,49155,49156,49157 10.10.10.40</code>.
+														 &nbsp;Output is below.
+													 </p>
+													 <center><div class="image post"><img src="../images/blue/1-nmap-initial.png" alt="" /></div></center><br>
+													 <center><div class="image post"><img src="../images/blue/2-nmap-os.png" alt="" /></div></center><br>
+
+													 <p>Once again Server Message Block (SMB) is open along with Microsoft Windows Remote Procedure Call (RPC) on port 135. &nbsp;The second nmap command lists
+														 the six bottom ports as Microsoft Windows RPC as well. &nbsp;OS enumeration returns Windows 7 Professional 6.1 Service Pack 1 (SP1) with high confidence. &nbsp;SMB
+														 further identifies the specific OS version as <i>Professional 7601</i>.
+													 </p>
+
+
+
+
+								<br><section id="RPC"><h2>Recon with Microsoft RPC</h2></section>
+
+												<p>
+													&emsp; &emsp;Since SMB is the most conspicuous vulnerability, I decided to frontload RPC and google <i>microsoft windows rpc exploit windows 7</i>. &nbsp;The results
+													already look promising with multiple results from <i>rapid7</i> and <i>exploit-db</i>. &nbsp;There is even an EternalBlue blog post which could be useful later.
+												</p>
+												<center><div class="image post"><img src="../images/blue/3-rpc-vulns.png" alt="" /></div></center><br>
+
+												<p>
+													Opening the first <i>rapid7</i> result shows an RPC Console Command Execution module that is valid for Windows 7 SP1. &nbsp;So far so good assuming SP1 holds true from
+													the scan!
+												</p>
+												<center><div class="image post"><img src="../images/blue/4-rpc-sp1.png" alt="" /></div></center>
+
+												<center><div class="image post"><img src="../images/blue/5-rpc-usage.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="SMB"><h2>Researching SMB</h2></section>
+
+												<p>
+													&emsp; &emsp;From the previous google search, I pulled up a page on <a href="https://null-byte.wonderhowto.com/how-to/exploit-eternalblue-windows-server-with-metasploit-0195413/" target="_blank" style="color:blue;">EternalBlue</a>
+													 which exploits a weakness in SMB. &nbsp;The article points to Microsoft's <a href="https://docs.microsoft.com/en-us/security-updates/securitybulletins/2017/MS17-010" target="_blank" style="color:blue;">MS17-010</a>
+													 message on SMB security updates. &nbsp;Which OS has a critical Remote Code Execution (RCE) vulnerability? &nbsp;Both 32 and 64-bit versions of Windows 7 SP1!
+												</p>
+												<center><div class="image post"><img src="../images/blue/6-ms17-101.png" alt="" /></div></center><br>
+												<p>
+													Following the article, I move into searching for EternalBlue modules with <i>searchsploit</i>. &nbsp;Three results appeared below and were noted for later use.
+													 &nbsp;This is not counting a few more from Metasploit (see EternalBlue link above).
+												</p>
+												<center><div class="image post"><img src="../images/blue/7-searchsploit-ms17.png" alt="" /></div></center><br>
+
+												<p>
+													I pivoted to a dedicated google search for SMB instead of pulling pages from the RPC search. &nbsp;Googling <i>windows 7 sp1 smb exploit -metasploit</i>, I was able to pull a
+													manual exploit script from <a href="https://github.com/worawit/MS17-010/blob/master/zzz_exploit.py" target="_blank" style="color:blue;">Github</a>. &nbsp;Scrolling the
+													script, the script is confirmed to work on the target OS and service pack!
+												</p>
+												<center><div class="image post"><img src="../images/blue/8-manual-sploit.png" alt="" /></div></center><br>
+
+												<p>
+													Before launching exploits, I used <i>smbclient</i> to fingerprint share names. &nbsp;I also attempted anonymous login on a few share names just as
+													TCM tried in his lessons. &nbsp;There was no luck in login attempts but I retrieved share names.
+												</p>
+												<center><div class="image post"><img src="../images/blue/9-smbclient.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Selection"><h2>Making the Selection</h2></section>
+
+												<p>
+													&emsp; &emsp;SMB is the first choice since I pulled a manual exploit repository from Github; however, the repository is written in Python v2 and full of
+													bugs. &nbsp;Upon further inspection, it appears the user must write their own shellcode for injection by the script(s). &nbsp;Trying an <i>.asm</i> file
+													returns the below error.
+												</p>
+												<center><div class="image post"><img src="../images/blue/10-manual-try.png" alt="" /></div></center><br>
+
+												<p>
+													That was short lived. &nbsp;I currently do not have shellcode writing capabilities so it's time to use Metasploit modules. &nbsp;Due to this setback, I
+													checked the presence of the vulnerability with the nmap scripting engine. &nbsp;Results come back positive!
+												</p>
+												<center><div class="image post"><img src="../images/blue/11-nmap-script.png" alt="" /></div></center><br>
+
+												<p>
+													Using the EternalBlue reference, I loaded Metasploit and searched <i>eternalblue</i>. &nbsp;I loaded option 2: Remote Windows Kernel Pool Corruption.
+												</p>
+												<center><div class="image post"><img src="../images/blue/12-load-eternalblue.png" alt="" /></div></center><br>
+
+												<p>
+													Set RHOSTS to the target IP address and confirm options. &nbsp;According to the reference, this exploit requires a payload to return a reverse
+													shell. &nbsp;We can use a simple TCP reverse shell module that returns a Meterpreter instance. &nbsp;Set LHOST to your tunnel IP (<i>tun0</i> in your <i>ifconfig</i>).
+												</p>
+												<center><div class="image post"><img src="../images/blue/13-payload-options.png" alt="" /></div></center><br>
+
+												<p>
+													At this point, Metasploit fails to return a reverse shell from the target. &nbsp;After consultation from the discord channel, it is common for msf EternalBlue
+													exploits to fail multiple times before working.
+												</p>
+												<center><div class="image post"><img src="../images/blue/14-eternalblue-fail.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Trouble"><h2>Trouble Ahead</h2></section>
+
+												<p>
+													&emsp; &emsp;After further consultation with the discord, it is also common for machines to be clearly vulnerable to an exploit and not respond to the given exploit. &nbsp;In
+													this case Blue is unresponsive to EternalBlue payloads. &nbsp;I noticed the end of fail messages would state "Exploit completed, but no session was
+													created". &nbsp;Perhaps the exploit worked but something was added to it?
+												</p>
+												<center><div class="image post"><img src="../images/blue/14-fail-message.png" alt="" /></div></center><br>
+
+												<p>
+												 Another attempt without the payload yielded the same result. &nbsp;There is one alternative to EternalBlue from the earlier reference. &nbsp;The fourth option when
+												 searching for EternalBlue is <code>windows/smb/ms17_010_psexec</code>, which derives from the same <i>ms17_010</i> security flaw. &nbsp;I loaded it and set appropriate options below.
+												</p>
+												<center><div class="image post"><img src="../images/blue/15-try-eternalromance.png" alt="" /></div></center><br>
+
+												<p>
+													I decided to run without a payload to test the connection. &nbsp;It turns out a payload was not needed as the psexec exploit returned root access on its first try!! &nbsp;  ᕦ(  ͡° ͜ʖ ͡°) ᕤ
+												</p>
+												<center><div class="image post"><img src="../images/blue/16-root-access.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/blue/16-root-confirm.png" alt="" /></div></center><br>
+
+
+
+
+								<br><section id="Post-Exploitation"><h2>Post-Exploitation</h2></section>
+
+												<p>
+													&emsp; &emsp;Once root access is granted with the meterpreter shell, navigate to the last place <i>root.txt</i> was found (back in <i>Legacy</i>). &nbsp;Surprise surprise,
+													the text file is in <i>C:\Users\Administrator\Desktop</i>! &nbsp;Cat the file and submit the root flag to HTB!
+												</p><br>
+												<center><div class="image post"><img src="../images/blue/17-root-flag.png" alt="" /></div></center><br>
+
+												<p>
+													Since I forgot to grab the user flag back in <i>Legacy</i>, return to <i>C:\Users</i> and find a user named <i>haris</i>. &nbsp;Search for their
+													<i>Desktop</i> folder and dump the contents of <i>user.txt</i> for a comprehensive pwn!
+												</p><br>
+												<center><div class="image post"><img src="../images/blue/18-user.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/blue/19-user-flag.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Thoughts"><h2>Thoughts</h2></section>
+												<p>
+													&emsp; &emsp;For an easy machine, <i>Blue</i> was a nightmare due to its configuration. &nbsp;The machine was confirmed vulnerable to MS17_010 by multiple sources and tools,
+													but was not returning a shell. &nbsp;Additionally HTB was having issues sustaining connections at times causing random disconnections. &nbsp;It was very strange that
+													guaranteed methods were not working. &nbsp;I give this machine a 1/10 in difficulty since the first MS17_010 exploit was expected to work. &nbsp;The fact it was expected
+													to fail numerous times before working significantly reduces the difficulty. &nbsp;Hopefully this is the only fickle machine [for now]!
+
+												</p><br>
+
+
+
+                        </div>
+
+                      </article>
+                    </body>
+                  </section>
+
+							</div>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+
+						<section class="split contact">
+
+							<section>
+								<h3>Social</h3>
+								<ul class="icons alt">
+									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net" target="_blank">HTML5 UP</a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
