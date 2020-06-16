@@ -1,0 +1,293 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<link rel="icon" href="../images/favicon.ico">
+		<title>Jerry</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a class="logo">The Defense</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="../index.html">Home</a></li>
+							<li class="active"><a href="../posts.html">Posts</a></li>
+							<li><a href="../research.html">Research</a></li>
+							<li><a href="../stories.html">Stories</a></li>
+							<li><a href="../references.html">Links</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+							<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="wrapper">
+
+						<!-- Post -->
+                  <section class="post">
+                    <body>
+                      <article id="first-post">
+												<a href="index.html"><img src="../images/ground.png" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; Jerry Writeup</h2>
+                        <div class="box">
+                          <p>&emsp; &emsp; Good evening, here is another writeup on an easy HTB machine named "Jerry". &nbsp;This machine has many 1/10 and 2/10 ratings
+														so it was a piece of cake. &nbsp;This took no time at all to root with the vast majority of time used for determining best exploitation vector. &nbsp;A significant
+														amount of time was also spent determining how to best remediate these vulnerabilities because I admittedly jumped down a rabbit hole! &nbsp;After working
+														Devel last time, I was legitimately stunned how easy this machine was.
+                           </p>
+
+													 <center><div class="image post"><img src="../images/jerry/jerry.png" alt="" /></div></center><br>
+
+													 <br><h2>Contents</h2>
+													 <a href="#Enumeration" style="color:blue;">Initial Enumeration</a><br>
+													 <a href="#Apache" style="color:blue;">Apache Tomcat</a><br>
+													 <a href="#More" style="color:blue;">More Enumeration</a><br>
+													 <a href="#Backdoor" style="color:blue;">Backdoor Attempt</a><br>
+													 <a href="#Post-Exploitation" style="color:blue;">Post-Exploitation</a><br>
+													 <a href="#Remediation" style="color:blue;">Remediation</a><br>
+													 <a href="#Thoughts" style="color:blue;">Thoughts</a><br><br><br>
+
+
+
+								<br><section id="Enumeration"><h2>Initial Enumeration</h2></section>
+													 <p>
+														 &emsp; &emsp;As usual, step one is to launch my initial and OS nmap scans on the target IP. &nbsp;The latter scan lists software versions for the services and
+														 OS fingerprinting information. &nbsp;Windows Server 12 is the most likely guess with Windows Server 2008 Release 2 (R2) also having high confidence. &nbsp;The
+														 below results show port 8080 open. &nbsp;Already we see leaked header information in the OS scan. &nbsp;The remote server runs on Apache Tomcat 7,
+														 specifically v7.0.88.
+													 </p>
+													 <center><div class="image post"><img src="../images/jerry/1-nmap-initial.png" alt="" /></div></center><br>
+													 <center><div class="image post"><img src="../images/jerry/2-nmap-OS.png" alt="" /></div></center><br>
+
+
+
+
+								<br><section id="Apache"><h2>Apache Tomcat</h2></section>
+
+												<p>
+													&emsp; &emsp;Since port 8080 was open, I decided to test this port on a web browser and navigated to <i>https://10.10.10.95:8080/</i> in Firefox. &nbsp;The
+													result was an Apache Tomcat default webpage. &nbsp;This is good news since default web pages indicate lazy configuration. &nbsp;What else is unsanitized?
+													 &nbsp;I also ran <i>whatweb</i> to confirm everything from nmap. &nbsp;Below are the findings.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/3-apache-homepage.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/jerry/4-whatweb.png" alt="" /></div></center><br>
+
+												<p>
+												<i>Dirbuster</i> helped reveal directories and provide a start. &nbsp;I ran it on the host with a medium length wordlist while searching for <i>html</i>, <i>php</i>,
+												and <i>txt</i> extensions, which took some time. &nbsp;If the program pauses after 20 consecutive errors, just resume it.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/5-dirbuster.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/jerry/6-results.png" alt="" /></div></center><br>
+
+												<p>
+												A <i>nikto</i> scan revealed default credentials left open for the management page: <i>http://10.10.10.95:8080/manager/html</i>.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/7-default-creds.png" alt="" /></div></center><br>
+
+												<p>
+												Enter credentials and gain access to the management page to reveal more information. &nbsp;Jerry's architecture is amd64 and JVM version is <i>1.8.0_171-b11</i>
+												in case we need to know that later. &nbsp;The management page also confirmed nmap's OS prediction: <i>Windows Server 2012 R2</i>.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/8-tomcat-manager.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/jerry/9-more-info.png" alt="" /></div></center><br>
+
+
+
+
+								<br><section id="More"><h2>More Enumeration</h2></section>
+
+												<p>
+													&emsp; &emsp;After gaining further understanding of the system, I researched vulnerabilities for <i>Apache Tomcat v7.0.88</i>. &nbsp;Google returned a few CVEs and
+													even a Metasploit <a href="https://www.rapid7.com/db/modules/exploit/windows/http/tomcat_cgi_cmdlineargs" target="_blank" style="color:blue;">module</a>. &nbsp;On the
+													Tomcat management page, I noticed an interesting section for uploading WAR files. &nbsp;After some investigation, it appears Tomcat v7.0.88 is vulnerable to a JSP
+													backdoor when using this upload interface.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/10-war-upload.png" alt="" /></div></center><br>
+
+												<p>
+												Very interesting! &nbsp;With this information in mind, I pivot to searching for "WAR backdoor" on google. &nbsp;I am taken to several results; one of which is a manual
+												tool for uploading WAR payloads.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/11-backdoor-search.png" alt="" /></div></center><br>
+
+												<p> <!-- Using what CVE and why?????-->
+												<a href="https://github.com/mgeeky/tomcatWarDeployer" target="_blank" style="color:blue;">This tool</a> appears to fit the use case of uploading a JSP backdoor to the
+												Apache Tomcat target. &nbsp;However instead of using the server's GUI interface, I used this tool to upload the payload via remote connection. &nbsp;Notice the <i>
+												valid HTTP Authentication credentials</i> "requirement" in the description. &nbsp;This is where <i>nikto</i> scan results come in handy.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/11-wardeployer.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Backdoor"><h2>Backdoor Attempt</h2></section>
+
+												<p>
+													&emsp; &emsp;Pull down the repository with <code>git clone https://github.com/mgeeky/tomcatWarDeployer</code> and find <i>tomcatWarDeployer.py </i> in the folder's root
+													directory. &nbsp;You may need to add execution permissions with <code>chmod 777 [script]</code> but you definitely need Python v2 or to change the shebang line to
+													python3. &nbsp;Thankfully I have both Python distributions! &nbsp;Type out the command below using the <i>nikto</i> credentials and the usual listening port 4444.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/12-start-command.png" alt="" /></div></center><br>
+
+												<p>
+													The tool generates debugger output while writing the JSP payload to <i>/tmp/</i>. &nbsp;Once complete, the payload is uploaded to the server's manager location: <i>
+													http://10.10.10.95:8080/manager</i>, then invoked by the script to deliver a reverse shell to port 4444.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/13-payload-location.png" alt="" /></div></center><br>
+
+												<p>
+													If everything is done correctly, a line should appear indicating the WAR file was deployed to the server. &nbsp;There should also be INFO lines showing the JSP backdoor is
+													running along with a web shell password to log back in later.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/13-success-text.png" alt="" /></div></center><br>
+
+												<p>
+													Run <i>whoami</i> to check. &nbsp;Success!
+												</p>
+												<center><div class="image post"><img src="../images/jerry/14-whoami-system.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Post-Exploitation"><h2>Post-Exploitation</h2></section>
+
+												<p>
+													&emsp; &emsp;With system permissions, navigate to the <i>Desktop</i> folder as done in previous machines. &nbsp;A file named <i>"2 for the price of 1.txt"</i>
+													appears since there are no user accounts; only <i>Administrator</i> and <i>Public</i>.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/15-navigation.png" alt="" /></div></center>
+
+												<p>
+													 Dump its contents using the <i>type</i> command. &nbsp;Enter both flags into HTB for the pwn.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/16-flags.png" alt="" /></div></center>
+
+
+
+								<br><section id="Remediation"><h2>Remediation</h2></section>
+
+												<p>
+												&emsp; &emsp;Circling back to what made this system appear glaringly vulnerable, the default Apache Tomcat page should be changed. &nbsp;I google image searched
+												<i>"apache tomcat default page"</i> and received the same page as the one pulled from <i>https://10.10.10.95:8080</i>. &nbsp;As TCM said in his walkthroughs, default
+												webpages are lazy practice and indicate lazy configuration. &nbsp;If you're unwilling to properly configure systems, what else are you not doing right that I can
+												exploit? <br>
+												&emsp; &emsp;The second fix is to restrict information disclosure over port 8080. &nbsp;The nmap scan at the beginning revealed software and version running on the
+												server. &nbsp;This can be mitigated by configuring the apache file (typically <i>/etc/apache2/apache2.conf</i> or <i>/etc/apache2/httpd.conf</i>.) not to disclose
+												version information (<a href="https://www.acunetix.com/blog/articles/configure-web-server-disclose-identity/" target="_blank" style="color:blue;">source</a>);
+												specifically, change the value of <i>ServerTokens</i> to <i>Prod</i> to only provide product names in response headers. &nbsp;On Kali Linux, this is located at
+												<i>/etc/apache2/conf-available/security.conf</i> at line 25.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/17-security-conf.png" alt="" /></div></center><br>
+
+												<p>
+												&emsp; &emsp;As for fixing the main vulnerability, the obvious solution is to upgrade Apache Tomcat from 7.0.88 to the latest version; which is 7.0.104 at the time of
+												this writing. &nbsp;What the update solves is more interesting to us. &nbsp;It turns out a double-decoding weakness is present in default configurations of
+												Apache Tomcat. &nbsp;This is because Tomcat is running through Apache via proxy, which is why port 8080 is open instead of port 80
+												(<a href="https://pentesterlab.com/exercises/cve-2007-1860/course" target="_blank" style="color:blue;">source</a>). &nbsp;An example of the configuration is
+												depicted below.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/19-proxy.png" alt="" /></div></center><br>
+
+												<p>
+													The actual <a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2007-1860" target="_blank" style="color:blue;">vulnerability (CVE-2007-1860)</a> is present in Apache
+													HTTP's <i>libapache-mod-jk</i>
+													package, which decodes requested URLs before passing them to Tomcat. &nbsp;By decoding URL requests first, the server fails to validate input and allows attackers to craft
+													specific URLs to access private pages. &nbsp;In the case of our manual exploit, <i>tomcatWarDeployer</i> uses double-decoding to send a JSP payload to <i>/manager/html/</i> and invoke
+													it. &nbsp;Solving this requires forwarding the original [non-decoded] URL request to Tomcat to decode only once. &nbsp;The Apache <a href="https://tomcat.apache.org/connectors-doc/webserver_howto/apache.html" target="_blank" style="color:blue;">homepage</a>
+													 reveals several JkOptions for handling URLs. &nbsp;This documentation along with the <a href="https://tomcat.apache.org/connectors-doc/miscellaneous/changelog.html" target="_blank" style="color:blue;">change-log</a>
+													 states <i>ForwardURICompatUnparsed</i> is sufficient to prevent double-decode path traversal attacks.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/20-forward-opt.png" alt="" /></div></center><br>
+
+												<p>
+													To inspect this manually, download the <i>libapache2-mod-jk</i> package on Kali unless you already have it on another Linux distribution.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/21-get-libapachemod.png" alt="" /></div></center><br>
+
+												<p>
+													Navigate to <i>/etc/apache2/mods-enabled/</i> to confirm <i>jk.conf</i> was downloaded with the package.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/22-jk-location.png" alt="" /></div></center><br>
+
+												<p>
+													Open the file and find <i>JkOptions</i> on line 44 set to <i>RejectUnsafeURI</i>. &nbsp;This is a stronger and more recent option to use than <i>ForwardURICompatUnparsed</i> so ensure
+													it is changed from <i>ForwardURICompat</i>.
+												</p>
+												<center><div class="image post"><img src="../images/jerry/21-get-libapachemod.png" alt="" /></div></center><br>
+
+												<p>
+												&emsp; &emsp;Finally, password management on the server is atrocious. &nbsp;Nikto was able to uncover
+												<a href="https://github.com/netbiosX/Default-Credentials/blob/master/Apache-Tomcat-Default-Passwords.mdown" target="_blank" style="color:blue;">default credentials</a> in a single scan. &nbsp;Stronger passwords
+												are required along with assurance that they will never be sent in cleartext.
+												</p>
+
+
+
+								<br><section id="Thoughts"><h2>Thoughts</h2></section>
+												<p>
+													&emsp; &emsp;<i>Jerry</i> is a straightforward machine that is easily exploitable with custom tools. &nbsp;For some reason the Metasploit payload for CVE-2019-0232 did not work
+													so I resorted to more manual workarounds. &nbsp;This was likely due to <i>enableCmdLineArguments</i> not being enabled on the Windows server. &nbsp;Additionally this is the
+													first writeup with a vulnerability mitigation section which required significantly more research and sanity checks. &nbsp;Overall I rate this box a 1/10 difficulty due to how
+													quickly a manual method can be retrieved.
+												</p><br>
+
+
+
+                        </div>
+
+                      </article>
+                    </body>
+                  </section>
+
+							</div>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+
+						<section class="split contact">
+
+							<section>
+								<h3>Social</h3>
+								<ul class="icons alt">
+									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net" target="_blank">HTML5 UP</a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
