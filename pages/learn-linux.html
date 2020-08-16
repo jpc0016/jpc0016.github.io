@@ -43,7 +43,7 @@
                   <section class="post">
                     <body>
                       <article id="first-post">
-												<a href="index.html"><img src="../images/rome.PNG" class="avatar" alt="avatar"> </img></a>
+												<a href="index.html"><img src="../images/ms-st.PNG" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Learn Linux Writeup</h2>
                         <div class="box">
                           <p>&emsp; &emsp; Good afternoon Tim, this is my first writeup in a series of <a href="https://tryhackme.com/" target="_blank" style="color:blue;">TryHackMe (THM)</a>
@@ -101,24 +101,27 @@
 												<center><div class="image post"><img src="../images/learn-linux/4-sudo-perms.png" alt="" /></div></center><br>
 
 												<p>
-													A list of 120 Metasploit modules are returned. &nbsp;Referring to the rapid7 page from earlier, we are looking for a module with <i>ms08_067_netapi</i> in
-													its name, which is the 97th result. &nbsp;Load it with the command <code>use 97</code> or <code>use exploit/windows/smb/ms08_067_netapi</code>; either will
-													work. &nbsp;If you ever need to unset a module, type <code>back</code>.
+													With sudo in mind, I returned to <i>nootnoot</i>'s home folder and confirmed write permissions with <i>ll</i>. &nbsp;I tried to edit
+													the file <i>ll</i> with <i>nano</i> but overlooked that it only has write permissions for <i>root</i>; however, the home folder ('./' in this screenshot) has
+													write and execute permissions!
 												</p><br>
 												<center><div class="image post"><img src="../images/learn-linux/5-nano-ll-try.png" alt="" /></div></center><br>
 
 												<p>
-													Open module options with <code>options</code> to see if parameters need to be added. &nbsp;Sure enough, it requires the target IP address.
+													Start a new script with <i>nano</i>. &nbsp;I called mine <i>"s"</i> because I'm lazy. &nbsp;Write <i>shebang</i> in the first line
+													to avoid typing <i>.sh</i> every time (see Task 38). &nbsp;Write a simple echo statement to ensure the script runs properly. &nbsp;And finally
+													initiate <i>/bin/bash -i</i> to run a bash shell in interactive mode. &nbsp;Exit <i>nano</i> and save.
 												</p>
-												<center><div class="image post"><img src="../images/learn-linux/options.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/learn-linux/6-nano-s.png" alt="" /></div></center><br>
 
 												<p>
-													Set the target with <code>set RHOSTS 10.10.10.4</code> and confirm the result.
+													List files again to see <i>"s"</i> in the home directory. &nbsp;It is not executable so those permissions must be added with
+													<i>chmod +x s</i>.  List files once again to find <i>"s"</i> in bold font. &nbsp;The exploit is ready to go!
 												</p><br>
-												<center><div class="image post"><img src="../images/learn-linux/set.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/learn-linux/7-alter-s.png" alt="" /></div></center><br>
 
 												<p>
-													Once complete run the binary to activate <i>/bin/bash</i> in interactive mode! &nbsp;Notice the username change.
+													Run the binary with sudo to activate our interactive shell with elevated privileges! &nbsp;Notice the username change.
 												</p><br>
 												<center><div class="image post"><img src="../images/learn-linux/8-get-shell.png" alt="" /></div></center><br>
 
@@ -127,8 +130,8 @@
 								<br><section id="Post-Exploitation"><h2>Post-Exploitation</h2></section>
 
 												<p>
-												&emsp; &emsp;Once root access is achieved, we need to find a flag. &nbsp;Start searching for interesting files and directories. &nbsp;Since <i>Legacy</i>
-												is a Windows system, <i>cmd</i> commands are used to navigate the file system. &nbsp;Type <i>dir</i> to view the contents and gain some situational awareness.
+												&emsp; &emsp;Once we see the username changed, navigate to the root folder to find <i>root.txt</i>. &nbsp;Dump its contents with
+												cat and copy the flag to THM. &nbsp;Success!!!  \o/
 											</p><br>
 												<center><div class="image post"><img src="../images/learn-linux/9-root-flag.png" alt="" /></div></center><br>
 												<br>
@@ -137,12 +140,12 @@
 
 								<br><section id="Thoughts"><h2>Thoughts</h2></section>
 												<p>
-													&emsp; &emsp;Although an easy room, the <i>Learn Linux</i> challenge threw me off and I admittedly underestimated it when starting. &nbsp;This challenge took me longer than
+													&emsp; &emsp;Although an easy room, the <i>Learn Linux</i> challenge threw me off and I admittedly underestimated it when starting. &nbsp;This challenge took longer than
 													I'm embarrased to admit, which was a little over an hour. &nbsp;The main timesink was not having the initial piece for user compromise. &nbsp;I knew exaclty
 													which method to use for root privilege escalation, but reaching the necessary user took some time. &nbsp;This was caused by insufficient enumeration early
 													 on. &nbsp;Therefore, it is <b>imperative</b> that proper enumeration is done early on to avoid time sinks. &nbsp;Everyone in the OSCP community repeats "enumerate,
 													 enumerate, enumerate" all the time and this is why. &nbsp;Overall I rate this difficulty a 2/10 only because of prior experience in my escalation method.
-													  &nbsp;A newer person may require a nudge on the final portion but good enumeration is something everyone at all levels benefit from.
+													  &nbsp;A newer person may require a nudge on the final portion but good enumeration is something everyone at all levels benefits from.
 												</p><br>
 												<!--<center><div class="image post"><img src="../images/learn-linux/submit.png" alt="" /></div></center><br>-->
 
