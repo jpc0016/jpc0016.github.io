@@ -1,0 +1,215 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<link rel="icon" href="../images/favicon.ico">
+		<title>Learn Linux</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a class="logo">The Defense</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="../index.html">Home</a></li>
+							<li class="active"><a href="../posts.html">Posts</a></li>
+							<li><a href="../research.html">Research</a></li>
+							<li><a href="../stories.html">Stories</a></li>
+							<li><a href="../references.html">Links</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+							<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="wrapper">
+
+						<!-- Post -->
+                  <section class="post">
+                    <body>
+                      <article id="first-post">
+												<a href="index.html"><img src="../images/rome.PNG" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; Learn Linux Writeup</h2>
+                        <div class="box">
+                          <p>&emsp; &emsp; Good afternoon Tim, this is my first writeup in a series of <a href="https://tryhackme.com/" target="_blank" style="color:blue;">TryHackMe (THM)</a>
+														rooms. &nbsp;This writeup is on an easy room called <i>Learn Linux</i>. &nbsp;Since the first 42 tasks are accomplished by following
+														simple directions, this writeup only focuses on the bonus task. &nbsp;The bonus task is a Capture The Flag (CTF) challenge to find a
+														<i>root.txt</i> document with the flag. &nbsp;Everything needed to escalate privileges is covered in the 42 earlier tasks.
+                           </p>
+
+													 <br><h2>Contents</h2>
+
+													 <a href="#Enumeration" style="color:blue;">Enumeration</a><br>
+													 <a href="#Exploitation" style="color:blue;">Exploitation</a><br>
+													 <a href="#Post-Exploitation" style="color:blue;">Post-Exploitation</a><br>
+													 <a href="#Thoughts" style="color:blue;">Thoughts</a><br><br><br>
+
+
+											<br><section id="Enumeration"><h2>Enumeration</h2></section>
+													 <p>
+														&emsp; &emsp;All 42 tasks are completed on the current machine so a significant amount of enumeration can be done if you pay attention.
+														 &nbsp;There are 5 normal users (shiba1, shiba2, shiba3, shiba4, nootnoot) and an admin user (root). &nbsp;Each account has varying
+														 read/write permissions on different files. &nbsp;While navigating around each users' home folder, I noticed a file named <i>ll</i> in
+														 <i>/home/nootnoot</i>. &nbsp;I ran the <i>ll</i> command to find hidden files with <i>.sudo_as_admin_successful</i> listed. &nbsp;This
+														 means user <i>nootnoot</i> has sudo permissions. &nbsp;If only there was some way to log in as <i>nootnoot</i>...
+														 <br>
+														 &emsp; &emsp;During my enumeration, I found a lead on a file <i>/var/log/test1234</i> in task 32.
+													 </p>
+													 <center><div class="image post"><img src="../images/learn-linux/0-lead-32.png" alt="" /></div></center><br>
+
+													 <p>Ports 139 and 445 have open services. &nbsp;Open source research can be done on both ports for vulnerabilities. &nbsp;Using TCM's methodology, I look for interesting
+														 pages from exploit-db or rapid7. &nbsp;OS detection is particularly important in this case because as the machine title infers, this is an old system no longer
+														 supported. &nbsp;That means unpatched vulnerabilities. &nbsp;Nmap scan results show <i>Legacy</i> is running Windows XP with Service Pack 2 or 3 (SP2/SP3). &nbsp;Googling for
+														 port 445 yields "SMB over IP" in the first result.
+													 </p>
+													 <center><div class="image post"><img src="../images/legacy/445.png" alt="" /></div></center><br>
+
+													 <p>
+														Server Message Block (SMB) is a network file sharing protocol that is very vulnerable. &nbsp;Contents in the first result above even say so in
+													the first paragraph!
+													</p>
+													<center><div class="image post"><img src="../images/legacy/smb.png" alt="" /></div></center><br>
+
+													<p>The CVE <a href="https://www.cvedetails.com/vulnerability-list.php?vendor_id=26&product_id=739&version_id=&page=1&hasexp=0&opdos=0&opec=0&opov=0&opcsrf=0&opgpriv=0&opsqli=0&opxss=0&opdirt=0&opmemc=0&ophttprs=0&opbyp=0&opfileinc=0&opginf=0&cvssscoremin=9&cvssscoremax=0&year=0&month=0&cweid=0&order=1&trc=239&sha=47f525e9d45918cf8c2b12de9ba4a618a21a0a55" target="_blank" style="color:blue;">list</a>
+													 also contains general Windows XP vulnerabilities; about 5 pages worth of vulnerabilities with CVSS scores above 9. &nbsp;Because they are vulnerabilities
+														by OS, you still need to search for ports and services.<br>
+														&emsp; &emsp;Not much is found from searching NetBIOS vulnerabilities over port 139. &nbsp;Every search I made brought up the SMB vulnerability! &nbsp;It appears
+													SMB is the route we take! &nbsp;Google searching "windows xp sp2 exploit 445" brings me to an interesting rapid7
+													<a href="https://www.rapid7.com/db/modules/exploit/windows/smb/ms08_067_netapi" target="_blank" style="color:blue;">result</a>. &nbsp;It even comes with
+													Metasploit instructions! &nbsp;Googling "windows xp microsoft-ds exploit" provides useful results as well. &nbsp;A few
+													<a href="https://www.exploit-db.com/exploits/40279" target="_blank" style="color:blue;">exploit-db</a> pages can be found here.
+												 </p>
+												 <center><div class="image post"><img src="../images/legacy/db-results.png" alt="" /></div></center><br>
+
+
+
+
+										<br><section id="Exploitation"><h2>Exploitation</h2></section>
+
+												<p>
+													&emsp; &emsp;Moving into exploitation, Metasploit is the path of least resistance. &nbsp;Fire it up with <code>msfconsole</code> and
+													 search for smb with <code>search smb</code>.
+												</p>
+												<center><div class="image post"><img src="../images/legacy/msfstart.png" alt="" /></div></center><br>
+
+												<p>
+													A list of 120 Metasploit modules are returned. &nbsp;Referring to the rapid7 page from earlier, we are looking for a module with <i>ms08_067_netapi</i> in
+													its name, which is the 97th result. &nbsp;Load it with the command <code>use 97</code> or <code>use exploit/windows/smb/ms08_067_netapi</code>; either will
+													work. &nbsp;If you ever need to unset a module, type <code>back</code>.
+												</p><br>
+												<center><div class="image post"><img src="../images/legacy/module.png" alt="" /></div></center><br>
+
+												<p>
+													Open module options with <code>options</code> to see if parameters need to be added. &nbsp;Sure enough, it requires the target IP address.
+												</p>
+												<center><div class="image post"><img src="../images/legacy/options.png" alt="" /></div></center><br>
+
+												<p>
+													Set the target with <code>set RHOSTS 10.10.10.4</code> and confirm the result.
+												</p><br>
+												<center><div class="image post"><img src="../images/legacy/set.png" alt="" /></div></center><br>
+
+												<p>
+													It's exploit time! &nbsp;Enter <code>run</code> or <code>exploit</code> to launch the module! &nbsp;It takes a second but eventually a meterpreter shell appears in the terminal. &nbsp;Hit Enter if you don't see it right away. &nbsp;Confirm the exploit
+													worked by typing <code>pwd</code> or <code>getuid</code> for the username.
+												</p><br>
+												<center><div class="image post"><img src="../images/legacy/run.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Post-Exploitation"><h2>Post-Exploitation</h2></section>
+
+												<p>
+												&emsp; &emsp;Once root access is achieved, we need to find a flag. &nbsp;Start searching for interesting files and directories. &nbsp;Since <i>Legacy</i>
+												is a Windows system, <i>cmd</i> commands are used to navigate the file system. &nbsp;Type <i>dir</i> to view the contents and gain some situational awareness.
+											</p><br>
+												<center><div class="image post"><img src="../images/legacy/system-dir.png" alt="" /></div></center><br>
+
+												<p>
+													A bunch of junk files and directories appear. &nbsp;No flag value is in this folder. &nbsp;I spent a considerable amount of time navigating the file system to
+													find a folder titled <i>Documents and Settings</i>, which holds an <i>Administrator</i> folder. &nbsp;This looks promising!
+												</p><br>
+												<center><div class="image post"><img src="../images/legacy/admin.png" alt="" /></div></center><br>
+
+												<p>
+													Navigating deeper in the Administrator folder, there is a familiar folder layout of <i>Cookies</i>, <i>Desktop</i>, <i>My Documents</i>, etc. &nbsp;Check the
+													Desktop first for conspicuous files. &nbsp;<i>root.txt</i> is the only file in Desktop. &nbsp;Dump its contents to get the flag!  \o/ <br>
+													Submit the flag to HTB and <b>DO NOT FORGET TO RATE THE DIFFICULTY.</b>
+												</p><br>
+												<center><div class="image post"><img src="../images/legacy/flag.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Thoughts"><h2>Thoughts</h2></section>
+												<p>
+													&emsp; &emsp;Being my first writeup, this was definitely not done for time. &nbsp;The intent was to publish a correct writeup and focus on methodology learned
+													from PEH. &nbsp;I believe a crawl, walk, run approach is most beneficial. &nbsp;In the interest of time, taking screenshots throughout the process is
+													something I will remember in the next writeup. &nbsp;Overall I rate this difficulty a 1/10. &nbsp;Exploitation was not sophisticated as
+													Metasploit already carried the netapi module and it appeared in every Google search. &nbsp;The next machine is <i>Lame</i>, which is also low difficulty.
+												</p><br>
+												<!--<center><div class="image post"><img src="../images/legacy/submit.png" alt="" /></div></center><br>-->
+
+
+
+
+
+
+                        </div>
+
+                      </article>
+                    </body>
+                  </section>
+
+							</div>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+
+						<section class="split contact">
+
+							<section>
+								<h3>Social</h3>
+								<ul class="icons alt">
+									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net" target="_blank">HTML5 UP</a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
