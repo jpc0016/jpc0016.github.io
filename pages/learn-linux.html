@@ -46,7 +46,9 @@
 												<a href="index.html"><img src="../images/ms-st.PNG" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Learn Linux Writeup</h2>
                         <div class="box">
-                          <p>&emsp; &emsp; Good afternoon Tim, this is my first writeup in a series of <a href="https://tryhackme.com/" target="_blank" style="color:blue;">TryHackMe (THM)</a>
+                          <p>
+														<b>TryHackMe Learn Linux Room:</b> &nbsp;<a href="https://tryhackme.com/room/zthlinux" target="_blank" style="color:blue;">https://tryhackme.com/room/zthlinux</a><br><br>
+														&emsp; &emsp; Good afternoon Tim, this is my first writeup in a series of <a href="https://tryhackme.com/" target="_blank" style="color:blue;">TryHackMe (THM)</a>
 														rooms. &nbsp;This writeup is on an easy room called <i>Learn Linux</i>. &nbsp;Since the first 42 tasks are accomplished by following
 														simple directions, this writeup only focuses on the bonus task. &nbsp;The bonus task is a Capture The Flag (CTF) challenge to find a
 														<i>root.txt</i> document with the flag. &nbsp;Everything needed to escalate privileges is covered in the 42 earlier tasks.
@@ -64,7 +66,7 @@
 													 <p>
 														&emsp; &emsp;All 42 tasks are completed on the current machine so a significant amount of enumeration can be done if you pay attention.
 														 &nbsp;There are 5 normal users (shiba1, shiba2, shiba3, shiba4, nootnoot) and an admin user (root). &nbsp;Each account has varying
-														 read/write permissions on different files. &nbsp;While navigating around each users' home folder, I noticed a file named <i>ll</i> in
+														 read/write permissions on different files so pay close attention. &nbsp;While navigating around each users' home folder, I noticed a file named <i>ll</i> in
 														 <i>/home/nootnoot</i>. &nbsp;I ran the <i>ll</i> command to find hidden files with <i>.sudo_as_admin_successful</i> listed. &nbsp;This
 														 means user <i>nootnoot</i> has sudo permissions. &nbsp;If only there was some way to log in as <i>nootnoot</i>...
 														 &nbsp;During my enumeration, I found a lead on a file <i>/var/log/test1234</i> in task 32.
