@@ -67,34 +67,25 @@
 														 read/write permissions on different files. &nbsp;While navigating around each users' home folder, I noticed a file named <i>ll</i> in
 														 <i>/home/nootnoot</i>. &nbsp;I ran the <i>ll</i> command to find hidden files with <i>.sudo_as_admin_successful</i> listed. &nbsp;This
 														 means user <i>nootnoot</i> has sudo permissions. &nbsp;If only there was some way to log in as <i>nootnoot</i>...
-														 <br>
-														 &emsp; &emsp;During my enumeration, I found a lead on a file <i>/var/log/test1234</i> in task 32.
+														 &nbsp;During my enumeration, I found a lead on a file <i>/var/log/test1234</i> in task 32.
 													 </p>
 													 <center><div class="image post"><img src="../images/learn-linux/0-lead-32.png" alt="" /></div></center><br>
 
-													 <p>Ports 139 and 445 have open services. &nbsp;Open source research can be done on both ports for vulnerabilities. &nbsp;Using TCM's methodology, I look for interesting
-														 pages from exploit-db or rapid7. &nbsp;OS detection is particularly important in this case because as the machine title infers, this is an old system no longer
-														 supported. &nbsp;That means unpatched vulnerabilities. &nbsp;Nmap scan results show <i>Legacy</i> is running Windows XP with Service Pack 2 or 3 (SP2/SP3). &nbsp;Googling for
-														 port 445 yields "SMB over IP" in the first result.
+													 <p>I navigated to the file directory with <i>cd /var/log</i> and ran <i>ll</i> to view permissions. &nbsp;The file <i>test1234</i> allows
+														 read permissions for user <i>shiba2</i>, which is a user that was logged into earlier in the lesson.
 													 </p>
-													 <center><div class="image post"><img src="../images/legacy/445.png" alt="" /></div></center><br>
+													 <center><div class="image post"><img src="../images/learn-linux/2-permissions.png" alt="" /></div></center><br>
 
 													 <p>
-														Server Message Block (SMB) is a network file sharing protocol that is very vulnerable. &nbsp;Contents in the first result above even say so in
-													the first paragraph!
+														Attempting to cat out the contents as <i>shiba1</i> results in permission denied.
 													</p>
-													<center><div class="image post"><img src="../images/legacy/smb.png" alt="" /></div></center><br>
+													<center><div class="image post"><img src="../images/learn-linux/1-lead-from-grep.png" alt="" /></div></center><br>
 
-													<p>The CVE <a href="https://www.cvedetails.com/vulnerability-list.php?vendor_id=26&product_id=739&version_id=&page=1&hasexp=0&opdos=0&opec=0&opov=0&opcsrf=0&opgpriv=0&opsqli=0&opxss=0&opdirt=0&opmemc=0&ophttprs=0&opbyp=0&opfileinc=0&opginf=0&cvssscoremin=9&cvssscoremax=0&year=0&month=0&cweid=0&order=1&trc=239&sha=47f525e9d45918cf8c2b12de9ba4a618a21a0a55" target="_blank" style="color:blue;">list</a>
-													 also contains general Windows XP vulnerabilities; about 5 pages worth of vulnerabilities with CVSS scores above 9. &nbsp;Because they are vulnerabilities
-														by OS, you still need to search for ports and services.<br>
-														&emsp; &emsp;Not much is found from searching NetBIOS vulnerabilities over port 139. &nbsp;Every search I made brought up the SMB vulnerability! &nbsp;It appears
-													SMB is the route we take! &nbsp;Google searching "windows xp sp2 exploit 445" brings me to an interesting rapid7
-													<a href="https://www.rapid7.com/db/modules/exploit/windows/smb/ms08_067_netapi" target="_blank" style="color:blue;">result</a>. &nbsp;It even comes with
-													Metasploit instructions! &nbsp;Googling "windows xp microsoft-ds exploit" provides useful results as well. &nbsp;A few
-													<a href="https://www.exploit-db.com/exploits/40279" target="_blank" style="color:blue;">exploit-db</a> pages can be found here.
+													<p>Simply switch user to <i>shiba2</i> with the <i>su</i> command. &nbsp;You should have <i>shiba2</i>'s password from earlier in the room.
+														 &nbsp;Once complete, cat the contents again to reveal <i>nootnoot</i>'s password. &nbsp;Log in as <i>nootnoot</i> to complete the initial
+														 foothold stage of this challenge.
 												 </p>
-												 <center><div class="image post"><img src="../images/legacy/db-results.png" alt="" /></div></center><br>
+												 <center><div class="image post"><img src="../images/learn-linux/3-nootnoot-pw.png" alt="" /></div></center><br>
 
 
 
@@ -102,33 +93,34 @@
 										<br><section id="Exploitation"><h2>Exploitation</h2></section>
 
 												<p>
-													&emsp; &emsp;Moving into exploitation, Metasploit is the path of least resistance. &nbsp;Fire it up with <code>msfconsole</code> and
-													 search for smb with <code>search smb</code>.
+													&emsp; &emsp;I tried <i>sudo -l</i> earlier as <i>shiba1</i> but failed due to lack of sudo permissions. &nbsp;Once <i>nootnoot</i> was
+													compromised, I made a second attempt and acquired the below output. &nbsp;This indicates <i>nootnoot</i> can run all commands as
+													<i>root</i>. &nbsp;In the words of <a href="https://unix.stackexchange.com/questions/201858/what-does-all-all-all-all-mean-in-sudoers" target="_blank" style="color:blue;">Unix StackExchange</a>:
+													it's "security nirvana!"
 												</p>
-												<center><div class="image post"><img src="../images/legacy/msfstart.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/learn-linux/4-sudo-perms.png" alt="" /></div></center><br>
 
 												<p>
 													A list of 120 Metasploit modules are returned. &nbsp;Referring to the rapid7 page from earlier, we are looking for a module with <i>ms08_067_netapi</i> in
 													its name, which is the 97th result. &nbsp;Load it with the command <code>use 97</code> or <code>use exploit/windows/smb/ms08_067_netapi</code>; either will
 													work. &nbsp;If you ever need to unset a module, type <code>back</code>.
 												</p><br>
-												<center><div class="image post"><img src="../images/legacy/module.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/learn-linux/5-nano-ll-try.png" alt="" /></div></center><br>
 
 												<p>
 													Open module options with <code>options</code> to see if parameters need to be added. &nbsp;Sure enough, it requires the target IP address.
 												</p>
-												<center><div class="image post"><img src="../images/legacy/options.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/learn-linux/options.png" alt="" /></div></center><br>
 
 												<p>
 													Set the target with <code>set RHOSTS 10.10.10.4</code> and confirm the result.
 												</p><br>
-												<center><div class="image post"><img src="../images/legacy/set.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/learn-linux/set.png" alt="" /></div></center><br>
 
 												<p>
-													It's exploit time! &nbsp;Enter <code>run</code> or <code>exploit</code> to launch the module! &nbsp;It takes a second but eventually a meterpreter shell appears in the terminal. &nbsp;Hit Enter if you don't see it right away. &nbsp;Confirm the exploit
-													worked by typing <code>pwd</code> or <code>getuid</code> for the username.
+													Once complete run the binary to activate <i>/bin/bash</i> in interactive mode! &nbsp;Notice the username change.
 												</p><br>
-												<center><div class="image post"><img src="../images/legacy/run.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/learn-linux/8-get-shell.png" alt="" /></div></center><br>
 
 
 
@@ -138,31 +130,21 @@
 												&emsp; &emsp;Once root access is achieved, we need to find a flag. &nbsp;Start searching for interesting files and directories. &nbsp;Since <i>Legacy</i>
 												is a Windows system, <i>cmd</i> commands are used to navigate the file system. &nbsp;Type <i>dir</i> to view the contents and gain some situational awareness.
 											</p><br>
-												<center><div class="image post"><img src="../images/legacy/system-dir.png" alt="" /></div></center><br>
-
-												<p>
-													A bunch of junk files and directories appear. &nbsp;No flag value is in this folder. &nbsp;I spent a considerable amount of time navigating the file system to
-													find a folder titled <i>Documents and Settings</i>, which holds an <i>Administrator</i> folder. &nbsp;This looks promising!
-												</p><br>
-												<center><div class="image post"><img src="../images/legacy/admin.png" alt="" /></div></center><br>
-
-												<p>
-													Navigating deeper in the Administrator folder, there is a familiar folder layout of <i>Cookies</i>, <i>Desktop</i>, <i>My Documents</i>, etc. &nbsp;Check the
-													Desktop first for conspicuous files. &nbsp;<i>root.txt</i> is the only file in Desktop. &nbsp;Dump its contents to get the flag!  \o/ <br>
-													Submit the flag to HTB and <b>DO NOT FORGET TO RATE THE DIFFICULTY.</b>
-												</p><br>
-												<center><div class="image post"><img src="../images/legacy/flag.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/learn-linux/9-root-flag.png" alt="" /></div></center><br>
+												<br>
 
 
 
 								<br><section id="Thoughts"><h2>Thoughts</h2></section>
 												<p>
-													&emsp; &emsp;Being my first writeup, this was definitely not done for time. &nbsp;The intent was to publish a correct writeup and focus on methodology learned
-													from PEH. &nbsp;I believe a crawl, walk, run approach is most beneficial. &nbsp;In the interest of time, taking screenshots throughout the process is
-													something I will remember in the next writeup. &nbsp;Overall I rate this difficulty a 1/10. &nbsp;Exploitation was not sophisticated as
-													Metasploit already carried the netapi module and it appeared in every Google search. &nbsp;The next machine is <i>Lame</i>, which is also low difficulty.
+													&emsp; &emsp;Although an easy room, the <i>Learn Linux</i> challenge threw me off and I admittedly underestimated it when starting. &nbsp;This challenge took me longer than
+													I'm embarrased to admit, which was a little over an hour. &nbsp;The main timesink was not having the initial piece for user compromise. &nbsp;I knew exaclty
+													which method to use for root privilege escalation, but reaching the necessary user took some time. &nbsp;This was caused by insufficient enumeration early
+													 on. &nbsp;Therefore, it is <b>imperative</b> that proper enumeration is done early on to avoid time sinks. &nbsp;Everyone in the OSCP community repeats "enumerate,
+													 enumerate, enumerate" all the time and this is why. &nbsp;Overall I rate this difficulty a 2/10 only because of prior experience in my escalation method.
+													  &nbsp;A newer person may require a nudge on the final portion but good enumeration is something everyone at all levels benefit from.
 												</p><br>
-												<!--<center><div class="image post"><img src="../images/legacy/submit.png" alt="" /></div></center><br>-->
+												<!--<center><div class="image post"><img src="../images/learn-linux/submit.png" alt="" /></div></center><br>-->
 
 
 
