@@ -1,0 +1,285 @@
+<!DOCTYPE HTML>
+<html>
+	<head>
+		<link rel="icon" href="../images/favicon.ico">
+		<title>Netmon</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a class="logo">The Defense</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="../index.html">Home</a></li>
+							<li class="active"><a href="../posts.html">Posts</a></li>
+							<li><a href="../research.html">Research</a></li>
+							<li><a href="../stories.html">Stories</a></li>
+							<li><a href="../references.html">Links</a></li>
+						</ul>
+						<ul class="icons">
+							<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+							<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="wrapper">
+
+						<!-- Post -->
+                  <section class="post">
+                    <body>
+                      <article id="first-post">
+												<a href="index.html"><img src="../images/ground.png" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; Netmon Writeup</h2>
+                        <div class="box">
+                          <p>&emsp; &emsp; Good evening Jim, today's HTB writeup is on "Netmon." &nbsp;This machine is rated very easy
+														but that was only for the user flag. &nbsp;The root flag required more effort and enumeration. &nbsp;It was very heavy on CVEs and realistic according to machine
+														statistics. &nbsp;I ran into trouble due to the exploit requiring certain credentials, which were tricky to find. &nbsp;A remediation section is included on how
+														to fix weaknesses.
+                           </p>
+
+
+													 <br><h2>Contents</h2>
+													 <a href="#Enumeration" style="color:blue;">Initial Enumeration</a><br>
+													 <a href="#FTP" style="color:blue;">Anonymous FTP</a><br>
+													 <a href="#Further" style="color:blue;">Further Enumeration</a><br>
+													 <a href="#Entry" style="color:blue;">Initial Entry</a><br>
+													 <a href="#Exploit" style="color:blue;">Exploitation</a><br>
+													 <a href="#Post" style="color:blue;">Post Exploitation</a><br>
+													 <a href="#Remediation" style="color:blue;">Remediation</a><br>
+													 <a href="#Thoughts" style="color:blue;">Thoughts</a><br><br><br>
+
+
+
+								<br><section id="Enumeration"><h2>Initial Enumeration</h2></section>
+													 <p>
+														 &emsp; &emsp;First step is launching the initial and OS nmap scans on the target IP. &nbsp;Results show several open ports including traditionally vulnerable ports such as FTP and SMB.
+														  &nbsp;OS scan results show leaked port information for ports 21 and 80. &nbsp;According to the second scan, Microsoft Windows Server 2008 R2 or 2012 is the most likely OS with high confidence.
+													 </p>
+													 <center><div class="image post"><img src="../images/netmon/1-nmap-initial.png" alt="" /></div></center>
+													 <center><div class="image post"><img src="../images/netmon/2-nmap-OS.png" alt="" /></div></center><br>
+
+
+
+							<br><section id="FTP"><h2>Anonymous FTP</h2></section>
+
+					 									<p>
+					 									&emsp; &emsp;Port 21 was open so I decided to begin port enumeration there. &nbsp;Since the machine allows anonymous FTP login, I did just that with username/password both
+														set to 'anonymous'.
+					 									</p>
+					 									<center><div class="image post"><img src="../images/netmon/3-anon-ftp.png" alt="" /></div></center><br>
+
+														<p>
+															I noticed the folder <i>C:\Users</i> was displayed so I tried to see how far I could push into the system. &nbsp;Access to the <i>Administrator</i> folder was not
+															authorized so I checked out <i>Public</i>. &nbsp;Flag file <i>user.txt</i> was found!
+														</p>
+					 									<center><div class="image post"><img src="../images/netmon/4-cd-users.png" alt="" /></div></center><br>
+
+														<p>
+															I fumbled with FTP commands a bit but was able to pull the flag to my Kali <i>/root</i> directory and dump its contents! &nbsp;User own took about 30 seconds so I rated it
+															difficulty 0/10 but HTB doesn't allow that; 1/10 was what I submitted.
+					 									</p>
+					 									<center><div class="image post"><img src="../images/netmon/5-get-user.png" alt="" /></div></center>
+														<center><div class="image post"><img src="../images/netmon/6-user-flag.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Further"><h2>Further Enumeration</h2></section>
+
+												<p>
+													&emsp; &emsp;After pulling down the user flag, I began looking for exploits and CVEs related to PRTG Network Monitor. &nbsp;I navigated to <i>10.10.10.152</i> in Firefox and poked around
+													a bit. &nbsp;It has a login prompt on its welcome page but nothing out of the ordinary. &nbsp;I found an <a href="https://www.exploit-db.com/exploits/46527" target="_blank" style="color:blue;">RCE exploit</a>
+													while googling and noticed default credentials.
+												</p>
+												<center><div class="image post"><img src="../images/netmon/7-script-creds.png" alt="" /></div></center><br>
+
+												<p>
+													I made an attempt with the default credentials but no luck. &nbsp;I also ran the exploit with cookies from the login page but it output a "success" message with credentials that didn't work. &nbsp;I
+													continued looking for exploits related to PRTG. &nbsp;I ran the credentials through ftp and smbclient but received the same bad password messages.
+												</p>
+												<center><div class="image post"><img src="../images/netmon/8-default-fail.png" alt="" /></div></center><br>
+
+												<p>
+												While searching for Indy http exploits, I came across <a href="https://www.criticalstart.com/prtg-network-monitor-privilege-escalation/" target="_blank" style="color:blue;">this link</a> which lists files
+												containing useful information. &nbsp;I did not see the folder <i>ProgramData</i> in my earlier ftp connection so I suspected the folder was hidden. &nbsp;I fired up ftp and attempted to change into that
+												directory. &nbsp;It exists!
+												</p>
+												<center><div class="image post"><img src="../images/netmon/9-hidden-folder.png" alt="" /></div></center><br>
+
+												<p>
+													I moved to the target files and retrieved them with the <i>get</i> command.
+												</p>
+												<center><div class="image post"><img src="../images/netmon/10-config-files.png" alt="" /></div></center><br>
+
+												<p>
+												The ensuing enumeration was time consuming but I ran into a username/password pair in plaintext! &nbsp;It was located in <i>PRTG Configuration.old.bak</i> at lines 140-143 with <i>dbpassword</i> tags.
+												</p>
+												<center><div class="image post"><img src="../images/netmon/11-dbpassword.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Entry"><h2>Initial Entry</h2></section>
+
+												<p>
+													&emsp; &emsp;I tried logging into the web interface with the dbpassword credentials but they failed. &nbsp;I repeated this for ftp and smb but also got no luck. &nbsp;What was wrong with the password?
+													 &nbsp;It took some thought but I noticed a couple of clues: 1) I found out the machine was deployed to HTB in 2019 but the password said '2018'. 2) The configuration file containing
+													 dbpassword had a <i>.old</i> file extension. &nbsp;With those hints in mind, I increased the year to <i>2019</i> and had a successful login!
+												</p>
+												<center><div class="image post"><img src="../images/netmon/12-login-success.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Exploit"><h2>Exploitation</h2></section>
+
+												<p>
+													&emsp; &emsp;I messed around with the PRTG Network Monitor system hoping to find cookies to use in my earlier script. &nbsp;I spent the better part of 2 hours trying to find cookies in the web
+													interface because I didn't see the <i>"Inspect"</i> option when I right-clicked the page. &nbsp;Eventually I just clicked the "hamburger" icon and selected <i>Web Developer > Web Console</i> to access
+													the exact cookies I need!
+												</p>
+												<center><div class="image post"><img src="../images/netmon/13-credentialed-cookies.png" alt="" /></div></center><br>
+
+												<p>
+													I plugged the values into the script for a successful run. &nbsp;This time the script takes longer to output the exploit message; indicating that it worked!
+												</p>
+												<center><div class="image post"><img src="../images/netmon/14-prtg-command.png" alt="" /></div></center><br>
+
+												<p>
+													To see if the exploit worked, I tried the new credentials on ftp and smb. &nbsp;I already had access to the admin panel of PRTG so that was not my concern. &nbsp;FTP did not work so I used the
+													credentials in <i>smbclient</i>.
+												</p>
+												<center><div class="image post"><img src="../images/netmon/15-smbdump.png" alt="" /></div></center><br>
+
+												<p>
+													The list of share drives was able to print. &nbsp;I was unable to do this before so I made an attempt on the ADMIN$ drive. &nbsp;It was successful!
+												</p>
+												<center><div class="image post"><img src="../images/netmon/16-smbadmin.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Post"><h2>Post-Exploitation</h2></section>
+
+												<p>
+													&emsp; &emsp;After gaining access to the ADMIN$ drive, I began poking around to find interesting files and folders. &nbsp;Although folders like <i>System32</i> are interesting and contain valuable
+													information, they do not contain what I am looking for. &nbsp;I exited the ADMIN$ drive and successfully entered the C$ drive to find the filesystem I expected.
+												</p>
+												<center><div class="image post"><img src="../images/netmon/17-smbC.png" alt="" /></div></center><br>
+
+												<p>
+													I navigated to the Administrator's Desktop and pulled down <i>root.txt</i>
+												</p>
+												<center><div class="image post"><img src="../images/netmon/18-get-root.png" alt="" /></div></center><br>
+
+												<p>
+													Finally I dumped <i>root.txt</i> and entered the flag into HTB! \o/
+												</p>
+												<center><div class="image post"><img src="../images/netmon/19-root-flag.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Remediation"><h2>Remediation</h2></section>
+
+												<p>
+												&emsp; &emsp;Unlike previous machines, this server did not use default credentials for its interfaces. &nbsp;It was a step up from machines like <i>Nibbles</i> and <i>Jerry</i>. &nbsp;This machine's Achilles' heel was leaving
+												old config files on the system and allowing anonymous access to them. &nbsp;Old logs such as "PRTG Configuration.old" should be relocated to secure areas, have sensitive credentials removed/encrypted, or even purged.<br>
+
+												&emsp; &emsp;The vulnerability used to gain foothold in the PRTG Network Monitor interface was weak password reuse. &nbsp;Not only was the password not strong enough, it was susceptible to recycling. &nbsp;Anyone able to
+												add a number or slightly modify the password can significantly reduce the number of tries needed to gain entry. &nbsp;A stronger password policy will fix that.
+												&emsp; &emsp;Anonymous ftp must also be disabled. &nbsp;This can be done by following
+												<a href="https://docs.microsoft.com/en-us/iis/configuration/system.applicationhost/sites/site/ftpserver/security/authentication/anonymousauthentication" target="_blank" style="color:blue;">these</a> instructions:
+												</p>
+												<center><div class="image post"><img src="../images/netmon/20-disable-ftp.png" alt="" /></div></center><br>
+
+												<p>
+												In addition to disabling services, banner responses should be disabled to hinder reconaissance. &nbsp;For HTTP this can be disabled at the server by modifying the <i>DisableServerHeader</i> registry key and setting its
+												value to 1. &nbsp;Additional response instructions can be found in <a href="https://techcommunity.microsoft.com/t5/iis-support-blog/remove-unwanted-http-response-headers/ba-p/369710" target="_blank" style="color:blue;">this blog post</a>.
+												 &nbsp;Disabling ftp response headers is similar but not critical since the ftpd version number isn't leaked. &nbsp;Since the target machine is Server 2008, the default banner can be suppressed by a simple check box. &nbsp;
+												 Instructions can be found <a href="https://www.ehow.co.uk/how_7532329_change-font-used-smarterm.html" target="_blank" style="color:blue;">here</a>.<br>
+												 &emsp; &emsp;Finally, the RCE vulnerability (<a href="https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2018-9276" target="_blank" style="color:blue;">CVE-2018-9276</a>) enabled us to add an Administrator account allowing us to
+												 remote into the machine via smbclient. &nbsp;The obvious remediation is to upgrade to PRTG version >= 18.2.39 &nbsp;This patch was released on April 20, 2018 according to the vulnerability
+												 <a href="https://www.codewatch.org/blog/?p=453" target="_blank" style="color:blue;">source</a>. &nbsp;The first mistake pointed out by the article is PRTG running as <i>Local System</i> by
+												default allowing any command injections to run with those high level privileges. &nbsp;This attribute must be changed whenever PRTG Network Monitor is installed. &nbsp;The most significant weakness
+												of the RCE vulnerability is the lack of checks on special characters or length.
+												</p>
+												<center><div class="image post"><img src="../images/netmon/21-powershell.png" alt="" /></div></center><br>
+
+												<p>
+													The powershell script above from <i>CodeWatch</i> should contain code allowing only expected characters to be in <i>$Args[0]</i>. &nbsp;Input validation needs to occur after <i>$Path</i> is assigned and before the
+													if-statement. &nbsp;It could be something like this by Ed Wilson from Microsoft
+													 <a href="https://devblogs.microsoft.com/scripting/weekend-scripter-remove-non-alphabetic-characters-from-string/" target="_blank" style="color:blue;">devblogs</a>:<br>
+												</p>
+												<center><div class="image post"><img src="../images/netmon/22-sanitize.png" alt="" /></div></center><br>
+
+												<p>
+													The above powershell would replace any non-alphabetic input with spaces. &nbsp;It needs tweaking since spaces are likely not the best choice, but it's a start in the right direction. &nbsp;An additional
+													option is to check for length if the parameter has that requirement. &nbsp;It's just another hurdle for malicious input.
+												</p>
+
+
+								<br><section id="Thoughts"><h2>Thoughts</h2></section>
+												<p>
+													&emsp; &emsp;<i>Netmon</i> is a fantastic box for learning the importance of enumeration. &nbsp;The ease of overlooking critical log files cannot be overstated. &nbsp;Whenever the next exploitation
+													step is reached, you should inspect all encountered files for revealing information. &nbsp;I have noticed it is often seemingly random files that contain information related to the next step. &nbsp;
+													Overall I rate this box a 4/10 difficulty due overcoming the "correct dbpassword." &nbsp;I also submitted separate ratings for each flag; user
+													flag is 0/10 (or 1/10) while root receives a significantly higher score of 4/10.
+												</p><br>
+
+
+
+                        </div>
+
+                      </article>
+                    </body>
+                  </section>
+
+							</div>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+
+						<section class="split contact">
+
+							<section>
+								<h3>Social</h3>
+								<ul class="icons alt">
+									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net" target="_blank">HTML5 UP</a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
