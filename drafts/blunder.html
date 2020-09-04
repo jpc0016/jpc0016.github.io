@@ -45,9 +45,10 @@
                       <article id="first-post">
 												<a href="index.html"><img src="../images/ground.png" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Blunder Writeup</h2>
+												<h5>&emsp; &emsp; &emsp; &emsp; November 3, 2020</h5>
                         <div class="box">
-                          <p>&emsp; &emsp; Good evening Tim and Aaron, today's HTB writeup is on "Blunder." &nbsp;This machine has mostly 3/10 ratings
-														so it was not too difficult. &nbsp;I ran into trouble due to exploits requiring certain credentials, which were tricky to find. &nbsp;A significant
+                          <p>&emsp; &emsp; Good evening Tim and Aaron, "Blunder" is the box we will walkthrough today! &nbsp;This machine stunned me most of the time but was able to power through with some
+														Linux-fu! &nbsp;I ran into trouble due to exploits requiring certain credentials, which were tricky to find. &nbsp;A significant
 														amount of time was also spent using the correct payload. &nbsp;Just like last time, a remediation section is included on how to implement fixes.
                            </p>
 
@@ -67,7 +68,7 @@
 
 								<br><section id="Enumeration"><h2>Initial Enumeration</h2></section>
 													 <p>
-														 &emsp; &emsp;First step is launching the initial and OS nmap scans on the target IP. &nbsp;Results show ports 22 and 80 are open. &nbsp;OS scan results show leaked header information
+														 &emsp; &emsp;As usual, I started by launching initial and OS nmap scans on Blunder's IP. &nbsp;Results show ports 22 and 80 are open. &nbsp;OS scan results show leaked header information
 														 from both ports and early versions of Linux as the target OS. &nbsp;According to port enumeration, Ubuntu is the most likely flavor of Linux with high confidence. &nbsp;Port 22
 														 reveals <i>OpenSSH 7.2p2</i> and some ssh-hostkey information. &nbsp;Port 80 reveals <i>Apache httpd 2.4.18</i> running on the back end. &nbsp;As with previous machines, header
 														 and service information are unnecessarily disclosed which is a pentest report finding.

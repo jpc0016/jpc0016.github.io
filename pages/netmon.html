@@ -45,6 +45,8 @@
                       <article id="first-post">
 												<a href="index.html"><img src="../images/ground.png" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Netmon Writeup</h2>
+												<h5>&emsp; &emsp; &emsp; &emsp; September 3, 2020</h5>
+
                         <div class="box">
                           <p>&emsp; &emsp; Good evening Jim, today's HTB writeup is on "Netmon." &nbsp;This machine is rated very easy
 														but that was only for the user flag. &nbsp;The root flag required more effort and enumeration. &nbsp;It was very heavy on CVEs and realistic according to machine
@@ -198,7 +200,7 @@
 
 												&emsp; &emsp;The vulnerability used to gain foothold in the PRTG Network Monitor interface was weak password reuse. &nbsp;Not only was the password not strong enough, it was susceptible to recycling. &nbsp;Anyone able to
 												add a number or slightly modify the password can significantly reduce the number of tries needed to gain entry. &nbsp;A stronger password policy will fix that.
-												&emsp; &emsp;Anonymous ftp must also be disabled. &nbsp;This can be done by following
+												 &nbsp;Anonymous ftp must also be disabled. &nbsp;This can be done by following
 												<a href="https://docs.microsoft.com/en-us/iis/configuration/system.applicationhost/sites/site/ftpserver/security/authentication/anonymousauthentication" target="_blank" style="color:blue;">these</a> instructions:
 												</p>
 												<center><div class="image post"><img src="../images/netmon/20-disable-ftp.png" alt="" /></div></center><br>

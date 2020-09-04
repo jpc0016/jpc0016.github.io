@@ -44,14 +44,15 @@
                     <body>
                       <article id="first-post">
 												<a href="index.html"><img src="../images/ground.png" class="avatar" alt="avatar"> </img></a>
-                        <h2>&emsp; Nibbles Writeup</h2>
+                        <h2>&emsp; Bashed Writeup</h2>
+												<h5>&emsp; &emsp; &emsp; &emsp; September 3, 2020</h5>
                         <div class="box">
-                          <p>&emsp; &emsp; Good evening Tim and Aaron, today's HTB writeup is on "Nibbles." &nbsp;This machine has mostly 3/10 ratings
+                          <p>&emsp; &emsp; Good evening Tim and Aaron, today's HTB writeup is on "Bashed." &nbsp;This machine has mostly 3/10 ratings
 														so it was not too difficult. &nbsp;I ran into trouble due to exploits requiring certain credentials, which were tricky to find. &nbsp;A significant
 														amount of time was also spent using the correct payload. &nbsp;Just like last time, a remediation section is included on how to implement fixes.
                            </p>
 
-													 <center><div class="image post"><img src="../images/nibbles/nibbles.png" alt="" /></div></center><br>
+													 <center><div class="image post"><img src="../images/bashed/bashed.png" alt="" /></div></center><br>
 
 													 <br><h2>Contents</h2>
 													 <a href="#Enumeration" style="color:blue;">Initial Enumeration</a><br>
@@ -72,8 +73,8 @@
 														 reveals <i>OpenSSH 7.2p2</i> and some ssh-hostkey information. &nbsp;Port 80 reveals <i>Apache httpd 2.4.18</i> running on the back end. &nbsp;As with previous machines, header
 														 and service information are unnecessarily disclosed which is a pentest report finding.
 													 </p>
-													 <center><div class="image post"><img src="../images/nibbles/1-nmap-initial.png" alt="" /></div></center>
-													 <center><div class="image post"><img src="../images/nibbles/2-nmap-OS.png" alt="" /></div></center><br>
+													 <center><div class="image post"><img src="../images/bashed/1-nmap-initial.png" alt="" /></div></center>
+													 <center><div class="image post"><img src="../images/bashed/2-nmap-OS.png" alt="" /></div></center><br>
 
 
 
@@ -84,25 +85,25 @@
 					 									result was a Hello World webpage. &nbsp;I tested the contents behind port 80 by requesting <i>/dev/</i> and received a 404 page leaking server information.
 														 &nbsp;This is another finding on a pentest report.
 					 									</p>
-					 									<center><div class="image post"><img src="../images/nibbles/3-hello-world.png" alt="" /></div></center><br>
-					 									<center><div class="image post"><img src="../images/nibbles/4-try-dev.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/bashed/3-hello-world.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/bashed/4-try-dev.png" alt="" /></div></center><br>
 
 														<p>
 															Running <i>dirbuster</i> on the root folder revealed only a few directories that provided little information.
 					 									</p>
-					 									<center><div class="image post"><img src="../images/nibbles/5-dirbuster-results.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/bashed/5-dirbuster-results.png" alt="" /></div></center><br>
 
 														<p>
 															During this time I investigated exploits for <i>Apache 2.4.18</i> but found none that fit my use case. &nbsp;They were almost all local privilege escalation
 															or Denial of Service (DoS) exploits. &nbsp;With few leads, I went back to the Hello World page to inspect the html source code. &nbsp;An interesting directory
 															appeared in a comment.
 					 									</p>
-					 									<center><div class="image post"><img src="../images/nibbles/6-nibbleblog-path.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/bashed/6-nibbleblog-path.png" alt="" /></div></center><br>
 
 														<p>
 															Append the directory to the ip address to reveal a backend home page. &nbsp;
 					 									</p>
-					 									<center><div class="image post"><img src="../images/nibbles/7-nibbleblog-home.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/bashed/7-nibbleblog-home.png" alt="" /></div></center><br>
 
 
 
@@ -111,21 +112,21 @@
 												<p>
 													&emsp; &emsp;Being satisfied with the home page, I ran <i>dirbuster</i> again with <i>/nibbleblog/</i> as the starting directory. &nbsp;Results were dramatically different!
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/8-dirbuster-settings.png" alt="" /></div></center>
-												<center><div class="image post"><img src="../images/nibbles/9-dirbuster-again.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/8-dirbuster-settings.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/bashed/9-dirbuster-again.png" alt="" /></div></center><br>
 
 												<p>
 												While <i>dirbuster</i> was at work, I grabbed backend system information with <i>wappalyzer</i> then inspected the <i>README</i> once it was revealed. &nbsp;The <i>README</i> was interesting in
 												that it implied <i>nibbleblog</i> was an actual blogging framework, not a random name someone gave to their blog. &nbsp;This was noted by "Nibbleblog Version: v4.0.3" in the red square. &nbsp;The
 												nibbleblog documentation sites also gave it away.
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/10-wappalyzer.png" alt="" /></div></center><br>
-												<center><div class="image post"><img src="../images/nibbles/11-nibbleblog-version.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/10-wappalyzer.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/11-nibbleblog-version.png" alt="" /></div></center><br>
 
 												<p>
 												<i>dirbuster</i> eventually revealed a page called <i>admin.php</i>. &nbsp;This looked interesting so I navigated to the page for inspection. &nbsp;A login page was shown!
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/12-login-page.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/12-login-page.png" alt="" /></div></center><br>
 
 
 
@@ -135,20 +136,20 @@
 													&emsp; &emsp;I tried basic login credentials but had no luck since this is a HTB machine!  ¯\_(ツ)_/¯ <br>
 													It turns out the system owner is not as dumb on this machine because <i>admin:admin</i> and <i>admin:password</i> both fail.
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/13-login-fail.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/13-login-fail.png" alt="" /></div></center><br>
 
 												<p>
 												So this page presents the next challenge because one of the <a href="https://www.rapid7.com/db/modules/exploit/multi/http/nibbleblog_file_upload" target="_blank" style="color:blue;">exploits</a>
 												I found (thanks to <i>searchsploit nibble</i>) requires valid login credentials to function. &nbsp;I used Hydra on this page but it would temporarily lockout after 16 failed attempts. &nbsp;For some time I
 												cycled between attempting to crack the page and searching through backend files for clues. &nbsp;Eventually I came across a config file with interesting information. &nbsp;Down in the notification
-												 information was an email field with "admin" and "nibbles" in the address.
+												 information was an email field with "admin" and "bashed" in the address.
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/14-default-creds.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/14-default-creds.png" alt="" /></div></center><br>
 
 												<p>
-												Using this lead, I tried <i>nibbles</i> as the password instead. &nbsp;The result was a successful login to nibbleblog's dashboard!! &nbsp;It turns out the admin IS that lazy! &nbsp;\o/
+												Using this lead, I tried <i>bashed</i> as the password instead. &nbsp;The result was a successful login to nibbleblog's dashboard!! &nbsp;It turns out the admin IS that lazy! &nbsp;\o/
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/15-login-success.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/15-login-success.png" alt="" /></div></center><br>
 
 
 
@@ -161,7 +162,7 @@
 													manual Proof of Concept (PoC) for exploiting <i>CVE-2015-6967</i>. &nbsp;Basically <i>nibbleblog</i> fails to check file extensions when uploading files (images in this case), which would
 													allow attackers to upload malicious executables. &nbsp;With that in mind, I confirmed the existence of an image uploading function in the <i>My image</i> plugin.
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/18-select-image.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/18-select-image.png" alt="" /></div></center><br>
 
 												<p>
 													The next step is to produce a payload to upload in the system. &nbsp;I tried <i>msfvenom</i> first but the payload failed for an unknown reason. &nbsp;Netcat would receive a connection from it
@@ -169,26 +170,26 @@
 													attempt. &nbsp;I instead googled <i>"php reverse shell"</i> and pulled up the first result.
 
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/19-php-reverse.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/19-php-reverse.png" alt="" /></div></center><br>
 
 												<p>
 													Download <i>php-reverse-shell.php</i> and change lines 49 and 50 to your listener IP and listener port number. &nbsp;Save the file as <i>image.php</i>
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/20-change-parameters.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/20-change-parameters.png" alt="" /></div></center><br>
 
 												<p>
 													The payload is ready for action! &nbsp;Upload it to nibbleblog. &nbsp;Ignore the warnings per the blog post. &nbsp;<i>image.php</i> is uploaded to the
 													directory <i>/content/private/plugins/my_image/</i>.
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/21-upload-messages.png" alt="" /></div></center>
-												<center><div class="image post"><img src="../images/nibbles/22-image-location.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/21-upload-messages.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/bashed/22-image-location.png" alt="" /></div></center><br>
 
 												<p>
 												 Make sure to start a netcat listener on the desired port before invoking your payload. &nbsp;Click on <i>image.php</i> to receive a shell! &nbsp;Navigate to the home directory to
 												 dump flag contents!
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/23-nibbler.png" alt="" /></div></center>
-												<center><div class="image post"><img src="../images/nibbles/24-user-flag.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/23-nibbler.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/bashed/24-user-flag.png" alt="" /></div></center><br>
 
 
 
@@ -198,13 +199,13 @@
 													&emsp; &emsp;Once a foothold was established, I began post-exploitation enumeration to find interesting files and permissions. &nbsp;I decided to look inside <i>personal.zip</i>
 													because it looked intersting and stuck out. &nbsp;I unzipped it and discovered a shell script called <i>monitor.sh</i>.
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/26-personal-unzip.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/26-personal-unzip.png" alt="" /></div></center><br>
 
 												<p>
 													I ran the script to inspect behavior but nothing interesting happened besides telling me what I already know; however, the green colored output gave me a clue about what to research. &nbsp;I
 													suspected the text changed color due to <i>monitor.sh</i> running with elevated privileges.
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/27-run-monitor.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/27-run-monitor.png" alt="" /></div></center><br>
 
 												<p>
 													While researching Linux privilege escalation methods, I encountered this <a href="https://medium.com/schkn/linux-privilege-escalation-using-text-editors-and-files-part-1-a8373396708d" target="_blank" style="color:blue;">blog post</a>
@@ -212,20 +213,20 @@
 													runs with elevated privileges, you can add commands such as system calls to get what you want. &nbsp;Use <i>sudo -l</i> to run this check. &nbsp;In our case, <i>monitor.sh</i> runs with root
 													permissions! &nbsp;And most importantly, <i>monitor.sh</i> will NOT request a password when executing with sudo!
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/28-check-sudo.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/28-check-sudo.png" alt="" /></div></center><br>
 
 												<p>
 													Since we have ownership over the file, use bash commands to overwrite the contents of <i>monitor.sh</i>. &nbsp;In my case it was only three lines of code: the shebang line, a welcome message, and a
 													call to the bash shell in interactive mode. &nbsp;This means whatever is written in <i>monitor.sh</i> will be executed as root if sudo is invoked.
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/29-manipulate-monitor.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/29-manipulate-monitor.png" alt="" /></div></center><br>
 
 												<p>
 													&emsp; &emsp;Once <i>monitor.sh</i> has been overwritten, I ran it with sudo permissions. &nbsp;<code>sudo bash monitor.sh</code> did not work for some reason but <i>./</i> notation
 													was fine. &nbsp;A root shell was acquired! &nbsp;Navigate to the <i>/root/</i> directory and dump the flag!
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/30-root-whoami.png" alt="" /></div></center>
-												<center><div class="image post"><img src="../images/nibbles/31-root-flag.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/30-root-whoami.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/bashed/31-root-flag.png" alt="" /></div></center><br>
 
 
 
@@ -242,7 +243,7 @@
 												checks for valid file extensions (jpg, gif, or png) before continuing. &nbsp;If you need this implemented in a function or pure PHP, StackOverflow also has some
 												<a href="https://stackoverflow.com/questions/2486329/how-can-i-only-allow-certain-filetypes-on-upload-in-php" target="_blank" style="color:blue;">sample code</a> to implement.
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/32-extension-check.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/32-extension-check.png" alt="" /></div></center><br>
 
 												<p>
 												The post-exploitation vulnerability is straightforward to fix. &nbsp;You can either disable NOPASSWD in the sudoers file (<i>/etc/sudoers</i>) or comment out the line with a '#'. &nbsp;One
@@ -253,7 +254,7 @@
 												<i>visudo -f /etc/sudoers</i> to edit the file since it protects against many failure modes
 												(<a href="https://serverfault.com/questions/615034/disable-nopasswd-sudo-access-for-ubuntu-user-on-an-ec2-instance" target="_blank" style="color:blue;">source</a>).
 												</p>
-												<center><div class="image post"><img src="../images/nibbles/33-sudoers.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/33-sudoers.png" alt="" /></div></center><br>
 
 												<p>
 												Finally, the machine leaked header information again through nmap scans. &nbsp;I addressed this solution in Jerry's
@@ -269,7 +270,7 @@
 
 								<br><section id="Thoughts"><h2>Thoughts</h2></section>
 												<p>
-													&emsp; &emsp;<i>Nibbles</i> is a tricky box with many rabbitholes to fall into. &nbsp;This machine took some time due to proper enumeration and temptation to fall into its many rabbitholes.
+													&emsp; &emsp;<i>bashed</i> is a tricky box with many rabbitholes to fall into. &nbsp;This machine took some time due to proper enumeration and temptation to fall into its many rabbitholes.
 													&nbsp;As difficulty of HTB machines increase, system enumeration becomes much more important. &nbsp;I suspect Open Source Intelligence (OSINT) methods could play an increasingly important
 													role in later boxes. &nbsp;Overall I rate this box a 4/10 difficulty due to the number of possible pitfalls encountered. &nbsp;I also submitted separate ratings for each flag; user
 													flag is 4/10 while root receives a lower score of 3/10.
