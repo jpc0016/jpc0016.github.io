@@ -10,6 +10,9 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="../assets/css/main.css" />
+		<link rel="stylesheet" href="../assets/css/atom-one-dark-reasonable.min.css">
+		<script src="../assets/js/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
 		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
 	</head>
 	<body class="is-preload">
@@ -53,21 +56,40 @@
 												<h5>&emsp; &emsp; &emsp; &emsp; September 18, 2020</h5>
                         <div class="box">
                           <p>
-														<b>This blog post has been created for completing the requirements of the SecurityTube Linux Assembly Expert (SLAE) certification:</b>
-														<a href="http://securitytube-training.com/online-courses/securitytube-linux-assembly-expert/">http://securitytube-training.com/online-courses/securitytube-linux-assembly-expert/</a><br><br>
-														<b>Student ID: SLAE-XXXXX</b><br><br>
-
-														This is Assignment 1 in a series of <a href="https://www.pentesteracademy.com/">PentesterAcademy</a> projects to satisfy the SLAE certification.
+														&emsp; &emsp;This post involves writing shellcode that creates a <i>Bind TCP</i> shell on a victim machine. &nbsp;Before continuing high-level analysis, it is worth noting the difference between
+														bind and reverse TCP shells:<br><br>
+														A bind shell is a command line interface opened when an attacker machine opens a port on the victim machine and connects to it. &nbsp;This is typically done using the 0.0.0.0 IP address to denote
+														listening on all interfaces. &nbsp;A diagram of bind tcp shell is shown below.
 											 	</p>
+												<center><div class="image post"><img src="../images/slae/bind-shell.png" alt="" /></div></center><br>
+												<br>
+
+												<p>
+													&emsp; &emsp;It is important to visualize what a bind shell looks like in higher level objective C code before writing any x86 assembly. &nbsp;The tool, <i>libemu</i> has a tool
+													called <i>sctest</i> (shellcode test) that
+												</p>
+												<pre>
+													<code class="c-like" style=display:block;white-space:pre-wrap>
+#include &lt;stdio.h&gt;
+printf("Hello World!");
+													</code>
+												</pre>
 
 
 
 
 
-                         <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
-                         <center><div class="image post"><img src="../images/cracking_menu.png" alt="" /></div></center><br>
+                         <p>The source code for this assignment as well as other SLAE assignments is here:
+												 <a href="https://github.com/jpc0016/SLAE-code" target="_blank" style="color:blue;">https://github.com/jpc0016/SLAE-code</a></p>
 
-                         <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
+
+
+
+
+												 This blog post has been created for completing the requirements of the SecurityTube Linux Assembly Expert (SLAE) certification:
+												 <a href="http://securitytube-training.com/online-courses/securitytube-linux-assembly-expert/" target="_blank" style="color:blue;">http://securitytube-training.com/online-courses/securitytube-linux-assembly-expert/</a><br><br>
+												 Student ID: SLAE-XXXXX<br><br>
+
                         </div>
 
                       </article>
