@@ -56,16 +56,28 @@
 												<h5>&emsp; &emsp; &emsp; &emsp; September 18, 2020</h5>
                         <div class="box">
                           <p>
-														&emsp; &emsp;This post involves writing shellcode that creates a <i>Bind TCP</i> shell on a victim machine. &nbsp;Before continuing high-level analysis, it is worth noting the difference between
+														&emsp; &emsp;This post involves writing shellcode to create a <i>Bind TCP</i> shell on a victim machine. &nbsp;This is also known as
+														<i>port-binding shellcode</i>. &nbsp;Before continuing high-level analysis, it is worth noting the difference between
 														bind and reverse TCP shells:<br><br>
-														A bind shell is a command line interface opened when an attacker machine opens a port on the victim machine and connects to it. &nbsp;This is typically done using the 0.0.0.0 IP address to denote
-														listening on all interfaces. &nbsp;A diagram of bind tcp shell is shown below.
+														A bind shell is a command line interface opened when an attacker machine opens a port on the victim machine and connects to it. &nbsp;
+														The victim machine listens to incoming connections and the attacker machine makes the connection. &nbsp;This is typically done
+														using IP address 0.0.0.0 to denote listening on all interfaces. &nbsp;A diagram of a bind TCP shell is shown below.
 											 	</p>
 												<center><div class="image post"><img src="../images/slae/bind-shell.png" alt="" /></div></center><br>
 												<br>
 
 												<p>
-													&emsp; &emsp;It is important to visualize what a bind shell looks like in higher level objective C code before writing any x86 assembly. &nbsp;The tool, <i>libemu</i> has a tool
+													Reverse shells are functionally similar to bind shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
+													for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
+													machine, usually by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
+												</p>
+												<center><div class="image post"><img src="../images/slae/reverse-shell.png" alt="" /></div></center><br>
+
+
+												<br><h2>Drafting the Proof of Concept</h2>
+
+												<p>
+													&emsp; &emsp;It is important to visualize what a bind shell looks like in higher level objective C code before attempting to write it in x86 assembly. &nbsp;The tool, <i>libemu</i> has a tool
 													called <i>sctest</i> (shellcode test) that
 												</p>
 												<pre>
@@ -76,11 +88,29 @@ printf("Hello World!");
 												</pre>
 
 
+												<br><h2>Assembly Code Creation</h2>
+
+												<p>
+													Assembly code goes here.
+												</p>
 
 
+												<br><h2>Demonstration</h2>
+
+												<p>
+													Demonstrate shellcode here in test case
+												</p>
+
+
+												<br><h2>Final Thoughts</h2>
+
+												<p>
+													Conclusion and stuff
+										 		</p>
 
                          <p>The source code for this assignment as well as other SLAE assignments is here:
-												 <a href="https://github.com/jpc0016/SLAE-code" target="_blank" style="color:blue;">https://github.com/jpc0016/SLAE-code</a></p>
+												 <a href="https://github.com/jpc0016/SLAE-code" target="_blank" style="color:blue;">https://github.com/jpc0016/SLAE-code</a>
+											 		</p>
 
 
 
