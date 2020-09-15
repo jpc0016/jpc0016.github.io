@@ -145,7 +145,7 @@ int execve (
 
 												<p>
 													From here you can see the functions <i>socket()</i>, <i>bind()</i>, <i>listen()</i>, <i>accept()</i>, <i>dup2()</i>, and <i>execve()</i> are primary drivers of the
-													payload. &nbsp;Conveniently it also displays parameters used along with their values. &nbsp;It takes some googling and reading Linux man-pages 
+													payload. &nbsp;Conveniently it also displays parameters used along with their values. &nbsp;It takes some googling and reading Linux man-pages
 													(like <a href="https://man7.org/linux/man-pages/man2/bind.2.html" target="_blank" style="color:blue;">this one</a>) to
 													get a general idea of what libraries to include, where to find them, and what parameters does each function need. &nbsp;Below is the resultant PoC:
 												</p>
@@ -153,13 +153,20 @@ int execve (
 
 												<pre>
 													<code class="c-like" style=display:block;white-space:pre-wrap>
-
 #include &lt;stdio.h>
+#include &lt;netinet/in.h>
 #include &lt;sys/types.h>
 #include &lt;sys/socket.h>
 #include &lt;unistd.h>
 													</code>
 												</pre>
+
+												<p>
+													The above code looks very similar to what is found in server side socket code.
+												</p>
+
+
+
 
 
 												<br><h2>Assembly Code Creation</h2>
