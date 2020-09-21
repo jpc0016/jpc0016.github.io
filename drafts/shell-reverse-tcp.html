@@ -58,21 +58,105 @@
                     <body>
                       <article id="first-post">
 												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
-                        <h2>&emsp; SLAE Question 2</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; September 25, 2020</h5>
+                        <h2>&emsp; Shellcoding the Reverse TCP Shell</h2>
+												<h5>&emsp; &emsp; &emsp; &emsp; October 2, 2020</h5>
                         <div class="box">
-                          <p>
-														<b>This blog post has been created for completing the requirements of the SecurityTube Linux Assembly Expert certification:</b>
-													<a href="http://securitytube-training.com/online-courses/securitytube-linux-assembly-expert/" target="_blank" style="color:blue;">http://securitytube-training.com/online-courses/securitytube-linux-assembly-expert/</a><br>
 
-													<b>Student ID: SLAE-XXXXX</b>
+													<br><h2>Contents</h2>
+													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
+													<a href="#Assembly" style="color:blue;">Writing the Assembly</a><br>
+													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
+													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
+													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
-													</p>
+													<p>
+														&emsp; &emsp;Welcome back! &nbsp;This post involves writing shellcode to create a <i>Reverse TCP</i> shell to establish a connection with a victim machine.
+														 &nbsp;A review of the reverse TCP shell is below:<br><br>
+														From the previous <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">article</a>: &nbsp;
+														Reverse shells are functionally similar to bind shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
+														for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
+														machine by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
+											 	</p>
+												<center><div class="image post"><img src="../images/slae/assignment2/1-reverse-shell.png" alt="" /></div></center><br>
+												<br>
 
-                         <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
-                         <center><div class="image post"><img src="../images/cracking_menu.png" alt="" /></div></center><br>
 
-                         <p>To start from the root-me homepage, click on <b>Challenges</b> &gt&gt <b>Cracking</b>  </p>
+			<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
+
+											<p>
+												Similar to the bind shell, a Proof of Concept (PoC) is developed using the same methodology. &nbsp;Look for the unstaged
+												version of <i>Shell Reverse TCP</i> payload in <i>msfvenom</i> and break it apart with <i>libemu's sctest</i> tool.
+											</p>
+
+											<pre>
+												<code class="bash" style=display:block;white-space:pre-wrap>
+-- snip --
+
+
+												</code>
+											</pre>
+
+
+
+
+
+
+
+
+
+			<br><section id="Assembly"><h2>Writing the Assembly</h2></section>
+
+									<p>
+										&emsp; &emsp;Writing assembly
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+
+
+
+
+
+			<br><section id="Demonstration"><h2>Demonstration</h2></section>
+
+									<p>
+										&emsp; &emsp;Demonstrate shellcode here
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+
+
+
+
+
+			<br><section id="Debugging"><h2>Debugging</h2></section>
+
+									<p>
+										&emsp; &emsp;Debugging and Troubleshooting
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+
+
+
+
+		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
+
+									<p>
+										&emsp; &emsp;Conclusion goes here
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+
+
+
+
+
+
+
+									<p>
+									This blog post has been created for completing the requirements of the SecurityTube Linux Assembly Expert certification:
+									<a href="http://securitytube-training.com/online-courses/securitytube-linux-assembly-expert/" target="_blank" style="color:blue;">http://securitytube-training.com/online-courses/securitytube-linux-assembly-expert/</a><br>
+
+									Student ID: PA-15981
+									</p>
+
+
                         </div>
 
                       </article>
