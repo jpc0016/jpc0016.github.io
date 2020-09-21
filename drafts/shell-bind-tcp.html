@@ -51,30 +51,38 @@
                   <section class="post">
                     <body>
                       <article id="first-post">
-												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
-                        <h2>&emsp; Creating Shell_Bind_TCP Shellcode </h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; September 18, 2020</h5>
+												<a href="index.html"><img src="../images/andy.png" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; Creating Shell Bind TCP Shellcode </h2>
+												<h5>&emsp; &emsp; &emsp; &emsp; September 21, 2020</h5>
                         <div class="box">
+
+													<br><h2>Contents</h2>
+													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
+													<a href="#Assembly" style="color:blue;">Assembly Code Creation</a><br>
+													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
+													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
+													<a href="#Thoughts" style="color:blue;">Thoughts</a><br><br>
+
                           <p>
-														&emsp; &emsp;This post involves writing shellcode to create a <i>Bind TCP</i> shell on a victim machine. &nbsp;This is also known as
+														&emsp; &emsp;This post involves writing shellcode to create a <i>Bind TCP</i> shell to connect to a victim machine. &nbsp;This is also known as
 														<i>port-binding shellcode</i>. &nbsp;Before continuing high-level analysis, it is worth noting the difference between
 														bind and reverse TCP shells:<br><br>
 														A bind shell is a command line interface opened when an attacker machine opens a port on the victim machine and connects to it. &nbsp;
 														The victim machine listens to incoming connections and the attacker machine makes the connection. &nbsp;This is typically done
 														using IP address 0.0.0.0 to denote listening on all interfaces. &nbsp;A diagram of a bind TCP shell is shown below.
 											 	</p>
-												<center><div class="image post"><img src="../images/slae/bind-shell.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/slae/1-bind-shell.png" alt="" /></div></center><br>
 												<br>
 
 												<p>
 													Reverse shells are functionally similar to bind shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
 													for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
-													machine, usually by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
+													machine by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
 												</p>
-												<center><div class="image post"><img src="../images/slae/reverse-shell.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/slae/2-reverse-shell.png" alt="" /></div></center><br>
 
 
-												<br><h2>Drafting the Proof of Concept</h2>
+									<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
 
 												<p>
 													&emsp; &emsp;It is important to visualize what a bind shell looks like in higher level objective C code before attempting to write it in x86 assembly. &nbsp;
@@ -224,7 +232,7 @@ int main(){
 												<center><div class="image post"><img src="../images/slae/3-c-test.png" alt="" /></div></center><br>
 
 
-												<br><h2>Assembly Code Creation</h2>
+							<br><section id="Assembly"><h2>Assembly Code Creation</h2></section>
 
 												<p>
 													&emsp; &emsp;Now that high-level functions are organized, the fun starts when disassembling the binary to inspect activity. &nbsp;Running the binary through <i>objdump</i>
@@ -235,7 +243,7 @@ int main(){
 
 
 												<p>
-													Although similar, it is not quite intended for the shellcode. &nbsp;It provides a clue to how assembly code will be drafted. &nbsp;Using function like <i>socket</i> in shellcode
+													Although similar, it is not quite intended for the shellcode. &nbsp;It provides a clue to how assembly code will be drafted. &nbsp;Using functions like <i>socket</i> in shellcode
 													are better suited as system calls. &nbsp;To get system call information, the system call location must be known. &nbsp;This can happen with a neat command below, which shows
 													header files used in preprocessing.
 												</p>
@@ -243,44 +251,192 @@ int main(){
 
 
 												<p>
-													Open <i>asm/unistd_32.h</i> to find the expected system call table. &nbsp;Scroll down to find <i>socketcall</i> set to 102, <i>bind</i> to 361, <i>listen</i> to 363, and <i>accept4</i> to 364. &nbsp;Also
+													Open <code>/usr/include/i386-linux-gnu/asm/unistd_32.h</code> to find the expected system call table. &nbsp;Scroll down to find <i>socket</i> set to 359, <i>bind</i> to 361, <i>listen</i> to 363, and <i>accept4</i> to 364. &nbsp;Also
 													<i>dup2</i> is 63 and <i>execve</i> is 11. &nbsp;Below is what the system call table looks like.
 												</p>
 												<center><div class="image post"><img src="../images/slae/6-syscalls.png" alt="" /></div></center><br>
 
 
 												<p>
-													The assembly can be created. &nbsp;Start with the jump-call-pop outline
+													Assembly coding can begin by loading registers with parameter values and using syscall numbers. &nbsp;The <a href="https://www.man7.org/linux/man-pages/man2/socket.2.html" target="_blank" style="color:blue;"><i>socket()</i></a>
+													 system call is straightforward so simply load each register according to their values from the <i>objdump</i> output.
+
 												</p>
+												<center><div class="image post"><img src="../images/slae/Assembly/1-socket.png" alt="" /></div></center><br>
 
-
-
-
-
-												<br><h2>Demonstration</h2>
 
 												<p>
-													Demonstrate shellcode here in test case
+													For reference, <i>socket()</i> and <i>bind()</i> both utilize the AF_INET address family. &nbsp;AF_INET is defined in <code>/usr/include/i386-linux-gnu/bits/socket.h</code>. &nbsp;PF_INET is
+													first set to 2, then AF_INET is set equal to PF_INET.
+
 												</p>
+												<center><div class="image post"><img src="../images/slae/7-PF_INET-definition.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/slae/8-AF_INET-definition.png" alt="" /></div></center><br>
 
 
-												<br><h2>Final Thoughts</h2>
+													<p>Things get interesting when using <i>bind()</i>. &nbsp;Passing structures is not as simple as passing single parameters. &nbsp;The binary needs to be
+													inspected in GDB to observe how the <i>sockaddr</i> structure is passed into <i>bind()</i>. &nbsp;Run strace on the binary to observe how parameters are passed at a high level.
+												</p>
+												<center><div class="image post"><img src="../images/slae/9-strace.png" alt="" /></div></center><br>
+
+
+												<p>There are three parameters passed into <i>bind()</i>, one of which is a structure with three attributes. &nbsp;Refer to the <i>Unix Socket Structures</i>
+													<a href="https://www.tutorialspoint.com/unix_sockets/socket_structures.htm" target="_blank" style="color:blue;">page</a> for the size of each attribute. &nbsp;<i>sockaddr</i> is a
+													structure with an <i>sa_family</i> attribute [set to AF_INET] and an <i>sa_data</i> attribute that holds up to 14 bytes. &nbsp;<i>sa_data</i> is further represented by another
+													structure called <i>sockaddr_in</i>.
+											</p>
+											<center><div class="image post"><img src="../images/slae/10-sockaddr-struct.png" alt="" /></div></center><br>
+
+
+											<p><i>sockaddr_in</i> is defined further down the page using 2 bytes for <i>sin_family</i>, 2 bytes for <i>sin_port</i>, and a structure of 4 bytes for <i>sin_addr</i>. &nbsp;Notice how
+												<i>sin_addr</i> is defined as a structure of type <i>in_addr</i> which only has one attribute!
+										</p>
+										<center><div class="image post"><img src="../images/slae/11-sockaddr_in-struct.png" alt="" /></div></center><br>
+
+
+											<p>With parameter layout in mind, the structure can be pushed onto the stack in reverse order. &nbsp;The structure <i>sockaddr</i> is a base set of address structures which holds
+												initialized data in <i>sockaddr_in</i>. &nbsp;This is why <i>&home</i> is cast as a <i>sockaddr</i> structure when passed into <i>bind()</i>. &nbsp;The result is <i>sa_data[14]</i>
+												holding the values of <i>sin_addr</i> and <i>sin_port</i>. &nbsp;<i>sin_addr</i> is 4 bytes (unsigned long) and pushed first. &nbsp;<i>sin_port</i> holds port 4444 in reverse order to
+												satisfy the network byte order <a href="https://linux.die.net/man/3/htons" target="_blank" style="color:blue;">requirement</a>. &nbsp;<i>sin_family</i> is holds 0x2, the value of
+												AF_INET. &nbsp;It is important to push both 2 byte values (<i>sin_port</i> and <i>sin_family</i>) as WORDs to avoid dead bytes (more on dead bytes in <b>Troubleshooting</b> section).
+												 &nbsp;Move the stack pointer into <i>ecx</i> to satisfy the second <i>bind()</i> parameter.
+										</p>
+										<center><div class="image post"><img src="../images/slae/Assembly/2-setstruct.png" alt="" /></div></center><br>
+
+
+										<p>Once the hardest parameter is taken care of, load the other ones into their respective registers. &nbsp;<i>ebx</i> holds the file descriptor from <i>socket()</i>, <i>eax</i> holds system call
+											number 361, and <i>edx</i> holds address length.
+										</p>
+										<center><div class="image post"><img src="../images/slae/Assembly/3-bind.png" alt="" /></div></center><br>
+
+
+										<p>The <a href="https://man7.org/linux/man-pages/man2/listen.2.html" target="_blank" style="color:blue;"><i>listen()</i></a> system call is next, which is pretty straightforward like
+										 <i>socket()</i>. &nbsp;Note that ebx is already set to the file descriptor.
+									 </p>
+									 <center><div class="image post"><img src="../images/slae/Assembly/4-listen.png" alt="" /></div></center><br>
+
+
+										<p>Things get interesting again when calling <a href="https://man7.org/linux/man-pages/man2/accept.2.html" target="_blank" style="color:blue;"><i>accept()</i></a>. &nbsp;Since <i>accept()</i> is
+											not in the system call table, <i>accept4()</i> is used instead with a value of 364. &nbsp;This can be treated the same as <i>accept()</i> if no flags are passed in <i>accept4()</i>. &nbsp;That
+											part is easy, but the tricky part is loading space for the structure similar to what was done in <i>bind()</i>. &nbsp;Revisit the source code to check parameters.
+										</p>
+										<center><div class="image post"><img src="../images/slae/12-accept-c.png" alt="" /></div></center><br>
+
+
+										<p>
+											The function requires the current file descriptor, a structure pointer, and the address of the structure's size. &nbsp;When inspecting the activity in GDB, there are 3 addresses involved in this
+											function call. &nbsp;The first one ([ebp-0x3c]) is set to the structure size (16) before its address (0xbfffee4c) is loaded into eax and pushed onto the stack.
+										</p>
+										<center><div class="image post"><img src="../images/slae/13-accept-gdb.png" alt="" /></div></center><br>
+
+
+										<p>
+											The next address ([ebp-0x38]) is the pointer to the <i>sockaddr</i> structure and follows the same activity. &nbsp;Finally the file descriptor at [ebp-0xc] (address 0xbfffee7c, value 0x3) is pushed
+											onto the stack. &nbsp;The top of the stack has all parameters (highlighted) and their destinations boxed in red. &nbsp;The <i>sockaddr </i>structure is on the next line after address 0xbfffee48
+											since it starts at 0xbfffee50.
+										</p>
+										<center><div class="image post"><img src="../images/slae/14-accept-stack.png" alt="" /></div></center><br>
+
+
+										<p>
+											Once function behavior is known, load the structure parameters backwards and move the stack pointer to ecx. &nbsp;These values are 0 since the function is not interested in
+											<a href="https://www.ibm.com/support/knowledgecenter/SSLTBW_2.2.0/com.ibm.zos.v2r2.bpxbd00/accept.htm" target="_blank" style="color:blue;">accepting specific addresses or ports</a>.
+											 &nbsp;Set the esi register to 0 in case <i>accept4()</i> requires the flags field. &nbsp;As with <i>listen()</i>, ebx already holds the file descriptor. &nbsp;Save the new file descriptor
+											 into edi after running the syscall instruction.
+											<!-- ebx already = fd -->
+										</p>
+										<center><div class="image post"><img src="../images/slae/Assembly/5-accept4.png" alt="" /></div></center><br>
+
+
+										<p>Next is duplicating the new file descriptor to each stdio connection: stdin, stdout, stderr. &nbsp;These are 0, 1, and 2 respectively. &nbsp;Since three function calls need to happen,
+											the action can be coded in a loop. &nbsp;<i>loop</i> or <i>cmp/jne</i> should work as long as the loop counter (ecx) is set.
+									</p>
+									<center><div class="image post"><img src="../images/slae/Assembly/6-dup2.png" alt="" /></div></center><br>
+
+
+										<p>The final call to <i>execve()</i> is straightforward and can be modeled after lecture videos. &nbsp;The important part is remembering the first argument is the <i>//bin/sh</i> string and the
+											second is the pointer to that string. &nbsp;This involves pushing <i>//bin/sh</i> onto the stack twice: First to get the string value, second to get the pointer value.
+											</p>
+												<center><div class="image post"><img src="../images/slae/Assembly/7-execve.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Demonstration"><h2>Demonstration</h2></section>
 
 												<p>
-													Conclusion and stuff
+													&emsp; &emsp;After writing the disassembly and verifying the same functionality, extract the shellcode with the <i>objdump</i> command from
+													<a href="https://www.commandlinefu.com/commands/view/6051/get-all-shellcode-on-binary-file-from-objdump" target="_blank" style="color:blue;">commandlinefu</a>. &nbsp;The binary should be compiled
+													from assembly with <i>nasm</i> and linked with <i>ld</i> (<b>Troubleshooting</b> section explains why).
+												</p>
+												<center><div class="image post"><img src="../images/slae/17-get-shellcode.png" alt="" /></div></center><br>
+
+
+												<p>
+													Copy and paste the shellcode into the C-code test harness. &nbsp;Make sure to use nano and not vim.
+												</p>
+												<center><div class="image post"><img src="../images/slae/18-add-to-harness.png" alt="" /></div></center><br>
+
+
+												<p>
+													Compile the program with no stack protection and executable stack flags set.
+												</p>
+												<center><div class="image post"><img src="../images/slae/19-compile-harness.png" alt="" /></div></center><br>
+
+
+												<p>
+													Finally validate the shellcode works when <i>harness.c</i> passes execution control to it.
+												</p>
+												<center><div class="image post"><img src="../images/slae/20-harness-works.png" alt="" /></div></center><br>
+
+
+
+							<br><section id="Troubleshooting"><h2>Troubleshooting</h2></section>
+
+												<p>
+												&emsp; &emsp;This section is intended to describe pitfalls and how to avoid them. &nbsp;Due to the sheer amount of code, the testing stage is much more time demanding than the code
+												drafting stage and debugging occurred entirely in response to assembly code errors.<br>
+												&emsp; &emsp;The shellcode is required to avoid dead bytes as mentioned in the <i>bind()</i> assembly writeup. &nbsp;If <i>gcc</i> is used to link the final executable, the commandlinefu <i>objdump</i>
+												will return dead bytes. &nbsp;These same dead bytes will be present in the disassembly upon inspecting but are in linker sections like <i>.init</i> and <i>.plt</i>; however, dead bytes are
+												absent from the main function!
+												</p>
+												<center><div class="image post"><img src="../images/slae/21-compile-gcc.png" alt="" /></div></center><br>
+
+												<p>
+												Link with <i>ld</i> instead of <i>gcc</i> to avoid extra fluff in the compiled binary. &nbsp;This means use <i>_start</i> instead of <i>main</i> in the assembly. &nbsp;Inspect it again with
+												<i>objdump</i> and grep for dead bytes. &nbsp;They are gone but 0x01 bytes are present!
+												</p>
+												<center><div class="image post"><img src="../images/slae/22-troubleshoot-deadbytes.png" alt="" /></div></center><br>
+
+
+												<p>
+												Another source of dead bytes occurs when pushing <i>sockaddr_in</i> parameters onto the stack. &nbsp;The values 0x5c11 (<i>sin_port</i>) and 0x2 (<i>sin_family</i>) must be pushed as WORD
+												size. &nbsp;If the size is not specified, <i>push</i> will assume 4 bytes of data are pushed onto the stack and will pad the remaining bytes with zeros.<br>
+												&emsp; &emsp;At times <i>bind()</i> would return a -1 error stating the address was already in use. &nbsp;This issue can be resolved by killing the process at the target IP. &nbsp;Run command
+												<code>fuser 4444/tcp</code> to verify the process is in use. &nbsp;Then run <code>fuser -k 4444/tcp</code> to terminate it.
+
+												</p>
+												<center><div class="image post"><img src="../images/slae/23-strace-bind-debug.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Thoughts"><h2>Thoughts and Important Lessons</h2></section>
+
+												<p>
+													&emsp; &emsp;Bind shell was a fantastic shellcode exercise with remote system exploitation in mind. &nbsp;It provided great lessons in sockets programming as well as debugging
+													techniques. &nbsp;When in doubt, use <i>strace</i> and <i>GDB</i> to reveal errors and determine paths forward. &nbsp;Those two tools were life-savers. &nbsp;Assignment 2 is the reverse shell which will be built in a
+													 similar fashion using the bind shell as a springboard.
 										 		</p>
+
 
                          <p>The source code for this assignment as well as other SLAE assignments is here:
 												 <a href="https://github.com/jpc0016/SLAE-code" target="_blank" style="color:blue;">https://github.com/jpc0016/SLAE-code</a>
 											 		</p>
 
-
-
-
-
+													<p>
 												 This blog post has been created for completing the requirements of the SecurityTube Linux Assembly Expert (SLAE) certification:
 												 <a href="http://securitytube-training.com/online-courses/securitytube-linux-assembly-expert/" target="_blank" style="color:blue;">http://securitytube-training.com/online-courses/securitytube-linux-assembly-expert/</a><br><br>
-												 Student ID: SLAE-XXXXX<br><br>
+												 Student ID: PA-15981
+												 </p><br><br>
 
                         </div>
 
