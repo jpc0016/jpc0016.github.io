@@ -59,25 +59,25 @@ Reverse<!DOCTYPE HTML>
                       <article id="first-post">
 												<a href="index.html"><img src="../images/matt.png" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Shellcoding the Reverse TCP Shell</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; October 2, 2020</h5>
+												<h5>&emsp; &emsp; &emsp; &emsp; September 25, 2020</h5>
                         <div class="box">
 
 													<br><h2>Contents</h2>
 													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
 													<a href="#Assembly" style="color:blue;">Writing the Assembly</a><br>
-													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
-													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
+													<a href="#Demonstration" style="color:blue;">Shellcode Demonstration</a><br>
+													<a href="#Debugging" style="color:blue;">Debugging</a><br>
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 													<p>
 														&emsp; &emsp;Welcome back, Aaron! &nbsp;This post involves writing shellcode to create a <i>Reverse TCP</i> Shell to establish a connection with a victim machine.
 														 &nbsp;This is also called a <i>connect-back shell</i>. &nbsp;Before proceeding, it is important to note most detailed explanation common to Bind and Reverse Shells
 														 can be found in the <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">previous post</a>. &nbsp;This is done for
-														 brevity and highlighting Reverse Shell specific features. &nbsp;A review of the Reverse TCP Shell is below:<br><br>
+														 brevity and highlighting Reverse Shell specific features. &nbsp;A review of the Reverse TCP Shell is below.<br><br>
 														From the previous article: &nbsp;
 														Reverse Shells are functionally similar to Bind Shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
 														for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
-														machine by invoking a Reverse Shell. &nbsp;Below is what a Reverse TCP Shell looks like.
+														machine by invoking the Reverse Shell payload. &nbsp;Below is what a Reverse TCP Shell looks like.
 											 	</p>
 												<center><div class="image post"><img src="../images/slae/assignment2/1-reverse-shell.png" alt="" /></div></center><br>
 												<br>
@@ -87,8 +87,8 @@ Reverse<!DOCTYPE HTML>
 
 											<p>
 												&emsp; &emsp;Similar to the Bind Shell, a Proof of Concept (PoC) is developed using the same methodology. &nbsp;The methodology comes from
-												<a href="https://www.wiley.com/en-us/The+Shellcoder%27s+Handbook%3A+Discovering+and+Exploiting+Security+Holes%2C+2nd+Edition-p-9780470080238" target="_blank" style="color:blue;"><i>The Shellcoder's Handbook</i></a>,
-												 which is referenced in the <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html#POC" target="_blank" style="color:blue;"><i>previous post</i></a>.
+												<a href="https://www.wiley.com/en-us/The+Shellcoder%27s+Handbook%3A+Discovering+and+Exploiting+Security+Holes%2C+2nd+Edition-p-9780470080238" target="_blank" style="color:blue;"><i>The Shellcoder's Handbook</i></a>
+												 and is referenced in the <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html#POC" target="_blank" style="color:blue;"><i>previous post</i></a>.
 												 &nbsp;Look for the unstaged version of <i>Shell Reverse TCP</i> payload in <i>msfvenom</i> and break it apart with <i>libemu's sctest</i> tool. &nbsp;The command used is <br>
 												 <code>msfvenom -p linux/x86/shell_reverse_tcp R | ~/SLAE/Libemu/tools/sctest/sctest -vvv -Ss 100000</code>
 											</p>
@@ -148,7 +148,7 @@ int execve (
 												A cursory look at the above shows Reverse Shell is much smaller than its Bind Shell counterpart. &nbsp;Instead of 6 main functions, there are only 4 which drive the Reverse Shell:
 												<i>socket()</i>, <i>dup2()</i>, <i>connect()</i>, and <i>execve()</i>. &nbsp;The functions <i>socket()</i>, <i>dup2()</i>, and <i>execve()</i> behave the same as in Bind Shell so
 												<i>connect()</i> is the major change in the reverse shell. &nbsp;Looking at the <a href="https://man7.org/linux/man-pages/man2/connect.2.html" target="_blank" style="color:blue;">man page</a>,
-												it appears <i>connect()</i> uses similar parameters to <i>accept()</i>. &nbsp;This function can be quickly coded by referencing <i>accept()</i> in
+												it appears <i>connect()</i> uses similar parameters to <i>bind()</i> and <i>accept()</i>. &nbsp;This function can be quickly coded by referencing <i>accept()</i> in
 												the Bind Shell <a href="https://github.com/jpc0016/SLAE-code/blob/master/Assignment-1/shell-bind.c" target="_blank" style="color:blue;">program</a>. &nbsp;The remaining functions are even more
 												straightforward:
 											</p>
@@ -208,7 +208,7 @@ int main() {
 			<br><section id="Assembly"><h2>Writing the Assembly</h2></section>
 
 									<p>
-										&emsp; &emsp;Now that the source code is validated, it is time to convert each main function to assembly language. &nbsp;Recall the system call table from the Bind Shell
+										&emsp; &emsp;Now that the source code is validated, it is time to convert each main function to assembly language. &nbsp;Refer to the system call table from the Bind Shell
 										<a href="https://thestunneddefense.com/pages/shell-bind-tcp.html#Assembly" target="_blank" style="color:blue;"><i>article</i></a>. &nbsp;System calls for <i>socket()</i>.
 										 <i>dup2()</i>, and <i>execve()</i> are unchanged. &nbsp;The system call for <i>connect()</i> needs to be included. &nbsp;Once again the system call table is at
 										 <code>/usr/include/i386-linux-gnu/asm/unistd_32.h</code> for 32-bit Linux systems. &nbsp;<i>connect()</i> uses syscall 362.
@@ -219,7 +219,7 @@ int main() {
 									<p>
 										For a quick recap, the previous post began with a quick disassembly of the <i>reverse-shell</i> binary to inspect how parameters were loaded. &nbsp;The same activity is shown below
 										with <i>socket()</i> parameters loaded in reverse order onto the stack. <br>Quick note on active debugging: the binary must be in <i>run</i> mode in order for linked labels like
-										<i>&lt;socket>@plt</i> to show in disassembly; otherwise calls to 'arbitrary' addresses will show with no references.
+										<i>&lt;socket>@plt</i> to show in disassembly; otherwise calls to 'arbitrary' addresses will be displayed with no references.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment2/4-socket-params.png" alt="" /></div></center><br>
 
@@ -230,7 +230,7 @@ int main() {
 
 
 									<p>
-										Although the home address structure was defined and initialized before calls to <i>dup()</i>, the later can be loaded and executed. &nbsp;That order is not important right now. &nbsp;The
+										Although the home address structure was defined and initialized before calls to <i>dup2()</i>, the later can be loaded and executed. &nbsp;That order is not important. &nbsp;The
 										assembly is identical to the code in Bind Shell. &nbsp;Only comments were changed!
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment2/6-dup2-call.png" alt="" /></div></center><br>
@@ -259,21 +259,21 @@ int main() {
 
 
 									<p>
-										Step to the <i>load effective address</i> instruction to view register contents beforehand.
+										Step to the <i>load effective address</i> instruction to view register contents beforehand. &nbsp;So far only the structure size (0x10) has been pushed onto the stack.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment2/struct/3-before-ptr.png" alt="" /></div></center><br>
 
 
 									<p>
 										Execute the load instruction to find eax with a pointer to the structure. &nbsp;Dump the bytes to see each parameter in byte order. &nbsp;The right-most 4 bytes is the IP address 127.0.0.1, the
-										next 2 bytes is port 4444 in hexadecimal, and the final left 2 bytes is the AF_INET designator.
+										next 2 bytes is port 4444 in hexadecimal (0x5c11 pushed backwards onto the stack), and the final left 2 bytes is the AF_INET designator.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment2/struct/4-inspect-ptr.png" alt="" /></div></center><br>
 
 
 									<p>
-										Step two more times to view all parameters on the stack at function call-time. &nbsp;All three <i>connect()</i> parameters are on the stack at the <i>call</i> instruction. &nbsp;Note they are
-										loaded in little-endian order.
+										Step two more times to view all parameters on the stack just before the function call. &nbsp;All three <i>connect()</i> parameters are on the stack at the <i>call</i> instruction: 0x00000003,
+										0xbfffee6c, and 0x00000010 &nbsp;Note they are loaded in little-endian order.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment2/struct/5-all-params.png" alt="" /></div></center><br>
 
@@ -292,9 +292,9 @@ mov WORD [eax + 1], bx		; eax = 0x0100007f
 									</pre>
 									<p>
 										Moving 0x0100007f into a register will involve NULL bytes in the middle of the address. &nbsp;Since the NULL bytes take up one WORD of space, replace that word with arbitrary bytes. &nbsp;0x0000 was
-										replaced with 0xbbbb. &nbsp;Remove those arbitrary bytes in the final instruction by replacing the arbitrary value with a 2 byte register of NULLs. &nbsp;This must occur at an offset of 1 to overwrite
+										replaced with 0xbbbb. &nbsp;Remove those arbitrary bytes in the final instruction by replacing them with a 2 byte register of NULLs. &nbsp;This must occur at an offset of 1 to overwrite
 										 the correct bytes.<br>
-										&emsp; &emsp;Other than the localhost address, all parameters remain unchanged; therefore, most of the assembly code remains the same as assembly code in <i>bind()</i>. &nbsp;Note it now takes two
+										&emsp; &emsp;Other than the localhost address, all parameters remain unchanged; therefore, most of the assembly code remains the same as assembly code in <i>bind()</i>. &nbsp;Note it now takes three
 										instructions to set <i>home.sin_addr</i>.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment2/8-connect-call.png" alt="" /></div></center><br>
@@ -313,10 +313,10 @@ mov WORD [eax + 1], bx		; eax = 0x0100007f
 
 
 
-			<br><section id="Demonstration"><h2>Demonstration</h2></section>
+			<br><section id="Demonstration"><h2>Shellcode Demonstration</h2></section>
 
 									<p>
-										&emsp; &emsp;The hard part is done when both the proof of concept and assembly are validated. &nbsp;Run <i>objdump</i> on the binary with the special
+										&emsp; &emsp;The hard part is done when both the proof of concept and assembly are validated. &nbsp;Run <i>objdump</i> on the binary using the special
 										<a href="https://www.commandlinefu.com/commands/view/6051/get-all-shellcode-on-binary-file-from-objdump" target="_blank" style="color:blue;">command</a> to extract the opcode.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment2/11-objdump.png" alt="" /></div></center><br>
@@ -338,22 +338,71 @@ mov WORD [eax + 1], bx		; eax = 0x0100007f
 			<br><section id="Debugging"><h2>Debugging</h2></section>
 
 									<p>
-										&emsp; &emsp;Reverse Shell was much less debug intensive compared to Bind Shell; however, there was an unanticipated problem at the shellcode stage. &nbsp;
+										&emsp; &emsp;Reverse Shell was much less debug-intensive compared to Bind Shell; however, an unanticipated problem occurred at the shellcode stage. &nbsp;After validating both
+										C and Assembly reverse shells, the <i>harness</i> binary received a segfault when executing shellcode.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/error/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment2/error/1-segfault.png" alt="" /></div></center><br>
 
+
+									<p>
+										<i>Strace</i> did not produce a concrete answer so <i>harness</i> was inspected in <i>GDB</i>. &nbsp;An address, 0x0804a040, is loaded into eax at lines 0x0804846d and 0x08048474 before it is called.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/error/2-disassemble-harness.png" alt="" /></div></center><br>
+
+
+									<p>
+										Address 0x0804a040 holds the shellcode payload. &nbsp;Dump the contents as instructions to reveal the wrong WORD value being subtracted. &nbsp;The original instruction to set IP address
+										127.0.0.1 involved subtracting the WORD value (0xbbbb) at the stack pointer offset instead of moving zeroes into those bytes.
+										<pre>
+											<code class="x86asm" style=display:block;white-space:pre-wrap>
+	; original instruction to set 127.0.0.1
+	push 0x7fbbbb01				; esp points to 0x01bbbb7f
+	sub WORD [esp + 1], 0xbbbb		; 0x0100007f
+											</code>
+										</pre>
+									</p>
+
+									<center><div class="image post"><img src="../images/slae/assignment2/error/3-wrong-value.png" alt="" /></div></center><br>
+
+
+									<p>
+										After dumping the assembly-coded Reverse Shell, the subtract instruction likely produced too many opcode bytes; 7 in this case. &nbsp;Refer to the previous screenshot to see 4 extra bytes
+										pushed onto the stack along with 0x5c11. &nbsp;These bytes (0x6a66) have no business being pushed with the target port number (0x5c11).
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment2/error/4-long-instruction.png" alt="" /></div></center><br>
+
+
+									<p>
+										Reduce the opcode bytes to an acceptable level by changing the instruction to the one used in <i>socket()</i>. &nbsp;Below is the corrected assembly code and the opcode reduced to
+										5 bytes. &nbsp;The shellcode properly executed after this fix so there is likely an opcode limit for each instruction.
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+; actual instruction to set 127.0.0.1
+xor edx, edx
+push 0x7fbbbb01				; esp points to 0x01bbbb7f
+mov WORD [esp + 1], dx		; 0x0100007f
+										</code>
+									</pre>
+									<center><div class="image post"><img src="../images/slae/assignment2/error/5-changed-value.png" alt="" /></div></center><br><br>
+
+
+									<p>
+										If other problems are encountered, refer to the Bind Shell
+										<a href="https://thestunneddefense.com/pages/shell-bind-tcp.html#Troubleshooting" target="_blank" style="color:blue;">Troubleshooting section</a> for details.
+									</p>
 
 
 
 		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
 
 									<p>
-										&emsp; &emsp;Conclusion goes here
+										&emsp; &emsp;Thanks to Bind Shell, much of the heavy lifting and troubleshooting was frontloaded. &nbsp;Once again <i>strace</i> and <i>GDB</i> played important roles in fault isolation when
+										the shellcode initially failed. &nbsp;Opcode length is an additional consideration going forward; however, a hard limit is yet to be determined (likely 5 or 6 bytes per instruction).
+										 &nbsp;An additional feature could be added to the C code to enable user input of a callback IP address. &nbsp;For further reading on reverse shells, look at Netsparker's
+										<a href="https://www.netsparker.com/blog/web-security/understanding-reverse-shells/" target="_blank" style="color:blue;">article</a> which details reverse shells in multiple high level
+										languages.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
-
-
-
 
 
 									<p>
