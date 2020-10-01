@@ -374,13 +374,15 @@ mov WORD [eax + 1], bx		; eax = 0x0100007f
 
 									<p>
 										Reduce the opcode bytes to an acceptable level by changing the instruction to the one used in <i>socket()</i>. &nbsp;Below is the corrected assembly code and the opcode reduced to
-										5 bytes. &nbsp;The shellcode properly executed after this fix so there is likely an opcode limit for each instruction.
+										5 bytes. &nbsp;The shellcode properly executed after this fix so there is likely an opcode limit for each instruction.<br>
+										<b>UPDATE:</b> &nbsp;The shellcode failed at 7 opcode bytes because the special <i>objdump</i> command only cuts up to 6 bytes; leaving out the 7th byte. &nbsp;This can be remediated
+										by changing the second <i>cut</i> instruction from <code>cut -f1-6 -d' '</code> to <code>cut -f1-7 -d' '</code>.
 									</p>
 									<pre>
 										<code class="x86asm" style=display:block;white-space:pre-wrap>
 ; actual instruction to set 127.0.0.1
 xor edx, edx
-push 0x7fbbbb01				; esp points to 0x01bbbb7f
+push 0x7fbbbb01			; esp points to 0x01bbbb7f
 mov WORD [esp + 1], dx		; 0x0100007f
 										</code>
 									</pre>

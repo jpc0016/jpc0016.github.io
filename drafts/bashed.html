@@ -6,6 +6,8 @@
 		<meta charset="utf-8" />
 		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
 		<link rel="stylesheet" href="../assets/css/main.css" />
+		<script src="../assets/js/highlight.pack.js"></script>
+		<script>hljs.initHighlightingOnLoad();</script>
 		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
 	</head>
 	<body class="is-preload">
@@ -45,7 +47,7 @@
                       <article id="first-post">
 												<a href="index.html"><img src="../images/ground.png" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Bashed Writeup</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; September 3, 2020</h5>
+												<h5>&emsp; &emsp; &emsp; &emsp; October 3, 2020</h5>
                         <div class="box">
                           <p>&emsp; &emsp; Good evening Tim and Aaron, today's HTB writeup is on "Bashed." &nbsp;This machine has mostly 3/10 ratings
 														so it was not too difficult. &nbsp;I ran into trouble due to exploits requiring certain credentials, which were tricky to find. &nbsp;A significant
@@ -68,10 +70,10 @@
 
 								<br><section id="Enumeration"><h2>Initial Enumeration</h2></section>
 													 <p>
-														 &emsp; &emsp;First step is launching the initial and OS nmap scans on the target IP. &nbsp;Results show ports 22 and 80 are open. &nbsp;OS scan results show leaked header information
-														 from both ports and early versions of Linux as the target OS. &nbsp;According to port enumeration, Ubuntu is the most likely flavor of Linux with high confidence. &nbsp;Port 22
-														 reveals <i>OpenSSH 7.2p2</i> and some ssh-hostkey information. &nbsp;Port 80 reveals <i>Apache httpd 2.4.18</i> running on the back end. &nbsp;As with previous machines, header
-														 and service information are unnecessarily disclosed which is a pentest report finding.
+														 &emsp; &emsp;As usual launch the initial and OS nmap scans on the target IP. &nbsp;Results show only port 80 is open with <i>Apache httpd 2.4.18</i> as its running service. &nbsp;OS
+														 scan results show leaked header information and the site's title: <i>Arrexel's Development Site</i>. &nbsp;This is simply the name of the HTB user who created the machine. &nbsp;
+														 According to port enumeration, Ubuntu is the most likely flavor of Linux at version 3.xx. &nbsp;The exact version will be confirmed later. &nbsp;Once again, header and service
+														  information disclosure is a no-go.
 													 </p>
 													 <center><div class="image post"><img src="../images/bashed/1-nmap-initial.png" alt="" /></div></center>
 													 <center><div class="image post"><img src="../images/bashed/2-nmap-OS.png" alt="" /></div></center><br>
@@ -81,39 +83,63 @@
 							<br><section id="Apache"><h2>Apache httpd</h2></section>
 
 					 									<p>
-					 									&emsp; &emsp;Port 80 was open so I decided to test the machine on a web browser and navigated to <i>https://10.10.10.75/</i> in Firefox. &nbsp;The
-					 									result was a Hello World webpage. &nbsp;I tested the contents behind port 80 by requesting <i>/dev/</i> and received a 404 page leaking server information.
-														 &nbsp;This is another finding on a pentest report.
+					 									&emsp; &emsp;With port 80 open on a TCP scan, it was the obvious starting point for deeper enumeration. &nbsp;Step one is to test the machine on a web browser by navigating to
+														<i>https://10.10.10.68/</i> in Firefox. &nbsp;The result was a home page with options for clicking! &nbsp;I clicked around and found the <i>/single.html</i> page with a clue.
 					 									</p>
-					 									<center><div class="image post"><img src="../images/bashed/3-hello-world.png" alt="" /></div></center><br>
-					 									<center><div class="image post"><img src="../images/bashed/4-try-dev.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/bashed/3-homepage.png" alt="" /></div></center><br>
 
 														<p>
-															Running <i>dirbuster</i> on the root folder revealed only a few directories that provided little information.
-					 									</p>
-					 									<center><div class="image post"><img src="../images/bashed/5-dirbuster-results.png" alt="" /></div></center><br>
+															The site developer is essentially admitting they integrated a bash interface to their website. &nbsp;An alternative line of thought is the author made it easy to invoke their
+															shell on this site. &nbsp;Either way this is good for red team!
+														</p>
+					 									<center><div class="image post"><img src="../images/bashed/4-phpbash.png" alt="" /></div></center><br>
 
 														<p>
-															During this time I investigated exploits for <i>Apache 2.4.18</i> but found none that fit my use case. &nbsp;They were almost all local privilege escalation
-															or Denial of Service (DoS) exploits. &nbsp;With few leads, I went back to the Hello World page to inspect the html source code. &nbsp;An interesting directory
-															appeared in a comment.
+															Run <i>dirbuster</i> on the root folder with a medium directory wordlist. &nbsp;Ensure at least php is in the <i>File extension</i> field.
 					 									</p>
-					 									<center><div class="image post"><img src="../images/bashed/6-nibbleblog-path.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/bashed/5-dirbuster.png" alt="" /></div></center><br>
 
 														<p>
-															Append the directory to the ip address to reveal a backend home page. &nbsp;
+															Results will appear and an interesting folder stands out: <i>/dev/</i>. &nbsp;This folder holds <i>phpbash.php</i> which matches what is seen in <i>Arrexel's</i> github page.
 					 									</p>
-					 									<center><div class="image post"><img src="../images/bashed/7-nibbleblog-home.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/bashed/6-dirbuster-phpbash.png" alt="" /></div></center><br>
+
+														<p>
+														Right click the shell and select <i>Open In Browser</i>. &nbsp;A php bash shell implementation is invoked with low level privileges!
+					 									</p>
+					 									<center><div class="image post"><img src="../images/bashed/7-shell-access.png" alt="" /></div></center><br><br>
 
 
 
 								<br><section id="Filesystem"><h2>Filesystem Inspection</h2></section>
 
 												<p>
-													&emsp; &emsp;Being satisfied with the home page, I ran <i>dirbuster</i> again with <i>/nibbleblog/</i> as the starting directory. &nbsp;Results were dramatically different!
+													&emsp; &emsp;Once the shell is received, the first step is to inspect contents of the file system to check what can be accessed. &nbsp;Navigate to the root directory to find the standard Linux
+													filesystem.
 												</p>
-												<center><div class="image post"><img src="../images/bashed/8-dirbuster-settings.png" alt="" /></div></center>
-												<center><div class="image post"><img src="../images/bashed/9-dirbuster-again.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/bashed/8-navigate-root.png" alt="" /></div></center><br>
+
+												<p>
+													So far so good. &nbsp;Check for users in <i>/home/</i>. &nbsp;It appears <i>Arrexel</i> left a user account on the system. &nbsp;Check in their directory to find the user flag and dump it!
+												</p>
+												<center><div class="image post"><img src="../images/bashed/9-user-flag.png" alt="" /></div></center><br>
+
+
+<!-- Important links:
+python pty source: https://blog.ropnop.com/upgrading-simple-shells-to-fully-interactive-ttys/
+sudo -u source:  https://askubuntu.com/questions/294736/run-a-shell-script-as-another-user-that-has-no-password
+fully interactive shell: https://null-byte.wonderhowto.com/how-to/upgrade-dumb-shell-fully-interactive-shell-for-more-flexibility-0197224/
+-->
+
+
+
+
+
+
+
+
+
+
 
 												<p>
 												While <i>dirbuster</i> was at work, I grabbed backend system information with <i>wappalyzer</i> then inspected the <i>README</i> once it was revealed. &nbsp;The <i>README</i> was interesting in
