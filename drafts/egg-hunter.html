@@ -58,35 +58,48 @@
                     <body>
                       <article id="first-post">
 												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
-                        <h2>&emsp; Egg Hunter Shellcode</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; October 9, 2020</h5>
+                        <h2>&emsp; Analysis of Egg Hunter Shellcode</h2>
+												<h5>&emsp; &emsp; &emsp; &emsp; October 11, 2020</h5>
                         <div class="box">
 
+													<!-- Don't think these contents will look the same-->
 													<br><h2>Contents</h2>
-													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
-													<a href="#Assembly" style="color:blue;">Writing the Assembly</a><br>
+													<a href="#Concept" style="color:blue;">Concept</a><br>
+													<a href="#Access" style="color:blue;">Access() Method</a><br>
+													<a href="#Sigaction" style="color:blue;">Sigaction() Method</a><br>
 													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
 													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 													<p>
-														&emsp; &emsp;Today's post involves writing Egghunter shellcode.
-														 &nbsp;A review of the reverse TCP shell is below:<br><br>
-														From the previous <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">article</a>: &nbsp;
-														Reverse shells are functionally similar to bind shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
-														for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
-														machine by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
+														&emsp; &emsp;Today's post involves writing Egg hunter shellcode. &nbsp;Per the assignment instructions, this is a research oriented task for the purpose of integrating with other
+														shellcode such as reverse shell. &nbsp;A quick introduction is required since this is a new concept.<br>
+
+				<br><section id="Concept"><h2>Concept</h2></section>
+														&emsp; &emsp;Not all vulnerable programs are built alike. &nbsp;They are often constrained by limited space to execute whatever is placed inside; therefore, it makes sense to split a payload into
+														two stages. &nbsp;Stage 1 searches memory space for Stage 2 and jumps to it. &nbsp;Stage 2 is the intended payload to be executed. &nbsp;The problem changes from a lack of space to a need for
+														continuous execution. &nbsp;Egg hunter is the solution to this problem. &nbsp;Consider the comparison below
+														(<a href="https://www.exploit-db.com/docs/english/18482-egg-hunter---a-twist-in-buffer-overflow.pdf" target="_blank" style="color:blue;">via Exploit-DB paper</a>).
 											 	</p>
-												<center><div class="image post"><img src="../images/slae/assignment2/1-reverse-shell.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/slae/assignment3/1-egghunter.png" alt="" /></div></center><br>
 												<br>
 
+													<p>
+														Both stacks are the same size except the right stack contains much less space after the input buffer (junk bytes). &nbsp;The left stack has continuous memory space for shellcode execution so using
+														stages is not necessary. &nbsp;All 365 shellcode bytes fit so just let it rip like beyblades! &nbsp;The right stack however, only has 190 bytes of space (where the question mark is) so where do
+														the remaining 175 bytes go?
+													</p>
 
-			<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
 
+
+
+			<br><section id="Access"><h2>Access() Method</h2></section>
+			<!-- msfvenom has an egghunter module.  Check that out to draft a POC -->
 											<p>
-												Similar to the bind shell, a Proof of Concept (PoC) is developed using the same methodology. &nbsp;Look for the unstaged
-												version of <i>Shell Reverse TCP</i> payload in <i>msfvenom</i> and break it apart with <i>libemu's sctest</i> tool.
+												&emsp; &emsp;The first Egg Hunter method uses the <i>access()</i> syscall. &nbsp;
 											</p>
+
+											<center><div class="image post"><img src="../images/slae/assignment3/2-access-syscall.gif" alt="" /></div></center><br>
 
 											<pre>
 												<code class="bash" style=display:block;white-space:pre-wrap>
@@ -96,6 +109,7 @@
 												</code>
 											</pre>
 
+											<center><div class="image post"><img src="../images/slae/assignment3/run.gif" alt="" /></div></center><br>
 
 
 
@@ -104,12 +118,20 @@
 
 
 
-			<br><section id="Assembly"><h2>Writing the Assembly</h2></section>
 
-									<p>
-										&emsp; &emsp;Writing assembly
-									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+			<br><section id="Sigaction"><h2>Sigaction() Method</h2></section>
+
+											<p>
+											&emsp; &emsp;The second Egg Hunter method uses the <i>sigaction()</i> syscall. &nbsp;
+											</p>
+
+											<pre>
+												<code class="bash" style=display:block;white-space:pre-wrap>
+-- snip --
+
+
+												</code>
+											</pre>
 
 
 
