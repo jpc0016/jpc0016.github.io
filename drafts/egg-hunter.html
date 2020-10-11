@@ -78,7 +78,8 @@
 				<br><section id="Concept"><h2>Concept</h2></section>
 														&emsp; &emsp;Not all vulnerable programs are built alike. &nbsp;They are often constrained by limited space to execute whatever is placed inside; therefore, it makes sense to split a payload into
 														two stages. &nbsp;Stage 1 searches memory space for Stage 2 and jumps to it. &nbsp;Stage 2 is the intended payload to be executed. &nbsp;The problem changes from a lack of space to a need for
-														continuous execution. &nbsp;Egg hunter is the solution to this problem. &nbsp;Consider the comparison below
+														continuous execution. &nbsp;Egg hunter is the solution to this problem. &nbsp;It allows for continuous execution by searching for a unique "tag", otherwise known as "egg," and jumping to it. &nbsp;Similar to how <i>try-except</i> behaves,
+														a four byte egg is searched in Virtual Address Space (VAS) for matches then called once it's found. &nbsp;Consider the comparison below
 														(<a href="https://www.exploit-db.com/docs/english/18482-egg-hunter---a-twist-in-buffer-overflow.pdf" target="_blank" style="color:blue;">via Exploit-DB paper</a>).
 											 	</p>
 												<center><div class="image post"><img src="../images/slae/assignment3/1-egghunter.png" alt="" /></div></center><br>
@@ -87,28 +88,144 @@
 													<p>
 														Both stacks are the same size except the right stack contains much less space after the input buffer (junk bytes). &nbsp;The left stack has continuous memory space for shellcode execution so using
 														stages is not necessary. &nbsp;All 365 shellcode bytes fit so just let it rip like beyblades! &nbsp;The right stack however, only has 190 bytes of space (where the question mark is) so where do
-														the remaining 175 bytes go?
+														the remaining 175 bytes go? &nbsp;The following Egg Hunter implementations from the
+														<a href="http://www.hick.org/code/skape/papers/egghunt-shellcode.pdf" target="_blank" style="color:blue;">Hick paper</a>
+														attempt to answer that.<br>
 													</p>
-
 
 
 
 			<br><section id="Access"><h2>Access() Method</h2></section>
 			<!-- msfvenom has an egghunter module.  Check that out to draft a POC -->
 											<p>
-												&emsp; &emsp;The first Egg Hunter method uses the <i>access()</i> syscall. &nbsp;
+												&emsp; &emsp;The first Egg Hunter method uses the <i>access()</i> syscall. &nbsp;Per the
+												<a href="https://man7.org/linux/man-pages/man2/access.2.html" target="_blank" style="color:blue;">man page</a>,
+												<i>access()</i> checks a pointer for the invoking user's authority. &nbsp;In other words, it checks an address for
+												read/write/execute permissions. &nbsp;This is advantageous because <i>access()</i> does not write to the pointer passed to it. &nbsp;Another
+												advantage is it uses only one pointer argument. &nbsp;Multiple pointer arguments would likely increase the size of the shellcode. &nbsp;The
+												<i>access()</i> syscall number can be found with all the others on 32-bit Linux systems:
+												<code>/usr/include/i386-linux-gnu/asm/unistd_32.h</code>
 											</p>
+											<center><div class="image post"><img src="../images/slae/assignment3/2-access-syscall.png" alt="" /></div></center><br>
 
-											<center><div class="image post"><img src="../images/slae/assignment3/2-access-syscall.gif" alt="" /></div></center><br>
-
+											<p>
+												Step one is to initialize the registers. &nbsp;This can be done using three steps for the four main General Purpose Registers (GPRs). &nbsp;First, load
+												the 4-byte egg into ebx. &nbsp;Second, set ecx to zero using XOR. &nbsp;Finally, set eax and edx to zero with a multiply instruction. &nbsp;Note
+												that the multiply instruction is the same as <i>mul eax, ecx</i> and the result is stored in edx:eax. &nbsp;eax holds the low bits and edx holds
+												the high bits.
+											</p>
 											<pre>
-												<code class="bash" style=display:block;white-space:pre-wrap>
--- snip --
-
-
+												<code class="x86asm" style=display:block;white-space:pre-wrap>
+	mov ebx,0x6a015f90	; ebx = 0x6a015f90
+	xor ecx,ecx		; ecx = 0
+	mul ecx			; eax = 0 and edx = 0
 												</code>
 											</pre>
 
+
+											<p>
+												The egg can be any four bytes as long as it satisfies two requirements.<br><br>
+											1)&emsp; &emsp;It must be unique enough for the Egg Hunter to find it twice without jumping to the wrong part of memory.<br><br>
+											2)&emsp; &emsp;It must not contain instructions that could derail execution of the second stage shellcode. &nbsp;For example, it must not include jump instructions.<br><br>
+											Shell-storm has a convenient assembler/disassembler
+											<a href="http://shell-storm.org/online/Online-Assembler-and-Disassembler/ " target="_blank" style="color:blue;">tool</a> that can help pick an
+											appropriate egg. &nbsp;It is best to pick a combination of nonsense instructions like repeatedly pushing and popping numbers off the stack or mixing in
+											NOPs. &nbsp;Likewise, four bytes can be picked and checked for sanity in the disassembler.
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment3/3-egg-instructions.png" alt="" /></div></center><br>
+
+
+											<p>
+											Next is page alignment. &nbsp;The basic premise is for <i>access()</i> to loop over VAS in increments of PAGE_SIZE. &nbsp;PAGE_SIZE
+											can be found with the below command. &nbsp;4096 bytes is the typical size, which equals 0x1000.
+										 </p>
+										 <center><div class="image post"><img src="../images/slae/assignment3/4-pagesize.png" alt="" /></div></center><br>
+
+										 <p>
+											 With this value in mind, place 0x0fff into dx and increment it to get 0x1000. &nbsp;These are destination points for later instructions and are thus separated. &nbsp;Its
+											 equivalent instruction is <code>mov dx, 0x1000</code>. &nbsp;Why the separation? &nbsp;Since <i>access()</i> reads inside the page, the code will
+											 jump another PAGE_SIZE bytes (4096 bytes) if it fails. &nbsp;This is because the code assumes contents cannot be accessed within the current page. &nbsp;If <i>access()</i>
+											 returns as readable memory, the code will simply increment edx until the egg is found (see
+											 <a href="https://thestunneddefense.com/pages/egg-hunter.html#Troubleshooting" target="_blank" style="color:blue;">Troubleshooting section</a> for why edx is incremented instead of dx).
+										 </p>
+										 <pre>
+											 <code class="x86asm" style=display:block;white-space:pre-wrap>
+PageUp:
+	or dx,0xfff	; edx = 0x0fff
+Increment:
+	inc edx		; edx = 0x1000
+											 </code>
+										 </pre>
+
+										 <p>
+											 Before invoking the system call, current register values need to be preserved so they can be restored should the call "fail." &nbsp;The simplest way to do this is push all values onto
+											 the stack. &nbsp;Registers for <i>access()</i> need to be loaded and the address pointer is loaded first. &nbsp;It uses a four byte offset of edx, which is a clever way to validate
+											 8 bytes of memory at once. &nbsp;If a four byte offset of PAGE_SIZE can be accessed, then the first four bytes can also be accessed. &nbsp;Finally load the system call number and
+											 invoke it with <code>int 0x80</code>.
+										 </p>
+										 <pre>
+											 <code class="x86asm" style=display:block;white-space:pre-wrap>
+	pusha			; push all registers onto stack
+	lea ebx,[edx+0x4]	; load address edx+0x4 into ebx
+	mov al,0x21		; eax = syscall 33
+	int 0x80
+											 </code>
+										 </pre>
+
+										 <p>
+											 After the syscall, check if an error was returned and handle it to avoid crashes. &nbsp;For <i>access()</i>, the particular error of interest is EFAULT because it returns when
+											 bad addresses are encountered. &nbsp;The EFAULT value can be found in the following file: <code>/usr/include/asm/errno.h</code>
+											 <!-- Verify EFAULT value in Ubuntu-16 -->
+										 </p>
+										 <center><div class="image post"><img src="../images/slae/assignment3/5-efault-value.png" alt="" /></div></center><br>
+
+										 <p>
+											 Restore the register values then jump to the PAGE_SIZE increment instruction if <i>access()</i> returns EFAULT. &nbsp;This allows the program to check the next 4096 bytes of VAS
+											 for accessability. &nbsp;Should <i>access()</i> not return the EFAULT value, the program will check for the egg value since valid address space has been encountered. &nbsp;If
+											 the egg is not found, the program will increment by single bytes to continue searching. &nbsp;The below <i>strace</i> output shows where readable address space starts.
+										 </p>
+										 <center><div class="image post"><img src="../images/slae/assignment3/6-readable-address-space.png" alt="" /></div></center>
+										 <pre>
+											 <code class="x86asm" style=display:block;white-space:pre-wrap>
+	cmp al, 0xf2	; ZF = 1 if EFAULT returned.
+	popa 		; restore previous register values
+	jz PageUp	; jump to PAGE_SIZE incrementer if EFAULT returned
+	cmp [edx],ebx	; check if edx holds the egg (edx = 0x6a015f90?)
+	jnz Increment	; jump to single byte incrementer if egg not found
+											 </code>
+										 </pre>
+
+
+										 <p>
+											 If the egg is encountered, the program will check if the following four bytes are the same. &nbsp;Back-to-back eggs means the shellcode has been reached! &nbsp;Should the
+											 following four bytes not be the egg, the program will jump back to the single byte increment instruction to continue searching. &nbsp;After both egg instances are found, the
+											 program finally passes execution to their location in memory. &nbsp;Behind those two egg instances is the intended payload!
+										 </p>
+										 <pre>
+											 <code class="x86asm" style=display:block;white-space:pre-wrap>
+	cmp [edx+0x4],ebx	; are the 4 bytes after egg the same value as egg? ([edx+0x4] = 0x6a015f90?)
+	jnz Increment		; if following 4 bytes are different, continue searching
+	jmp edx			; else, jump to egg-egg-shellcode location!! \x6a\x01\x5f\x90\x6a\x01\x5f\x90 + shellcode
+											 </code>
+										 </pre>
+
+
+										 <p>
+											 Below is the final Egg Hunter stage in GDB (with a different egg). &nbsp;The subsequent <i>add</i> instructions are never reached.
+										 </p>
+										 <center><div class="image post"><img src="../images/slae/assignment3/7-egghunt-instructions-gdb.png" alt="" /></div></center><br>
+
+										 <p>
+											 Once all assembly instructions are written, compile the code with <i>nasm</i> and link with <i>ld</i>. &nbsp;Extract the shellcode using the special <i>objdump</i>
+	 										<a href="https://www.commandlinefu.com/commands/view/6051/get-all-shellcode-on-binary-file-from-objdump" target="_blank" style="color:blue;">command</a>. &nbsp;Copy
+											and paste the shellcode into its own char array in <i>harness.c</i>. &nbsp;Copy and paste the egg twice in front of the target shellcode.
+										 </p>
+										 <center><div class="image post"><img src="../images/slae/assignment3/8-fix-n00t.png" alt="" /></div></center><br>
+
+										 <p>
+											 Compile the harness with no stack protections and an executable stack. &nbsp;Since the target shellcode is a reverse shell, run a netcat listener
+											 on port 4444. &nbsp;Execute the harness with <i>strace</i> to verify syscall output. &nbsp;The target payload is successfully invoked!
+										 </p>
 											<center><div class="image post"><img src="../images/slae/assignment3/run.gif" alt="" /></div></center><br>
 
 
@@ -136,26 +253,37 @@
 
 
 
+			<br><section id="Troubleshooting"><h2>Troubleshooting</h2></section>
 
-			<br><section id="Demonstration"><h2>Demonstration</h2></section>
+							<!--
+							STUFF TO REVIEW:
 
-									<p>
-										&emsp; &emsp;Demonstrate shellcode here
-									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
-
-
-
-
-
-			<br><section id="Debugging"><h2>Debugging</h2></section>
+							* why increment edx instead of dx?
+							* Why does n00t tag fail?
+							-->
 
 									<p>
-										&emsp; &emsp;Debugging and Troubleshooting
+										&emsp; &emsp;This post was debugging intensive as multiple pitfalls were encountered. &nbsp;The first pitfall was incrementing dx instead
+										of edx in the page alignment section. &nbsp;Why is this a problem? &nbsp;The address parameter passed to <i>access()</i> is 32 bits.
+										 &nbsp;Incrementing a 16-bit register instead of 32-bit does not properly increment the address pointer in <i>accept()</i> causing an infinite
+										 loop from 0x00000004 to 0x0000f004. &nbsp;Basically the address pointer has its upper 16 bits cut off after 0x0000f004 is passed. &nbsp;The address in the
+										 next loop should be 0x00010004, then 0x00011004, and so on. &nbsp;Below is an example of what correct address searching looks like.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment3/9-pagesize-offset.png" alt="" /></div></center><br>
 
+									<p>
+										The next error was choosing an egg value that did not decompile to adequate assembly instructions. &nbsp;<code>n00tn00t</code> was the original
+										egg value, which is <i>\x6e\x30\x30\x74</i> twice. &nbsp;When running <i>harness</i>, it is interesting to note that
+										<i>socket()</i> and <i>dup2()</i> syscalls were skipped while the incorrect IP address was used in <i>connect()</i>.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment3/10-n00t-fail.png" alt="" /></div></center><br>
 
+									<p>
+										While inspecting the output in <i>GDB</i>, the Egg Hunter stage worked and successfully located both instances of the egg; however when dumping
+										 the stage 2 instructions, it contained assembly code which interferred with functionality. &nbsp;Part of the egg decompiled to a jump instruction
+										 landing right after setting localhost, causing <i>connect()</i> to use a random IP address.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment3/11-n00t-trouble.png" alt="" /></div></center><br>
 
 
 		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
