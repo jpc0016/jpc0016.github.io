@@ -59,7 +59,7 @@
                       <article id="first-post">
 												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Analysis of Egg Hunter Shellcode</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; October 11, 2020</h5>
+												<h5>&emsp; &emsp; &emsp; &emsp; October 12, 2020</h5>
                         <div class="box">
 
 													<!-- Don't think these contents will look the same-->
@@ -68,17 +68,17 @@
 													<a href="#Access" style="color:blue;">Access() Method</a><br>
 													<a href="#Sigaction" style="color:blue;">Sigaction() Method</a><br>
 													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
-													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
+													<a href="#Thoughts" style="color:blue;">Thoughts</a><br><br>
 
 													<p>
-														&emsp; &emsp;Today's post involves writing Egg hunter shellcode. &nbsp;Per the assignment instructions, this is a research oriented task for the purpose of integrating with other
+														&emsp; &emsp;Today's post involves writing Egg Hunter shellcode. &nbsp;Per the assignment instructions, this is a research oriented task for the purpose of integrating with other
 														shellcode such as reverse shell. &nbsp;A quick introduction is required since this is a new concept.<br>
 
 				<br><section id="Concept"><h2>Concept</h2></section>
 														&emsp; &emsp;Not all vulnerable programs are built alike. &nbsp;They are often constrained by limited space to execute whatever is placed inside; therefore, it makes sense to split a payload into
 														two stages. &nbsp;Stage 1 searches memory space for Stage 2 and jumps to it. &nbsp;Stage 2 is the intended payload to be executed. &nbsp;The problem changes from a lack of space to a need for
-														continuous execution. &nbsp;Egg hunter is the solution to this problem. &nbsp;It allows for continuous execution by searching for a unique "tag", otherwise known as "egg," and jumping to it. &nbsp;Similar to how <i>try-except</i> behaves,
-														a four byte egg is searched in Virtual Address Space (VAS) for matches then called once it's found. &nbsp;Consider the comparison below
+														continuous execution. &nbsp;Egg Hunter is the solution to this problem. &nbsp;It allows for continuous execution by searching for a unique "tag", otherwise known as an "egg," and jumping to it. &nbsp;Similar to how <i>try-except</i> behaves,
+														a four byte egg is searched in Virtual Address Space (VAS) for matches then called once two instances are found. &nbsp;Consider the comparison below
 														(<a href="https://www.exploit-db.com/docs/english/18482-egg-hunter---a-twist-in-buffer-overflow.pdf" target="_blank" style="color:blue;">via Exploit-DB paper</a>).
 											 	</p>
 												<center><div class="image post"><img src="../images/slae/assignment3/1-egghunter.png" alt="" /></div></center><br>
@@ -100,7 +100,7 @@
 												&emsp; &emsp;The first Egg Hunter method uses the <i>access()</i> syscall. &nbsp;Per the
 												<a href="https://man7.org/linux/man-pages/man2/access.2.html" target="_blank" style="color:blue;">man page</a>,
 												<i>access()</i> checks a pointer for the invoking user's authority. &nbsp;In other words, it checks an address for
-												read/write/execute permissions. &nbsp;This is advantageous because <i>access()</i> does not write to the pointer passed to it. &nbsp;Another
+												read/write/execute permissions. &nbsp;This is useful because <i>access()</i> does not write to the pointer passed to it. &nbsp;Another
 												advantage is it uses only one pointer argument. &nbsp;Multiple pointer arguments would likely increase the size of the shellcode. &nbsp;The
 												<i>access()</i> syscall number can be found with all the others on 32-bit Linux systems:
 												<code>/usr/include/i386-linux-gnu/asm/unistd_32.h</code>
@@ -167,7 +167,7 @@ Increment:
 	pusha			; push all registers onto stack
 	lea ebx,[edx+0x4]	; load address edx+0x4 into ebx
 	mov al,0x21		; eax = syscall 33
-	int 0x80
+	int 0x80		; system call
 											 </code>
 										 </pre>
 
@@ -183,7 +183,8 @@ Increment:
 										 <p>
 											 Restore the register values then jump to the PAGE_SIZE increment instruction if <i>access()</i> returns EFAULT. &nbsp;This allows the program to check the next 4096 bytes of VAS
 											 for accessability. &nbsp;Should <i>access()</i> not return the EFAULT value, the program will check for the egg value since valid address space has been encountered. &nbsp;If
-											 the egg is not found, the program will increment by single bytes to continue searching. &nbsp;The below <i>strace</i> output shows where readable address space starts.
+											 the egg is not found, the program will increment by single bytes to continue searching. &nbsp;The below <i>strace</i> output shows where readable address space starts at
+											 0x8048000.
 										 </p>
 										 <center><div class="image post"><img src="../images/slae/assignment3/6-readable-address-space.png" alt="" /></div></center>
 										 <pre>
@@ -217,7 +218,23 @@ Increment:
 										 <center><div class="image post"><img src="../images/slae/assignment3/7-egghunt-instructions-gdb.png" alt="" /></div></center><br>
 
 										 <p>
-											 Once all assembly instructions are written, compile the code with <i>nasm</i> and link with <i>ld</i>. &nbsp;Extract the shellcode using the special <i>objdump</i>
+											 Once all assembly instructions are written, compile the code with <i>nasm</i> and link with <i>ld</i>. &nbsp;The specific instructions
+											 are below:
+											<pre>
+											 <code class="bash" style=display:block;white-space:pre-wrap>
+#!/bin/bash
+
+echo '[+] Assembling with Nasm ... '
+nasm -f elf32 -o $1.o $1.nasm
+
+echo '[+] Linking ... '
+ld -z execstack -o $1 $1.o
+
+echo '[+] Done!'
+												</code>
+											</pre>
+
+											 Extract the shellcode using the special <i>objdump</i>
 	 										<a href="https://www.commandlinefu.com/commands/view/6051/get-all-shellcode-on-binary-file-from-objdump" target="_blank" style="color:blue;">command</a>. &nbsp;Copy
 											and paste the shellcode into its own char array in <i>harness.c</i>. &nbsp;Copy and paste the egg twice in front of the target shellcode. &nbsp;Also be sure to change
 											"code" to "egghunt" in <i>main()</i> to pass execution to the correct payload stage.
@@ -237,7 +254,25 @@ Increment:
 			<br><section id="Sigaction"><h2>Sigaction() Method</h2></section>
 
 											<p>
-											&emsp; &emsp;The second Egg Hunter method uses the <i>sigaction()</i> syscall. &nbsp;It holds two advantages over the previous method: smaller size, and searches more memory at once. &nbsp;
+											&emsp; &emsp;The second Egg Hunter method uses the
+											<a href="https://man7.org/linux/man-pages/man2/sigaction.2.html" target="_blank" style="color:blue;"><i>sigaction()</i></a>
+											system call, which holds two advantages over the previous method: smaller size, and searches more memory at once. &nbsp;Under normal circumstances,
+											<i>sigaction()</i> is used to define actions taken upon receipt of a given signal; however in this case, it is used to validate
+											 readable address space. &nbsp;Due to this application, not all parameters are given equal weight. &nbsp;The parameter that matters
+											 is the struct pointer, <i>*act</i>, used by register ecx. &nbsp;For reference, the <i>sigaction()</i> function definition is below:
+											</p>
+											<pre>
+												<code class="c-like" style=display:block;white-space:pre-wrap>
+	int sigaction(int signum, const struct sigaction *act, struct sigaction *oldact);
+												</code>
+											</pre>
+
+											<p>
+												Register layout is as follows: eax = syscall number, ebx = <i>signum</i>, ecx = <i>*act</i>, and edx = <i>*oldact</i>. &nbsp;Because <i>sigaction()</i>
+												is not being used for its intended purpose, the <i>signum</i> parameter does not need to be set. &nbsp;The same goes for
+												the <i>*oldact</i> parameter because <i>*act</i> is verified first; therefore, it does not matter what <i>*oldact</i> contains. &nbsp;Only
+												the <i>*act</i> parameter matters because it points to a 16-byte structure for verification; twice as much address space
+												as the <i>access()</i> method. &nbsp;Register eax holds the syscall number found in <code>/usr/include/i386-linux-gnu/asm/unistd_32.h</code>.
 											</p>
 											<center><div class="image post"><img src="../images/slae/assignment3/9-sigaction-syscall.png" alt="" /></div></center><br>
 
@@ -271,13 +306,14 @@ Valid:
 
 
 											<p>
-												Load 67 into eax and invoke the system call. &nbsp;
+												Load 67 into eax and invoke <i>sigaction()</i>. &nbsp;As done with <i>access()</i>, check if EFAULT is returned
+												and increment the PAGE_SIZE if returned.
 											</p>
 											<pre>
 												<code class="x86asm" style=display:block;white-space:pre-wrap>
 	push BYTE 0x43
-	pop eax
-	int 0x80
+	pop eax		; eax = syscall number 67
+	int 0x80	; syscall
 	cmp al, 0xf2	; check if EFAULT returned
 	jz PageUp	; jump to PAGE_SIZE incrementer if EFAULT returned
 												</code>
@@ -285,44 +321,51 @@ Valid:
 
 
 											<p>
-												Load egg into eax and compare it with DWORD strings in memory location. &nbsp;
+												The next several steps are new. &nbsp;Load the egg into eax as well as the address pointer from ecx into edi. &nbsp;This sets up
+												<a href="https://www.felixcloutier.com/x86/scas:scasb:scasw:scasd" target="_blank" style="color:blue;"><i>scasd</i></a>
+												(scan string doubleword) for use. &nbsp;The <i>scasd</i> instruction compares eax with the double word pointed to by edi and sets flags based on
+												the result. &nbsp;If eax and [edi] are equal, the zero flag will be set; indicating the first egg has been found.
 											</p>
 											<pre>
 												<code class="x86asm" style=display:block;white-space:pre-wrap>
 	mov eax, 0x50905090	; load egg value
-	mov edi, ecx	; edi	= PAGE_SIZE pointer
-	scasd		; scan DWORD string
-	jnz Increment
+	mov edi, ecx		; edi	= PAGE_SIZE pointer
+	scasd			; ZF = 1 if eax = [edi]
+	jnz Increment		; if DWORD at edi != egg, jump to incrementer
 												</code>
 											</pre>
 
 
 											<p>
-												If the egg is encountered, run another <i>scasd</i> operation to check for another egg instance. &nbsp;
+												The neat part of <i>scasd</i> is it increments edi by 4 bytes automatically after each comparison. If the egg is encountered, simply
+												run another <i>scasd</i> instruction to check the second egg instance. &nbsp;If found, the program will jump directly to the shellcode
+												since edi is incremented a second time!
 											</p>
 											<pre>
 												<code class="x86asm" style=display:block;white-space:pre-wrap>
-	scasd
-	jnz Increment
-	jmp edi
+	scasd			; scan following DWORD string
+	jnz Increment		; if egg not found in next DWORD, continue searching!
+	jmp edi			; jump to shellcode!
 												</code>
 											</pre>
 
 
 											<p>
-											The
+											Compile the Egg Hunter with <i>nasm</i> and link with <i>ld</i> once again. &nbsp;Extract the shellcode with the special
+											<i>objdump</i> command below:
 											</p>
 											<center><div class="image post"><img src="../images/slae/assignment3/10-egghunt-shellcode.png" alt="" /></div></center><br>
 
 
 											<p>
-											Also
+											Copy and paste the Egg Hunter shellcode into its char array and set both egg values back-to-back. &nbsp;Remember the egg
+											is stored in little-endian so 0x50905090 is stored as <i>\x90\x50\x90\x50</i>.
 											</p>
 											<center><div class="image post"><img src="../images/slae/assignment3/11-harness-sig.png" alt="" /></div></center><br>
 
 
 											<p>
- 											 Compile the harness once again with the earlier command. &nbsp;Run the netcat listener on port 4444 and execute the harness. \o/
+ 											 Compile the harness once again with the earlier <i>gcc</i> command. &nbsp;Run the netcat listener on port 4444 and execute the harness. \o/
  										 </p>
  											<center><div class="image post"><img src="../images/slae/assignment3/run-again.gif" alt="" /></div></center><br>
 
@@ -346,7 +389,7 @@ Valid:
 										 loop from 0x00000004 to 0x0000f004. &nbsp;Basically the address pointer has its upper 16 bits cut off after 0x0000f004 is passed. &nbsp;The address in the
 										 next loop should be 0x00010004, then 0x00011004, and so on. &nbsp;Below is an example of what correct address searching looks like.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment3/16-pagesize-offset.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment3/12-pagesize-offset.png" alt="" /></div></center><br>
 
 
 									<p>
@@ -354,7 +397,7 @@ Valid:
 										egg value, which is <i>\x6e\x30\x30\x74</i> twice. &nbsp;When running <i>harness</i>, it is interesting to note that
 										<i>socket()</i> and <i>dup2()</i> syscalls were skipped while the incorrect IP address was used in <i>connect()</i>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment3/17-n00t-fail.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment3/13-n00t-fail.png" alt="" /></div></center><br>
 
 
 									<p>
@@ -362,30 +405,33 @@ Valid:
 										 the stage 2 instructions, it contained assembly code which interferred with functionality. &nbsp;Part of the egg decompiled to a jump instruction
 										 landing right after setting localhost, causing <i>connect()</i> to use a random IP address.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment3/18-n00t-trouble.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment3/14-n00t-trouble.png" alt="" /></div></center><br>
 
 
 									<p>
 										The <i>sigaction()</i> method had one error that was time consuming to track and solve due to possible confusion with egg values. &nbsp;Eventually the egg was found to not
-										be problematic when changing it to the default value, 0x50905090. &nbsp;Inspect egghunter execution in <i>GDB</i>.
+										be problematic when changing it to the default value, 0x50905090.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment3/19-start-gdb.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment3/15-start-gdb.png" alt="" /></div></center><br>
 
 
 									<p>
-										Continue to the highlighted breakpoint, 0x0804a059, at instruction <code>scas eax,DWORD PTR es:[edi]</code> to find a segmentation fault. &nbsp;Notice that ecx ($63) is 0. &nbsp;This is
-										a problem when NULL is moved into edi and the program tries to read bytes at that address. &nbsp;It is not accessible! &nbsp;This situation is why NULL check instructions are used
-										in the egghunter payload. &nbsp;Thanks to this situation, the egg is never reached!
+										Continue to the highlighted breakpoint, 0x0804a059, at the second <i>scasd</i> instruction to find a segmentation fault. &nbsp;Notice that ecx ($63) is 0. &nbsp;This is
+										a problem when NULL is moved into edi and the program tries to read bytes at that address. &nbsp;It is not accessible! &nbsp;This is why NULL-checking instructions are used
+										in the egghunter payload. &nbsp;Thanks to the NULL address, the egg is never reached!
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment3/20-segfault.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment3/16-segfault.png" alt="" /></div></center><br>
 
 
-		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
+		<br><section id="Thoughts"><h2>Thoughts</h2></section>
 
 									<p>
-										&emsp; &emsp;Conclusion goes here
+										&emsp; &emsp;Egg Hunter is a great introduction in applying two-stage payloads. &nbsp;<i>GDB</i> and <i>strace</i> once again
+										proved to be useful in fault isolation. &nbsp;An appropriate follow-on activity would be
+										analyzing Metasploit's staged payloads and noting similarities to Egg Hunter. &nbsp;The next post is writing a custom encoder
+										to obfuscate shellcode.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+
 
 
 
