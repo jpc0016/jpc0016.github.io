@@ -145,9 +145,10 @@ print encoded2
 
 											<p>
 												The custom encoding scheme attempted to XOR all bytes with 0x24 except those at multiples of 5: fifth byte, fifth byte, and so on. &nbsp;Those bytes will instead be XOR'ed with 0x25.
-												 &nbsp;Additionally at the fifth bytes, 0x69	is inserted after XORing with 0x25. &nbsp;All of this is done in two formats: <i>\x</i> format and <i>0x</i> format.
+												 &nbsp;Additionally at the fifth bytes, 0x69	is inserted after XORing with 0x25 because why not? &nbsp;¯\_(ツ)_/¯ &nbsp;Finally, everything is output in two formats: <i>\x</i>
+												 format and <i>0x</i> format.
 											</p>
-											<center><div class="tenor-gif-embed" data-postid="9094365" data-share-method="host" data-width="60%" data-aspect-ratio="1.4228571428571428"><a href="https://tenor.com/view/spongebob-25-patrick-star-24-gif-9094365">Spongebob 25 GIF</a> from <a href="https://tenor.com/search/spongebob-gifs">Spongebob GIFs</a></div><script type="text/javascript" async src="https://tenor.com/embed.js"></script></center><br>
+											<center><div class="tenor-gif-embed" data-postid="9094365" data-share-method="host" data-width="50%" data-aspect-ratio="1.4228571428571428"><a href="https://tenor.com/view/spongebob-25-patrick-star-24-gif-9094365">Spongebob 25 GIF</a> from <a href="https://tenor.com/search/spongebob-gifs">Spongebob GIFs</a></div><script type="text/javascript" async src="https://tenor.com/embed.js"></script></center><br>
 
 											<p>
 												An important formatting concept in Python involves the '%' symbol. &nbsp;Instead of the modulo operator, '%' is used with a string argument to convey byte formatting. &nbsp;This
@@ -164,7 +165,36 @@ print encoded2
 			<br><section id="Assembly"><h2>Writing the Decoder in Assembly</h2></section>
 
 									<p>
-										&emsp; &emsp;Writing assembly
+										&emsp; &emsp;Now that the payload is encoded, it is time to reverse the process and decode it using <i>nasm</i>. &nbsp;Based on the encoding scheme's sofistication, this can be a tedious process
+										with respect to lining up bytes in their original order. &nbsp;A jump-call-pop skeleton is used to start the assembly since byte operations are executed on a single line of [encoded] shellcode.
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+; JMP-CALL-POP technique
+global _start
+
+section .text
+
+_start:
+
+	jmp short call_shellcode
+
+decoder:
+	pop esi				; esi = address of EncodedShellcode
+	&lt;decoder stuff here>
+
+
+call_shellcode:
+	call decoder
+	; spaces added after commas for readability
+	EncodedShellcode: db 0x14, 0xe5, 0x75, 0x4d, 0x0b, 0x69, 0x0a, 0x56, 0x4d, 0x4d, 0x0b, 0x69, 0x47, 0x4c, 0x4b, 0xac, 0xc7, 0x69, 0x75, 0xac, 0xc7, 0x76, 0xad, 0x69, 0xc4, 0x95, 0x2e, 0xe8, 0xa4, 0x69, 0xaa, 0xaa
+
+										</code>
+									</pre>
+
+									<p>
+										The above technique is called <i>JMP-CALL-POP</i>. &nbsp;It manipulates the <i>call</i> instruction in which the address of the next instruction is pushed onto the stack. &nbsp;This comes in
+										handy when accessing data and its address is unknown.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment4/.png" alt="" /></div></center><br>
 
