@@ -49,18 +49,18 @@
                         <div class="box">
                           <p>&emsp; &emsp; Good evening Tim and Aaron, "Blunder" is the box we will walkthrough today! &nbsp;This machine stunned me most of the time but was able to power through with some
 														Linux-fu! &nbsp;I ran into trouble due to exploits requiring certain credentials, which were tricky to find. &nbsp;A significant
-														amount of time was also spent using the correct payload. &nbsp;Just like last time, a remediation section is included on how to implement fixes.
+														amount of time was also spent finding the correct privilege escalation method. &nbsp;A remediation section is included as usual.
                            </p>
 
 													 <center><div class="image post"><img src="../images/blunder/blunder.png" alt="" /></div></center><br>
 
 													 <br><h2>Contents</h2>
 													 <a href="#Enumeration" style="color:blue;">Initial Enumeration</a><br>
-													 <a href="#Apache" style="color:blue;">Apache httpd</a><br>
-													 <a href="#Filesystem" style="color:blue;">Filesystem Inspection</a><br>
-													 <a href="#Entry" style="color:blue;">Initial Entry</a><br>
+													 <a href="#HTTP" style="color:blue;">Examine HTTP</a><br>
+													 <a href="#Foothold" style="color:blue;">Gaining Foothold</a><br>
 													 <a href="#Exploit" style="color:blue;">Exploitation</a><br>
-													 <a href="#Privesc" style="color:blue;">Privilege Escalation</a><br>
+													 <a href="#User" style="color:blue;">Privesc to User</a><br>
+													 <a href="#Root" style="color:blue;">Privesc to Root</a><br>
 													 <a href="#Remediation" style="color:blue;">Remediation</a><br>
 													 <a href="#Thoughts" style="color:blue;">Thoughts</a><br><br><br>
 
@@ -73,20 +73,30 @@
 														 reveals <i>OpenSSH 7.2p2</i> and some ssh-hostkey information. &nbsp;Port 80 reveals <i>Apache httpd 2.4.18</i> running on the back end. &nbsp;As with previous machines, header
 														 and service information are unnecessarily disclosed which is a pentest report finding.
 													 </p>
-													 <center><div class="image post"><img src="../images/blunder/1-nmap-initial.png" alt="" /></div></center>
-													 <center><div class="image post"><img src="../images/blunder/2-nmap-OS.png" alt="" /></div></center><br>
+													 <center><div class="image post"><img src="../images/blunder/1-nmap-initial.png" alt=""/></div></center>
+													 <center><div class="image post"><img src="../images/blunder/2-nmap-OS.png" alt=""/></div></center><br>
 
 
+							<br><section id="HTTP"><h2>Examine HTTP</h2></section>
+					 									<p>
+					 									&emsp; &emsp;Port 80 was open so I decided to test the machine on a web browser and navigated to <i>https://10.10.10.191/</i> in Firefox. &nbsp;The
+					 									result was a blog powered by Bludit Content Management System (CMS). &nbsp;I clicked around to find clues, hints, or otherwise insightful information
+														leading to vulnerabilities.
+					 									</p>
+					 									<center><div class="image post"><img src="../images/blunder/3-bludit-blog.png" alt=""/></div></center>
 
-							<br><section id="Apache"><h2>Apache httpd</h2></section>
+														<p>
+
+														</p>
+
+
+							<br><section id="Foothold"><h2>Gaining Foothold</h2></section>
 
 					 									<p>
-					 									&emsp; &emsp;Port 80 was open so I decided to test the machine on a web browser and navigated to <i>https://10.10.10.75/</i> in Firefox. &nbsp;The
-					 									result was a Hello World webpage. &nbsp;I tested the contents behind port 80 by requesting <i>/dev/</i> and received a 404 page leaking server information.
-														 &nbsp;This is another finding on a pentest report.
+					 									&emsp; &emsp;Returning to the blog's home page, I noticed a typo in the introduction paragraph.
 					 									</p>
-					 									<center><div class="image post"><img src="../images/blunder/3-hello-world.png" alt="" /></div></center><br>
-					 									<center><div class="image post"><img src="../images/blunder/4-try-dev.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/blunder/3-hello-world.png" alt=""/></div></center><br>
+					 									<center><div class="image post"><img src="../images/blunder/4-try-dev.png" alt=""/></div></center><br>
 
 														<p>
 															Running <i>dirbuster</i> on the root folder revealed only a few directories that provided little information.
@@ -104,52 +114,6 @@
 															Append the directory to the ip address to reveal a backend home page. &nbsp;
 					 									</p>
 					 									<center><div class="image post"><img src="../images/blunder/7-nibbleblog-home.png" alt="" /></div></center><br>
-
-
-
-								<br><section id="Filesystem"><h2>Filesystem Inspection</h2></section>
-
-												<p>
-													&emsp; &emsp;Being satisfied with the home page, I ran <i>dirbuster</i> again with <i>/nibbleblog/</i> as the starting directory. &nbsp;Results were dramatically different!
-												</p>
-												<center><div class="image post"><img src="../images/blunder/8-dirbuster-settings.png" alt="" /></div></center>
-												<center><div class="image post"><img src="../images/blunder/9-dirbuster-again.png" alt="" /></div></center><br>
-
-												<p>
-												While <i>dirbuster</i> was at work, I grabbed backend system information with <i>wappalyzer</i> then inspected the <i>README</i> once it was revealed. &nbsp;The <i>README</i> was interesting in
-												that it implied <i>nibbleblog</i> was an actual blogging framework, not a random name someone gave to their blog. &nbsp;This was noted by "Nibbleblog Version: v4.0.3" in the red square. &nbsp;The
-												nibbleblog documentation sites also gave it away.
-												</p>
-												<center><div class="image post"><img src="../images/blunder/10-wappalyzer.png" alt="" /></div></center><br>
-												<center><div class="image post"><img src="../images/blunder/11-nibbleblog-version.png" alt="" /></div></center><br>
-
-												<p>
-												<i>dirbuster</i> eventually revealed a page called <i>admin.php</i>. &nbsp;This looked interesting so I navigated to the page for inspection. &nbsp;A login page was shown!
-												</p>
-												<center><div class="image post"><img src="../images/blunder/12-login-page.png" alt="" /></div></center><br>
-
-
-
-								<br><section id="Entry"><h2>Initial Entry</h2></section>
-
-												<p>
-													&emsp; &emsp;I tried basic login credentials but had no luck since this is a HTB machine!  ¯\_(ツ)_/¯ <br>
-													It turns out the system owner is not as dumb on this machine because <i>admin:admin</i> and <i>admin:password</i> both fail.
-												</p>
-												<center><div class="image post"><img src="../images/blunder/13-login-fail.png" alt="" /></div></center><br>
-
-												<p>
-												So this page presents the next challenge because one of the <a href="https://www.rapid7.com/db/modules/exploit/multi/http/nibbleblog_file_upload" target="_blank" style="color:blue;">exploits</a>
-												I found (thanks to <i>searchsploit nibble</i>) requires valid login credentials to function. &nbsp;I used Hydra on this page but it would temporarily lockout after 16 failed attempts. &nbsp;For some time I
-												cycled between attempting to crack the page and searching through backend files for clues. &nbsp;Eventually I came across a config file with interesting information. &nbsp;Down in the notification
-												 information was an email field with "admin" and "nibbles" in the address.
-												</p>
-												<center><div class="image post"><img src="../images/blunder/14-default-creds.png" alt="" /></div></center><br>
-
-												<p>
-												Using this lead, I tried <i>nibbles</i> as the password instead. &nbsp;The result was a successful login to nibbleblog's dashboard!! &nbsp;It turns out the admin IS that lazy! &nbsp;\o/
-												</p>
-												<center><div class="image post"><img src="../images/blunder/15-login-success.png" alt="" /></div></center><br>
 
 
 
@@ -193,7 +157,7 @@
 
 
 
-								<br><section id="Privesc"><h2>Privilege Escalation</h2></section>
+								<br><section id="User"><h2>Privesc to User</h2></section>
 
 												<p>
 													&emsp; &emsp;Once a foothold was established, I began post-exploitation enumeration to find interesting files and permissions. &nbsp;I decided to look inside <i>personal.zip</i>
@@ -215,18 +179,23 @@
 												</p>
 												<center><div class="image post"><img src="../images/blunder/28-check-sudo.png" alt="" /></div></center><br>
 
-												<p>
-													Since we have ownership over the file, use bash commands to overwrite the contents of <i>monitor.sh</i>. &nbsp;In my case it was only three lines of code: the shebang line, a welcome message, and a
-													call to the bash shell in interactive mode. &nbsp;This means whatever is written in <i>monitor.sh</i> will be executed as root if sudo is invoked.
-												</p>
-												<center><div class="image post"><img src="../images/blunder/29-manipulate-monitor.png" alt="" /></div></center><br>
 
-												<p>
-													&emsp; &emsp;Once <i>monitor.sh</i> has been overwritten, I ran it with sudo permissions. &nbsp;<code>sudo bash monitor.sh</code> did not work for some reason but <i>./</i> notation
-													was fine. &nbsp;A root shell was acquired! &nbsp;Navigate to the <i>/root/</i> directory and dump the flag!
-												</p>
-												<center><div class="image post"><img src="../images/blunder/30-root-whoami.png" alt="" /></div></center>
-												<center><div class="image post"><img src="../images/blunder/31-root-flag.png" alt="" /></div></center><br>
+
+												<br><section id="User"><h2>Privesc to User</h2></section>
+
+																<p>
+																	Since we have ownership over the file, use bash commands to overwrite the contents of <i>monitor.sh</i>. &nbsp;In my case it was only three lines of code: the shebang line, a welcome message, and a
+																	call to the bash shell in interactive mode. &nbsp;This means whatever is written in <i>monitor.sh</i> will be executed as root if sudo is invoked.
+																</p>
+																<center><div class="image post"><img src="../images/blunder/29-manipulate-monitor.png" alt="" /></div></center><br>
+
+																<p>
+																	&emsp; &emsp;Once <i>monitor.sh</i> has been overwritten, I ran it with sudo permissions. &nbsp;<code>sudo bash monitor.sh</code> did not work for some reason but <i>./</i> notation
+																	was fine. &nbsp;A root shell was acquired! &nbsp;Navigate to the <i>/root/</i> directory and dump the flag!
+																</p>
+																<center><div class="image post"><img src="../images/blunder/30-root-whoami.png" alt="" /></div></center>
+																<center><div class="image post"><img src="../images/blunder/31-root-flag.png" alt="" /></div></center><br>
+
 
 
 
