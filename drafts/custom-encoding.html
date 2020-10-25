@@ -144,7 +144,7 @@ print encoded2
 											</pre>
 
 											<p>
-												The custom encoding scheme attempted to XOR all bytes with 0x24 except those at multiples of 5: fifth byte, fifth byte, and so on. &nbsp;Those bytes will instead be XOR'ed with 0x25.
+												The custom encoding scheme attempted to XOR all bytes with 0x24 except those at multiples of 5: fifth byte, tenth byte, fifteenth byte, and so on. &nbsp;Those bytes will instead be XOR'ed with 0x25.
 												 &nbsp;Additionally at the fifth bytes, 0x69	is inserted after XORing with 0x25 because why not? &nbsp;¯\_(ツ)_/¯ &nbsp;Finally, everything is output in two formats: <i>\x</i>
 												 format and <i>0x</i> format.
 											</p>
@@ -199,6 +199,25 @@ call_shellcode:
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment4/3-call-instruction.png" alt="" /></div></center><br>
 
+									<p>
+										Before going further, it is important to understand the decoder's architecture. &nbsp;Two trackers are needed to traverse the encoded shellcode: 1 tracker handles every 6-byte
+										collection as a base of reference, and 1 tracker traverses the encoded shellcode 1 spot at a time to overwrite each position. &nbsp;Additionally, a counter register is
+										required to iterate over each set of 5 bytes. &nbsp;Remember that the sixth byte is 0x69 and is not counted in the iteration!
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment4/4-iteration-scheme.png" alt="" /></div></center><br>
+									
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+
+										</code>
+									</pre>
+
+
+
+
+
+
+
 
 									<p>
 										The final code is below
@@ -238,7 +257,7 @@ next:
 	mov byte [edi], bl		; store decoded byte into edi location
 	xor ecx, ecx			; 5th byte is reached. Reset to 0
 	inc edi				; edi points to next address of shellcode
-	add esi, 6
+	add esi, 6			; esi points to next 6-byte collection in shellcode
 	jmp short decode		; go to end-of-shellcode checking instructions
 
 Normal:
@@ -252,8 +271,9 @@ Normal:
 
 call_shellcode:
 	call decoder
-	;EncodedShellcode: db &lt;encoded execve-stack code>
-	EncodedShellcode: db 0x15,0xe4,0x74,0x4c,0x0a,0x69,0x0b,0x57,0x4c,0x4c,0x0a,0x69,0x46,0x4d,0x4a,0xad,0xc6,0x69,0x74,0xad,0xc6,0x77,0xac,0x69,0xc5,0x94,0x2f,0xe9,0xa5,0x69, 0x69, 0x69
+	; EncodedShellcode: db &lt;encoded execve-stack code>
+	; spaces added after commas for readability
+	EncodedShellcode: db 0x15, 0xe4, 0x74, 0x4c, 0x0a, 0x69, 0x0b, 0x57, 0x4c, 0x4c, 0x0a, 0x69, 0x46, 0x4d, 0x4a, 0xad, 0xc6, 0x69, 0x74, 0xad, 0xc6, 0x77, 0xac, 0x69, 0xc5, 0x94, 0x2f, 0xe9, 0xa5, 0x69, 0x69, 0x69
 
 
 										</code>
