@@ -205,7 +205,7 @@ call_shellcode:
 										required to iterate over each set of 5 bytes. &nbsp;Remember that the sixth byte is 0x69 and is not counted in the iteration!
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment4/4-iteration-scheme.png" alt="" /></div></center><br>
-									
+
 									<pre>
 										<code class="x86asm" style=display:block;white-space:pre-wrap>
 
@@ -297,7 +297,7 @@ call_shellcode:
 										&emsp; &emsp;After writing the assembly, the <i>-N</i> option must be added to the linker to enable write access to the <i>.text</i> section. &nbsp;Without it, the program
 										reaches a SEGFAULT error when storing the first decoded byte into <i>[edi]</i>; specifically at <code>mov byte [edi], bl</code>
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment4/4-compiled-decoder.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/5-compiled-decoder.png" alt="" /></div></center><br>
 
 									<p>
 										Confirm successful operation of <i>decoder.nasm</i>! &nbsp;\o/
@@ -307,24 +307,24 @@ call_shellcode:
 									<p>
 										Perform a quick optimization by checking for dead bytes. &nbsp;Luckily none exist.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment4/5-no-dead-bytes.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/6-no-dead-bytes.png" alt="" /></div></center><br>
 
 									<p>
 										Extract the shellcode with the special <i>objdump</i>
 									 <a href="https://www.commandlinefu.com/commands/view/6051/get-all-shellcode-on-binary-file-from-objdump" target="_blank" style="color:blue;">command</a>. &nbsp;Be sure
 									 to tweak the second <i>cut</i> instruction to <code>cut -f1-7 -d' '</code> to grab up to 7 bytes at a time if needed.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment4/6-get-shellcode.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/7-get-shellcode.png" alt="" /></div></center><br>
 
 									<p>
 										Copy and paste the shellcode into <i>harness.c</i>. &nbsp;
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment4/7-harness-paste.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/8-harness-paste.png" alt="" /></div></center><br>
 
 									<p>
 										Compile <i>harness.c</i> without stack protection and an executable stack. &nbsp;Run the binary to confirm a running shell! &nbsp;\o/
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment4/8-harness-works.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/9-harness-works.png" alt="" /></div></center><br>
 
 
 
@@ -340,7 +340,7 @@ call_shellcode:
 										setup commands: <i>set disassembly-flavor intel</i>, <i>break _start</i>, <i>run</i>. &nbsp;Then dump the endoded payload with the <i>disassemble</i>
 										command below.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment4/9-encoded-payload.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/10-encoded-payload.png" alt="" /></div></center><br>
 
 									<p>
 										Set a breakpoint at the <code>jz short EncodedShellcode</code> instruction and continue up to the point where <code>xor bl, 0x69</code> equals zero. &nbsp;<i>GDB</i> decompiles this
@@ -361,13 +361,13 @@ End with a line saying just "end".
 (gdb)
 										</code>
 									</pre>
-									<center><div class="image post"><img src="../images/slae/assignment4/10-pre-jump.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/11-pre-jump.png" alt="" /></div></center><br>
 
 									<p>
 										Step one last time to jump into the address pointed by <i>EncodedShellcode</i>. &nbsp;The payload is successfully decoded into <i>execve-stack</i> instructions
 										shown earlier!
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment4/11-decoded-payload.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/12-decoded-payload.png" alt="" /></div></center><br>
 
 
 
