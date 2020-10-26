@@ -67,11 +67,11 @@
 													<a href="#Assembly" style="color:blue;">Writing the Decoder in Assembly</a><br>
 													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
 													<a href="#GDB" style="color:blue;">GDB Analysis</a><br>
-													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
+													<a href="#Debugging" style="color:blue;">Debugging</a><br>
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 													<p>
-														&emsp; &emsp;This post involves writing a custom encoding scheme similar to the "insertion encoder" in SecurityTube Linux Assembler Expert (SLAE)
+														&emsp; &emsp;This post involves writing a custom encoding scheme similar to the <i>insertion encoder</i> in SecurityTube Linux Assembler Expert (SLAE)
 														course. &nbsp;A bit of familiarity is needed before continuing. &nbsp;Encoding is used to obfuscate shellcode in order to covertly maneuver a payload.
 														 &nbsp;At a high level, the payload needs to be encoded, placed into a decoder, compiled, and finally executed. &nbsp;Below is what this process looks like:
 														 <!--<a href="" target="_blank" style="color:blue;">article</a> -->
@@ -86,10 +86,13 @@
 												<br>
 
 
+
 			<br><section id="Encoding"><h2>Encoding the Payload</h2></section>
 
 											<p>
-												&emsp; &emsp;Starting at the beginning of the Proof of Concept (PoC), the <i>execve-stack</i> payload needs to be encoded. &nbsp;This can be done using high-level languages like C or Python.
+												&emsp; &emsp;Starting at the beginning of the Proof of Concept (PoC), the <i>execve-stack</i> payload needs to be encoded. &nbsp;Assembly code used to produce the
+												<i>execve-stack</i> shellcode can be found <a href="https://github.com/jpc0016/SLAE-code/blob/master/Assignment-4/execve-stack.nasm" target="_blank" style="color:blue;">here</a>.
+												 &nbsp;This can be done using high-level languages like C or Python.
 												to perform whatever operation is necessary on the bytes. &nbsp;Python will be used in this case. &nbsp;Using the insertion encoder as a template, the below Python
 												program was drafted.
 											</p>
@@ -98,7 +101,7 @@
 												<code class="language-python" style=display:block;white-space:pre-wrap>
 #!/usr/bin/python
 
-# Placeholder shellcode (reverse shell).  Needs to have execve-stack shellcode. FYI: 25 bytes long
+# Placeholder shellcode (//bin/sh shell).  Needs to have execve-stack shellcode. FYI: 25 bytes long
 shellcode = ("\x31\xc0\x50\x68\x2f\x2f\x73\x68\x68\x2f\x62\x69\x6e\x89\xe3\x50\x89\xe2\x53\x89\xe1\xb0\x0b\xcd\x80")
 
 encoded = ""
@@ -160,13 +163,12 @@ print encoded2
 
 
 
-
-
 			<br><section id="Assembly"><h2>Writing the Decoder in Assembly</h2></section>
 
 									<p>
-										&emsp; &emsp;Now that the payload is encoded, it is time to reverse the process and decode it using <i>nasm</i>. &nbsp;Based on the encoding scheme's sofistication, this can be a tedious process
-										with respect to lining up bytes in their original order. &nbsp;A jump-call-pop skeleton is used to start the assembly since byte operations are executed on a single line of [encoded] shellcode.
+										&emsp; &emsp;Now that the payload is encoded, it is time to reverse the process and decode it using <i>nasm</i>. &nbsp;Based on the encoding scheme's sophistication, this can be a tedious process
+										with respect to lining up bytes in their original order. &nbsp;A jump-call-pop skeleton is used to start the assembly since byte operations are executed on a single line of [encoded]
+										shellcode. &nbsp;Note that <i>EncodedShellcode</i> has two additional 0x69 bytes at the end. &nbsp;This is important later.
 									</p>
 									<pre>
 										<code class="x86asm" style=display:block;white-space:pre-wrap>
@@ -194,7 +196,7 @@ call_shellcode:
 
 									<p>
 										The above technique is called <i>JMP-CALL-POP</i>. &nbsp;It manipulates the <i>call</i> instruction in which the address of the next instruction (EIP value) is pushed onto the stack. &nbsp;This comes in
-										handy when accessing data and its address is unknown. &nbsp;Specific information on the <i>call</i> instruction can be found
+										handy when accessing data when its address is unknown. &nbsp;Specific information on the <i>call</i> instruction can be found
 										<a href="https://c9x.me/x86/html/file_module_x86_id_26.html" target="_blank" style="color:blue;">here</a> and in the screenshot below (from the same page).
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment4/3-call-instruction.png" alt="" /></div></center><br>
@@ -202,25 +204,81 @@ call_shellcode:
 									<p>
 										Before going further, it is important to understand the decoder's architecture. &nbsp;Two trackers are needed to traverse the encoded shellcode: 1 tracker handles every 6-byte
 										collection as a base of reference, and 1 tracker traverses the encoded shellcode 1 spot at a time to overwrite each position. &nbsp;Additionally, a counter register is
-										required to iterate over each set of 5 bytes. &nbsp;Remember that the sixth byte is 0x69 and is not counted in the iteration!
+										required to iterate over each set of 5 bytes. &nbsp;Remember that the sixth byte is 0x69 and is not counted in the iteration! &nbsp;Below is a quick visualization
+										of this framework.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment4/4-iteration-scheme.png" alt="" /></div></center><br>
 
+									<p>
+										With the above picture in mind, <i>esi</i> is the first tracker and should follow a large increment of 6 (<i>esi</i>, <i>esi+6</i>, <i>esi+12</i>, ...); following the locations outlined in bold red.
+										 &nbsp;Register <i>ecx</i> acts as the counter and should iterate inside each group of 6 (<i>esi+0</i>, <i>esi+1</i>, up to <i>esi+4</i>) following the locations
+										 outlined in blue; this iteration is expressed as <i>esi+ecx</i>. &nbsp;Finally <i>edi</i> is the second tracker and follows along <i>EncodedShellcode</i> [one byte at a time] as the destination
+										 for decoded bytes. &nbsp;Before any decoding happens, <i>esi</i> and <i>edi</i> should be set equal so they start from the same address. &nbsp;Below are the register initialization instructions.
+										  &nbsp;Note that <i>esi</i> is already set by instruction
+										 <code>pop esi</code>.
+									</p>
 									<pre>
 										<code class="x86asm" style=display:block;white-space:pre-wrap>
-
+	lea edi, [esi]			; edi = esi
+	xor ebx, ebx			; ebx = 0
+	xor ecx, ecx			; normal byte counter = 0. start at index 0
 										</code>
 									</pre>
 
-
-
-
-
-
-
+									<p>
+										Since the end-of-shellcode check is done before decoding the next five bytes, an offset of six is not necessary (this was determined and fixed in the
+										 <a href="https://thestunneddefense.com/pages/custom-encoding.html#Debugging" target="_blank" style="color:blue;">Debugging</a> section). &nbsp;Simply load the byte from <i>esi</i>
+										into <i>ebx</i> and XOR it with 0x69 to check if the end has been reached. &nbsp;The XOR value can be other values such as 0xaa or 0xbb, as long as the two
+										bytes trailing <i>EncodedShellcode</i> are changed accordingly. &nbsp;If the XOR output is zero, the end of the shellcode has been reached and execution
+										control can be passed to it. &nbsp;Since this check must be done after every iteration of 6 bytes, it requires its own <i>decode</i> label. &nbsp;Below is the
+										assembly code reflecting the check.
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+decode:
+	; check for end of EncodedShellcode. Hence the XOR with 0x69
+	mov bl, byte [esi]		; bl = first byte of EncodedShellcode
+	xor bl, 0x69			; check if bl = 0x69
+	jz short EncodedShellcode	; jump to EncodedShellcode if end is reached because it's decoded!
+										</code>
+									</pre>
 
 									<p>
-										The final code is below
+										The last two labels are relatively straightforward as they handle the raw decoding. &nbsp;The first four bytes are XORed by
+										0x24 and the fifth is XORed by 0x25; therefore a compare instruction is required for the program to branch to correct
+										XOR instructions. &nbsp;In this case, 4 is the index of the fifth byte. &nbsp;Each byte is handled by loading an offset
+										to <i>esi</i>; in particular, this is done using instruction <code>move bl, byte [esi + ecx]</code>. &nbsp;Each branch will
+										 increment <i>edi</i> in order to overwrite the next location in <i>EncodedShellcode</i>.
+										 &nbsp;The branch with 0x24 decoding will increment <i>ecx</i> to jump to the next byte. &nbsp;After decoding the fifth
+										  byte, <i>esi</i> is incremented by 6 to jump to the next set of bytes to decode. &nbsp;This incrementation must happen
+											after the fifth byte instead of in the <i>decode</i> label. &nbsp;If not, the program skips decoding the first 5 bytes.
+											 &nbsp;The counter <i>ecx</i> must also be reset to zero. &nbsp;Below is the assembly depicting normal decoding operations.
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+next:
+	cmp ecx, 4			; is the 5th byte reached?
+	jnz Normal			; jump to XOR 0x24 instructions
+	mov bl, byte [esi + ecx]	; load 5th byte into bl
+	xor bl, 0x25			; XOR 0x25 for 5th byte
+	mov byte [edi], bl		; store decoded byte into edi location
+	xor ecx, ecx			; 5th byte is reached. Reset to 0
+	inc edi				; edi points to next address of shellcode
+	add esi, 6			; esi points to next 6-byte collection in shellcode
+	jmp short decode		; go to end-of-shellcode checking instructions
+
+Normal:
+	mov bl, byte [esi + ecx]	; load byte into bl
+	xor bl, 0x24			; XOR 0x24 for first 4 bytes
+	mov byte [edi], bl		; store decoded byte into edi location
+	inc edi				; edi points to next address of shellcode
+	inc ecx				; counter + 1
+	jmp short next			; decode next byte
+										</code>
+									</pre>
+
+									<p>
+										Put everything together for the final code below.
 									</p>
 									<pre>
 										<code class="x86asm" style=display:block;white-space:pre-wrap>
@@ -235,8 +293,6 @@ _start:
 decoder:
 	pop esi				; esi = EncodedShellcode
 	lea edi, [esi]			; edi moves along shellcode length
-	xor eax, eax
-	mov al, 6			; eax = 6 set-of-six counter
 	xor ebx, ebx			; ebx = 0
 	xor ecx, ecx			; normal byte counter = 0. start at index 0
 
@@ -251,7 +307,7 @@ next:
 	; Need to decode first 5 bytes before running through any movement stuff
 	; Movement handled simultaneously for brevity
 	cmp ecx, 4			; is the 5th byte reached?
-	jnz Normal			; do XOR 0x24 for first four bytes
+	jnz Normal			; jump to XOR 0x24 instructions
 	mov bl, byte [esi + ecx]	; load 5th byte into bl
 	xor bl, 0x25			; XOR 0x25 for 5th byte
 	mov byte [edi], bl		; store decoded byte into edi location
@@ -262,7 +318,7 @@ next:
 
 Normal:
 	mov bl, byte [esi + ecx]	; load byte into bl
-	xor bl, 0x24			; do XOR 0x24 for first 4 bytes
+	xor bl, 0x24			; XOR 0x24 for first 4 bytes
 	mov byte [edi], bl		; store decoded byte into edi location
 	inc edi				; edi points to next address of shellcode
 	inc ecx				; counter + 1
@@ -281,9 +337,7 @@ call_shellcode:
 
 
 
-
 			<br><section id="Demonstration"><h2>Demonstration</h2></section>
-
 									<!-- Compiling 32-bit executables on 64-bit Linux:
 									nasm command works fine.
 									add i386 option to ld: ld -m elf_i386 -z execstack -o execve-stack execve-stack.o
@@ -295,7 +349,7 @@ call_shellcode:
 								 -->
 									<p>
 										&emsp; &emsp;After writing the assembly, the <i>-N</i> option must be added to the linker to enable write access to the <i>.text</i> section. &nbsp;Without it, the program
-										reaches a SEGFAULT error when storing the first decoded byte into <i>[edi]</i>; specifically at <code>mov byte [edi], bl</code>
+										reaches a SEGFAULT error when storing the first decoded byte into <i>[edi]</i>; specifically at instruction: <br><code>mov byte [edi], bl</code>
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment4/5-compiled-decoder.png" alt="" /></div></center><br>
 
@@ -305,7 +359,7 @@ call_shellcode:
 									<center><div class="image post"><img src="../images/slae/assignment4/decoder-strace.gif" alt="" /></div></center><br>
 
 									<p>
-										Perform a quick optimization by checking for dead bytes. &nbsp;Luckily none exist.
+										Perform quick optimization by checking for dead bytes. &nbsp;Luckily none exist.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment4/6-no-dead-bytes.png" alt="" /></div></center><br>
 
@@ -365,41 +419,46 @@ End with a line saying just "end".
 
 									<p>
 										Step one last time to jump into the address pointed by <i>EncodedShellcode</i>. &nbsp;The payload is successfully decoded into <i>execve-stack</i> instructions
-										shown earlier!
+										from the earlier link!
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment4/12-decoded-payload.png" alt="" /></div></center><br>
 
 
 
-
-
-
-
-
-
 			<br><section id="Debugging"><h2>Debugging</h2></section>
 
-									<!--
-
-									-->
 									<p>
-										&emsp; &emsp;This assignment contained mostly logical errors that lead to things like SEGFAULT and an obscure error: <i>Trace/breakpoint trap (core dumped)</i>.
-										 &nbsp;
+										&emsp; &emsp;This assignment contained mostly logical errors that lead to SEGFAULT and an obscure error: <i>Trace/breakpoint trap (core dumped)</i>.
+										 &nbsp;The latter error was "upgraded" to a SEGFAULT error when rearranging the program logic. &nbsp;It was likely caused by an attempt to access memory past the
+										 program's intended bounds.<br>
+										&emsp; &emsp;Below is a logical error encountered when traversing the shellcode. &nbsp;Before making the fix to load just <i>esi</i>, the program would
+										load the <i>eax</i> offset (<i>esi+eax</i>) when performing the end-of-shellcode check. &nbsp;Register <i>eax</i> is set to 6, <i>esi</i> points to 0xc5, and
+										<i>esi+eax</i> points to 0x69.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment4/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment4/13-logical-error.png" alt="" /></div></center><br>
 
+									<p>
+										The move instruction above loads 0x69 into ebx leading to a subsequent XOR with 0x69. &nbsp;Since values XORed with themselves equal zero, the remaining
+										5 bytes are skipped when the program branches to <i>EncodedShellcode</i>.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment4/14-premature-check.png" alt="" /></div></center><br>
+
+									<p>
+										The last 5 bytes are not decoded and are shown as garbage instructions when dumping the payload. &nbsp;The payload is partially decoded but the remaining 3
+										instructions cause an error; specifically a SEGFAULT. &nbsp;Avoid this error by removing <i>eax</i> altogether from the program as it is not needed.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment4/15-premature-jump.png" alt="" /></div></center><br>
 
 
 
 		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
 
 									<p>
-										&emsp; &emsp;Conclusion goes here &nbsp;
+										&emsp; &emsp;Encoding and decoding provided an important lesson in exponential difficulty. &nbsp;As encoding sophistication increases, the difficulty of
+										decoding their payloads increases. &nbsp;Furthermore, this causes problems when using operations which are not reversable such as bitwise <i>AND</i> and
+										<i>OR</i>. &nbsp;<i>NOT</i> operations could be used in encoding should "negative bytes" be successfully avoided. &nbsp;The next post involves analyzing 3
+										<i>msfvenom</i> payloads using <i>GDB</i>, <i>ndisasm</i>, and <i>Libemu</i>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment4/.png" alt="" /></div></center><br>
-
-
-
 
 
 									<p>
