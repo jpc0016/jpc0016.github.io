@@ -58,44 +58,40 @@
                     <body>
                       <article id="first-post">
 												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
-                        <h2>&emsp; Analyzing Msfvenom Payloads</h2>
+                        <h2>&emsp; Analyzing adduser Payload</h2>
 												<h5>&emsp; &emsp; &emsp; &emsp; October 30, 2020</h5>
                         <div class="box">
 
 													<br><h2>Contents</h2>
-													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
+													<a href="#Started" style="color:blue;">Getting Started</a><br>
 													<a href="#Assembly" style="color:blue;">Writing the Assembly</a><br>
 													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
 													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 													<p>
-														&emsp; &emsp;Good evening Tim, this post involves analyzing at least three shellcode samples from msfvenom linux/x86 payloads. &nbsp;A bit of familiarity is
-														needed before continuing. &nbsp;The purpose of encoding is to obfuscate shellcode in order to maneuver a payload.
-														 &nbsp;A review of the reverse TCP shell is below:<br><br>
-														From the previous <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">article</a>: &nbsp;
-														Reverse shells are functionally similar to bind shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
-														for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
-														machine by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
+														&emsp; &emsp;Good evening Tim, this post involves analyzing the <i>adduser</i> shellcode sample from <i>msfvenom</i>. &nbsp;<i>Msfvenom</i> is a command
+															line tool by <a href="https://blog.rapid7.com/2011/05/24/introducing-msfvenom/" target="_blank" style="color:blue;"><i>Rapid7</i></a> that generates payloads
+															in various formats and encoding schemes. &nbsp;According to <i>Offensive Security</i>, it combined functionally of both <i>msfpayload</i> and <i>msfencode</i> as of June 8, 2015 and placed both
+															tools under a single framework.
 											 	</p>
-												<center><div class="image post"><img src="../images/slae/assignment2/1-reverse-shell.png" alt="" /></div></center><br>
-												<br>
 
 
-			<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
+
+			<br><section id="Started"><h2>Getting Started</h2></section>
 
 											<p>
-												Similar to the bind shell, a Proof of Concept (PoC) is developed using the same methodology. &nbsp;Look for the unstaged
-												version of <i>Shell Reverse TCP</i> payload in <i>msfvenom</i> and break it apart with <i>libemu's sctest</i> tool.
+												&emsp; &emsp;Using any machine with Metasploit Framework, dump available payloads and verify <i>../adduser</i> exists. &nbsp;The specific command is
+												<code>msfvenom -l payloads | grep "linux/x86"</code>:
 											</p>
+											<center><div class="image post"><img src="../images/slae/assignment5/1-payloads-adduser.png" alt="" /></div></center><br>
 
-											<pre>
-												<code class="bash" style=display:block;white-space:pre-wrap>
--- snip --
-
-
-												</code>
-											</pre>
+											<p>
+												Next step is to determine what the payload requires. &nbsp;Dump the summary information with the command
+												<code>msfvenom -l linux/x86/adduser --list-options</code>. &nbsp;Note that the basic options take priority. &nbsp;According to the summary, the <i>adduser</i>
+												payload creates a user, <i>metasploit</i>, with password, <i>metasploit</i>, and adds it to the admin group.
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment5/2-adduser-summary.png" alt="" /></div></center><br>
 
 
 
