@@ -52,7 +52,7 @@
 									Post body goes here.
 									-->
                   <!--
-                  Solving slae question 5
+                  Solving slae question 5 part 1
                   -->
                   <section class="post">
                     <body>
@@ -79,7 +79,10 @@
 
 
 			<br><section id="Started"><h2>Getting Started</h2></section>
-
+											<!--
+											Need to add Libemu install from git repo and tweaks.  Use tools from root Libemu folder, no "./sctest" or moving to
+											/tools/sctest folder necessary
+											-->
 											<p>
 												&emsp; &emsp;Using any machine with Metasploit Framework, dump available payloads and verify <i>../adduser</i> exists. &nbsp;The specific command is
 												<code>msfvenom -l payloads | grep "linux/x86"</code>:
@@ -157,75 +160,108 @@
 									</pre>
 
 									<p>
-										The above dump is the entire assembly output, which includes multiple calls to <i>int 0x80</i>. &nbsp;0x46 is loaded into <i>eax</i> before calling <i>int 0x80</i>.
-										 &nbsp;This is sytem call number 70, which is <a href="https://man7.org/linux/man-pages/man2/setreuid.2.html" target="_blank" style="color:blue;"><i>setreuid()</i></a> below.
-
+										The above dump is the entire assembly output, which includes multiple calls to <i>int 0x80</i>. &nbsp; Multiple DWORDs
+										with ascii characters are also pushed onto the stack. &nbsp;This information is useful; however, it is
+										difficult to parse on its own. &nbsp;Further analysis is needed starting with <i>Libemu</i>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/3-syscall-number.png" alt="" /></div></center><br>
+
 
 
 			<br><section id="Libemu"><h2>Libemu Analysis</h2></section>
-							<!--
-
-								-->
 
 								<p>
-									&emsp; &emsp;Use Libemu here &nbsp;
+									&emsp; &emsp;<i>Libemu</i> is a tricky tool to install so most of its analysis is done on the web VM. &nbsp;The only <i>Libemu</i> tool missing from
+									the VM is <i>dot</i>, which allows visual analysis via the creation of <i>png</i> files. &nbsp;Unfortunately <i>dot</i> cannot be used because the
+									<i>sctest</i> output is incomplete. &nbsp;Navigate to the <i>../tools/sctest</i> folder to find the <i>sctest</i> binary.
 								</p>
-								<center><div class="image post"><img src="../images/slae/assignment5/4-sctest-folder.png" alt="" /></div></center><br>
+								<center><div class="image post"><img src="../images/slae/assignment5/3-sctest-folder.png" alt="" /></div></center><br>
 
 								<p>
-									After navigating to the folder, run the following command to dump  &nbsp;
-								</p>
-								<center><div class="image post"><img src="../images/slae/assignment5/5-sctest-out.png" alt="" /></div></center><br>
-								<!--
-								<p>
-									 graphical stuff not used in adduser   &nbsp;
-								</p>
-								<center><div class="image post"><img src="../images/slae/assignment5/6-create-graph.png" alt="" /></div></center><br>
+									After navigating to the folder, run the following command to pipe raw shellcode into <i>sctest</i>. &nbsp;For some reason the output stops at the
+									first syscall, thus a proper Control Flow Graph (CFG) file cannot be made using the <i>-G</i> option. &nbsp;Proper functionality was tested on a
+									<i>Libemu</i> install by running <code>sctest -vvv -Sc 100000 -G bind-shell.dot</code> on the <i>linux/x86/shell_bind_tcp</i> raw payload. &nbsp;A
+									png file depicting the payload's control flow was successfully created with the <i>dot</i> tool. &nbsp;The <i>adduser</i> payload provides no
+									further analysis vectors with <i>Libemu</i>.
 
-								<p>
-									 Need the sctest graphical stuff here   &nbsp;
 								</p>
-								<center><div class="image post"><img src="../images/slae/assignment5/7-dot-installed.png" alt="" /></div></center><br>
-								-->
+								<center><div class="image post"><img src="../images/slae/assignment5/4-sctest-out.png" alt="" /></div></center><br>
 
 
 
 			<br><section id="GDB"><h2>GDB Analysis</h2></section>
 
 									<p>
-										&emsp; &emsp;Debugging and Troubleshooting &nbsp;
+										&emsp; &emsp;In order to analyze the shellcode in <i>GDB</i>, it will need to be extracted and placed into a C-code harness.
+										 &nbsp;Use the below command to create a payload in C-code format. &nbsp;To list additional formats, simply run
+										 <code>msfvenom --list formats</code>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/6-create-shellcode-again.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/5-create-shellcode-again.png" alt="" /></div></center><br>
 
 									<p>
-										Paste shellcode into C-code harness. &nbsp;
+										Copy and paste shellcode into the C-code harness.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/7-paste-harness-again.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/6-paste-harness-again.png" alt="" /></div></center><br>
 
 									<p>
-										Dump of <i>main()</i> function. &nbsp;
+										Save the file and compile it with <code>gcc -fno-stack-protector -z execstack shellcode.c -o shellcode</code>. &nbsp;Start
+										<i>GDB</i> in quiet mode and disassemble the <i>main()</i> function. &nbsp;Stop at instruction <code>call eax</code>. &nbsp;This
+										is where the shellcode is passed control.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/8-gdb-main-again.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/7-gdb-main-again.png" alt="" /></div></center><br>
 
 									<p>
-										Entire dump of pasted shellcode after call to <i>eax</i>. &nbsp;
+										Step one more instruction then disassemble the payload. &nbsp;This should look familiar to the <i>nasm</i> disassembly.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/9-assembly-dump.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/8-assembly-dump.png" alt="" /></div></center><br>
 
 									<p>
-										The above dump is the entire assembly output, which includes multiple calls to <i>int 0x80</i>. &nbsp;0x46 is loaded into <i>eax</i> before calling <i>int 0x80</i>.
-										 &nbsp;This is sytem call number 70, which is <a href="https://man7.org/linux/man-pages/man2/setreuid.2.html" target="_blank" style="color:blue;"><i>setreuid()</i></a> below.
+										The above assembly includes 4 calls to <i>int 0x80</i> and multiple ascii bytes pushed onto the stack. &nbsp;By noting the values of <i>eax</i>,
+										each syscall can be mapped in order using the <a href="http://shell-storm.org/shellcode/files/syscalls.html" target="_blank" style="color:blue;">syscall table</a>:
+										<a href="https://man7.org/linux/man-pages/man2/setreuid.2.html" target="_blank" style="color:blue;"><i>setreuid()</i></a>,
+										<a href="https://man7.org/linux/man-pages/man2/open.2.html" target="_blank" style="color:blue;"><i>open()</i></a>,
+										<a href="https://man7.org/linux/man-pages/man2/write.2.html" target="_blank" style="color:blue;"><i>write()</i></a>, and
+										<a href="https://man7.org/linux/man-pages/man2/exit.2.html" target="_blank" style="color:blue;"><i>exit()</i></a>.
 
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/3-syscall-number.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/9-syscall-number.png" alt="" /></div></center><br>
 
 									<p>
-										Just before <i>setreuid()</i>&nbsp;
+										Starting with <i>setreuid()</i>, 0x46 (70) is loaded into <i>eax</i> while <i>ebx</i> and <i>ecx</i> are set to zero.
+										 &nbsp;The parameters are zero because the shellcode sets the UID to zero according to the earlier description. &nbsp;Step
+										 through the first few instructions up to the syscall to confirm the parameters. &nbsp;The corresponding
+										 hook-stop is defined below:
 									</p>
+									<pre>
+										<code style=display:block;white-space:pre-wrap>
+(gdb) define hook-stop
+Type commands for definition of "hook-stop".
+End with a line saying just "end".
+>print/x $eax
+>print/x $ebx
+>print/x $ecx
+>print/x $edx
+>disassemble $eip,+28
+>x/24xb $esp
+>end
+(gdb)
+										</code>
+									</pre>
 									<center><div class="image post"><img src="../images/slae/assignment5/10-before-syscall.png" alt="" /></div></center><br>
 
+									<p>
+										Step again to observe results from the call to <i>setreuid()</i>. &nbsp;Register <i>eax</i> is zero so the call was successful.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/11-.png" alt="" /></div></center><br>
+
+									<p>
+										The next syscall is to <i>open()</i>. &nbsp;It takes two parameters: pathname to the requested file, and flags. &nbsp;Revisit
+										 the DWORDs pushed onto the stack and convert the bytes to ascii. &nbsp;It spells <i>/etc/passwd</i>! &nbsp;The values
+										 placed into ecx are 0x0401, which represent file permissions similar to what is observed in <i>chmod</i>. &nbsp;The flag
+										 represents both <b>O_WRONLY</b> (write only) and <b>O_NOCTTY</b> (do not assign controlling terminal). &nbsp;Their exact
+										 values can be found in <i>/usr/include/asm-generic/fcntl.h</i>. &nbsp;If successful, the return value is a file descriptor
+										  used in later syscalls.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/12-.png" alt="" /></div></center><br>
 
 
 
