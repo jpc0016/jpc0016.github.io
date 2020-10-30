@@ -57,9 +57,9 @@
                   <section class="post">
                     <body>
                       <article id="first-post">
-												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
-                        <h2>&emsp; Analyzing adduser Payload</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; October 30, 2020</h5>
+												<a href="index.html"><img src="../images/aaron.jpg" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; Analyzing AddUser Payload</h2>
+												<h5>&emsp; &emsp; &emsp; &emsp; October 29, 2020</h5>
                         <div class="box">
 
 													<br><h2>Contents</h2>
@@ -70,10 +70,10 @@
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 											<p>
-											&emsp; &emsp;Good evening Tim, this post involves analyzing the <i>adduser</i> shellcode sample from <i>msfvenom</i>. &nbsp;<i>Msfvenom</i> is a command
+											&emsp; &emsp;Good evening Tim, this is the first of three posts about analyzing the <i>adduser</i> shellcode sample from <i>msfvenom</i>. &nbsp;<i>Msfvenom</i> is a command
 											line tool by <a href="https://blog.rapid7.com/2011/05/24/introducing-msfvenom/" target="_blank" style="color:blue;"><i>Rapid7</i></a> that generates payloads
-											in various formats and encoding schemes. &nbsp;According to <i>Offensive Security</i>, it combined functionally of both <i>msfpayload</i> and <i>msfencode</i> as of June 8, 2015 and placed both
-											tools under a single framework.
+											in various formats and encoding schemes. &nbsp;According to <i>Offensive Security</i>, it combined functionally of both <i>msfpayload</i> and <i>msfencode</i> as of
+											June 8, 2015 by placing both tools under a single framework.
 											</p>
 
 
@@ -84,7 +84,7 @@
 												&emsp; &emsp;Using any machine with Metasploit Framework, dump available payloads and verify <i>../adduser</i> exists. &nbsp;The specific command is
 												<code>msfvenom -l payloads | grep "linux/x86"</code>:
 											</p>
-											<center><div class="image post"><img src="../images/slae/assignment5/1-payloads-adduser.png" alt="" /></div></center><br>
+											<center><div class="image post"><img src="../images/slae/assignment5/adduser/1-payloads-adduser.png" alt="" /></div></center><br>
 
 											<p>
 												Next step is to determine what the payload requires. &nbsp;Dump the summary information with the command
@@ -92,7 +92,7 @@
 												taken care of. &nbsp;According to the summary, the <i>adduser</i>
 												payload creates a user, <i>metasploit</i>, with password, <i>metasploit</i>, and adds it to the admin group.
 											</p>
-											<center><div class="image post"><img src="../images/slae/assignment5/2-adduser-summary.png" alt="" /></div></center><br>
+											<center><div class="image post"><img src="../images/slae/assignment5/adduser/2-adduser-summary.png" alt="" /></div></center><br>
 
 
 
@@ -173,7 +173,7 @@
 									<i>Libemu</i> tool missing from the VM is <i>dot</i>, which allows visual analysis via the creation of <i>png</i> files. &nbsp;Unfortunately <i>dot</i>
 									 cannot be used because the <i>sctest</i> output is incomplete. &nbsp;Navigate to the <i>../tools/sctest</i> folder to find the <i>sctest</i> binary.
 								</p>
-								<center><div class="image post"><img src="../images/slae/assignment5/3-sctest-folder.png" alt="" /></div></center><br>
+								<center><div class="image post"><img src="../images/slae/assignment5/adduser/3-sctest-folder.png" alt="" /></div></center><br>
 
 								<p>
 									After navigating to the folder, run the following command to pipe raw shellcode into <i>sctest</i>. &nbsp;For some reason the output stops at the
@@ -183,7 +183,7 @@
 									further analysis vectors with <i>Libemu</i>.
 
 								</p>
-								<center><div class="image post"><img src="../images/slae/assignment5/4-sctest-out.png" alt="" /></div></center><br>
+								<center><div class="image post"><img src="../images/slae/assignment5/adduser/4-sctest-out.png" alt="" /></div></center><br>
 
 
 
@@ -194,24 +194,24 @@
 										 &nbsp;Use the below command to create a payload in C-code format. &nbsp;To list additional formats, simply run
 										 <code>msfvenom --list formats</code>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/5-create-shellcode-again.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/5-create-shellcode-again.png" alt="" /></div></center><br>
 
 									<p>
 										Copy and paste shellcode into the C-code harness.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/6-paste-harness-again.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/6-paste-harness-again.png" alt="" /></div></center><br>
 
 									<p>
 										Save the file and compile it with <code>gcc -fno-stack-protector -z execstack shellcode.c -o shellcode</code>. &nbsp;Start
 										<i>GDB</i> in quiet mode and disassemble the <i>main()</i> function. &nbsp;Stop at instruction <code>call eax</code>. &nbsp;This
 										is where the shellcode is passed control.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/7-gdb-main-again.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/7-gdb-main-again.png" alt="" /></div></center><br>
 
 									<p>
 										Step one more instruction then disassemble the payload. &nbsp;This should look identical to the <i>nasm</i> disassembly.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/8-assembly-dump.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/8-assembly-dump.png" alt="" /></div></center><br>
 
 									<p>
 										The above assembly includes 4 calls to <i>int 0x80</i> and multiple ascii bytes pushed onto the stack. &nbsp;By noting the values of <i>eax</i>,
@@ -222,12 +222,12 @@
 										<a href="https://man7.org/linux/man-pages/man2/exit.2.html" target="_blank" style="color:blue;"><i>exit()</i></a>.
 
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/9-syscall-number.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/9-syscall-number.png" alt="" /></div></center><br>
 
 									<p>
 										Starting with <i>setreuid()</i>, 0x46 (70) is loaded into <i>eax</i> while <i>ebx</i> and <i>ecx</i> are set to zero.
-										 &nbsp;The parameters are zero because the shellcode sets the UID to zero according to the earlier description. &nbsp;Step
-										 through the first few instructions up to the syscall to confirm the parameters. &nbsp;The corresponding
+										 &nbsp;Both parameters are zero because the shellcode sets the UID to zero according to the earlier description. &nbsp;Step
+										 through the first few instructions and reach the syscall to confirm the parameters. &nbsp;The corresponding
 										 hook-stop is defined below:
 									</p>
 									<pre>
@@ -245,35 +245,35 @@ End with a line saying just "end".
 (gdb)
 										</code>
 									</pre>
-									<center><div class="image post"><img src="../images/slae/assignment5/10-before-setreuid.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/10-before-setreuid.png" alt="" /></div></center><br>
 
 									<p>
-										Step again to observe results from the call to <i>setreuid()</i>. &nbsp;Register <i>eax</i> is zero so the call was successful. &nbsp;Furthermore,
+										Step again to observe results from the call to <i>setreuid()</i>. &nbsp;Register <i>eax</i> is zero meaning the call was successful. &nbsp;Furthermore,
 										nothing was changed on the stack.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/11-after-setreuid.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/11-after-setreuid.png" alt="" /></div></center><br>
 
 									<p>
-										The next syscall is to <i>open()</i> shown by loading 0x5 into <i>eax</i>. &nbsp;It takes two parameters: pathname to the requested file,
+										The next syscall is to <i>open()</i> shown by loading 0x5 into <i>eax</i>. &nbsp;It takes two parameters: pathname to the requested file as a pointer,
 										and flags. &nbsp;Revisit the DWORDs pushed onto the stack and convert the bytes to ascii. &nbsp;It spells <i>/etc/passwd</i>! &nbsp;The values
 										 placed into ecx are 0x0401, which represent file permissions similar to what is observed in <i>chmod</i>. &nbsp;The flag
 										 represents both <b>O_WRONLY</b> (write only) and <b>O_NOCTTY</b> (do not assign controlling terminal). &nbsp;Their exact
 										 values can be found in <i>/usr/include/asm-generic/fcntl.h</i>. &nbsp;If successful, the return value is a file descriptor
 										  used in later syscalls.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/12-before-open.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/12-before-open.png" alt="" /></div></center><br>
 
 									<p>
-										After <i>open()</i>. &nbsp;
+										Step through the <i>open()</i> syscall to receive a file descriptor value of 8. &nbsp;
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/13-after-open.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/13-after-open.png" alt="" /></div></center><br>
 
 									<p>
-										The next branch is a strange <i>call</i> instruction that points to the middle of a later instruction below. &nbsp;Specifically it points to the middle of
-										instruction <code>or bl, BYTE PTR [ecx-0x75]</code>. &nbsp;Remember that the <i>call</i> instruction places the address of the next instruction
-										(0x5655704b) onto the stack.
+										The next branch uses a strange <i>call</i> instruction that points to the middle of a later instruction below. &nbsp;Specifically it points to the middle of
+										instruction <code>or bl, BYTE PTR [ecx-0x75]</code>. &nbsp;This seems out of place. &nbsp;Why would a program do this? &nbsp;Remember that the <i>call</i>
+										 instruction places the address of the next instruction (0x5655704b) onto the stack.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/14-before-call.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/14-before-call.png" alt="" /></div></center><br>
 
 									<p>
 										After the <i>call</i> instruction, a <code>pop ecx</code> instruction appears! &nbsp;This activity appears very similar to that found in JMP-CALL-POP,
@@ -289,14 +289,14 @@ End with a line saying just "end".
 											opcode table: http://sparksandflames.com/files/x86InstructionChart.html
 										-->
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/15-after-call.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/15-after-call.png" alt="" /></div></center><br>
 
 									<p>
 										Verify the opcode bytes of <code>mov edx, DWORD PTR [ecx-0x4]</code> by dumping it into shell-storm's online
 										<a href="http://shell-storm.org/online/Online-Assembler-and-Disassembler/" target="_blank" style="color:blue;">assembler/disassembler tool</a>.
 										 &nbsp;
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/16-assemble-instructions.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/16-assemble-instructions.png" alt="" /></div></center><br>
 
 									<p>
 										The output matches the next 3 opcode bytes from the <i>ndisasm</i> disassembly. &nbsp;Below is the snipped output (before executing
@@ -334,37 +334,30 @@ End with a line saying just "end".
 
 										<!-- &nbsp;Parameters before <i>write()</i> instruction. &nbsp;-->
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/17-before-write.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/17-before-write.png" alt="" /></div></center><br>
 
 									<p>
-										A successful execution of <i>write()</i> returns the number of bytes written. &nbsp;33 bytes were successfully written according to <i>eax</i>
+										A successful execution of <i>write()</i> returns the number of bytes written. &nbsp;33 bytes were successfully written according to the <i>eax</i> value. &nbsp;All
+										bytes of the sub-payload were written because 0x5655704b + 0x21 = 0x5655706c, which is the start of instruction <code>pop ecx</code>!
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/18-after-write.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/18-after-write.png" alt="" /></div></center><br>
 
 									<p>
-										Check the contents of what was written to <i>/etc/passwd</i>. &nbsp;Dump 33 bytes based on the call to <i>write()</i>
+										The contents written to <i>/etc/passwd</i> can be checked by dumping 33 bytes. &nbsp;Below shows the string of user <i>bob</i>, their password,
+										User ID (UID), Group ID (GID), home directory, and starting program (typically an interactive shell).
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/19-dump-subpayload.png" alt="" /></div></center><br>
-
-
-
-
-
-
-
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/19-dump-subpayload.png" alt="" /></div></center><br>
 
 
 
 		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
 
 									<p>
-										&emsp; &emsp;Conclusion goes here &nbsp;
+										&emsp; &emsp;Analyzing payloads from <i>msfvenom</i> is great way to familiarize with other types of shellcode. &nbsp;Not all exploits
+										involve reverse shells! &nbsp;It is also important to understand not every tool will yield fruitful analysis. &nbsp;<i>Libemu</i>
+										provided little help with this analysis but is much friendlier towards shell-type payloads. &nbsp;The next <i>msfvenom</i> analysis
+										involves <i>read_file</i>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
-
-
-
-
 
 									<p>
 										The source code for this assignment as well as other SLAE assignments is here:
