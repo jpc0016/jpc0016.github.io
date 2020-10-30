@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <!--
-	Solution for SLAE question #5
+	Solution for SLAE question #5 part 2
 
 -->
 <html>
@@ -57,7 +57,7 @@
                   <section class="post">
                     <body>
                       <article id="first-post">
-												<a href="index.html"><img src="../images/tomlin.png" class="avatar" alt="avatar"> </img></a>
+												<a href="index.html"><img src="../images/azamat.jpg" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Analyzing Read_File Payload</h2>
 												<h5>&emsp; &emsp; &emsp; &emsp; October 31, 2020</h5>
                         <div class="box">
@@ -209,7 +209,8 @@
 										<li><a href="https://man7.org/linux/man-pages/man2/write.2.html" target="_blank" style="color:blue;"><i>write()</i></a></li>
 										<li><a href="https://man7.org/linux/man-pages/man2/exit.2.html" target="_blank" style="color:blue;"><i>exit()</i></a></li>
 
-										Before calling <i>open()</i>, a jump-call-pop is done to place the payload's address into <i>ebx</i> and 0x5 into <i>eax</i>.
+										This order makes sense because the program must <b>open</b> the target file, <b>read</b> its contents, then <b>write</b> the same contents out, and of course <b>exit</b>
+										 appropriately. &nbsp;Before calling <i>open()</i>, a jump-call-pop is done to place the payload's address into <i>ebx</i> and 0x5 into <i>eax</i>.
 										 &nbsp;After jumping to the <i>call</i> instruction, the address of the following instruction is outlined below and will be pushed onto the stack
 										 after executing <code>call 0x56557022</code>. &nbsp;The corresponding hook-stop is defined below:
 									</p>
@@ -246,109 +247,65 @@ End with a line saying just "end".
 									<center><div class="image post"><img src="../images/slae/assignment5/readfile/11-before-open.png" alt="" /></div></center><br>
 
 									<p>
-										The next syscall is to <i>open()</i> shown by loading 0x5 into <i>eax</i>. &nbsp;It takes two parameters: pathname to the requested file as a pointer,
+										Step again to reveal a file descriptor of 0x8 returned in <i>eax</i>.
+
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/readfile/12-after-open.png" alt="" /></div></center><br>
+
+									<p>
+										The next syscall is to <i>read()</i> shown when 0x3 is loaded into <i>eax</i>. &nbsp;It is very similar to <i>write()</i> with a slight
+										difference. &nbsp;The pointer to <i>buf</i> is the destination so it is not defined as <i>const</i>. &nbsp;The direction is backwards in
+										 <i>write()</i> where the file descriptor is the destination and <i>buf</i> is the source; therefore, the source contents are defined as
+										 <i>const</i> to prevent overwriting.
+
+
+										 <!--
+										 &nbsp;It takes two parameters: pathname to the requested file as a pointer,
 										and flags. &nbsp;Revisit the DWORDs pushed onto the stack and convert the bytes to ascii. &nbsp;It spells <i>/etc/passwd</i>! &nbsp;The values
 										 placed into ecx are 0x0401, which represent file permissions similar to what is observed in <i>chmod</i>. &nbsp;The flag
 										 represents both <b>O_WRONLY</b> (write only) and <b>O_NOCTTY</b> (do not assign controlling terminal). &nbsp;Their exact
 										 values can be found in <i>/usr/include/asm-generic/fcntl.h</i>. &nbsp;If successful, the return value is a file descriptor
-										  used in later syscalls.
+										  used in later syscalls. -->
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/readfile/12-before-open.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/readfile/13-read-write-diff.png" alt="" /></div></center><br>
 
 									<p>
-										Step through the <i>open()</i> syscall to receive a file descriptor value of 8. &nbsp;
+										Step up to the <i>read()</i> syscall to review its parameters. &nbsp;Remember that 0xffffd71c is the <b>destination</b> buffer. &nbsp;Nothing interesting exists
+										at that address [yet]. &nbsp;Register <i>edx</i> holds the number of bytes to read, which is 4096 bytes when converted from hex to decimal. &nbsp;This also matches
+										what was stated in the <code>--list-options</code> description above.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/readfile/13-after-open.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/readfile/14-before-read.png" alt="" /></div></center><br>
 
 									<p>
-										The next branch uses a strange <i>call</i> instruction that points to the middle of a later instruction below. &nbsp;Specifically it points to the middle of
-										instruction <code>or bl, BYTE PTR [ecx-0x75]</code>. &nbsp;This seems out of place. &nbsp;Why would a program do this? &nbsp;Remember that the <i>call</i>
-										 instruction places the address of the next instruction (0x5655704b) onto the stack.
+										If successful, <i>read()</i> returns the number of bytes read in <i>eax</i>. &nbsp;Step through the syscall to show 10 bytes read into the buffer at 0xffffd71c. &nbsp;
+										This can be verified by dumping the buffer as a string to reveal "wawaweewa." &nbsp;Very nice!
+
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/readfile/14-before-call.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/readfile/15-after-read.png" alt="" /></div></center><br>
 
 									<p>
-										After the <i>call</i> instruction, a <code>pop ecx</code> instruction appears! &nbsp;This activity appears very similar to that found in JMP-CALL-POP,
-										which means garbage instructions starting at address 0x5655704b represent a "sub-payload" inside the <i>adduser</i> payload! &nbsp;It is likely a parameter to
-										a later system call.<br>
-										 &emsp; &emsp;The subsequent instruction
-										changes to <code>mov edx, DWORD PTR [ecx-0x4]</code> and 0x5655704b appears on the stack. &nbsp;Based on the call, it appears
-										changes occured because execution control was passed to the middle of an instruction; reshuffling opcode bytes in the process.
-										  <!-- Compare opcode bytes of pop ecx with what was dumped
-											in ndisasm.  pop ecx opcode should match with opcode in the middle of instruction at 0x5655706b.
-											The instruction at 0x5655706b is 'or bl, BYTE PTR [ecx-0x75]'
-
-											opcode table: http://sparksandflames.com/files/x86InstructionChart.html
-										-->
+										The next syscall is <i>write()</i> since 0x4 is moved into <i>eax</i>. &nbsp;10 bytes were successfully read from the previous syscall so that value can be easily moved into
+										<i>edx</i>, which is <i>write()</i>'s' <i>count</i> parameter. &nbsp;Because the program is writing to <i>stdout</i>, 0x1 is loaded into <i>ebx</i> which holds the
+										file descriptor. &nbsp;Remember that <i>read()</i> and <i>write()</i> are symmetrical functions so they operate on the same buffer in this case; meaning <i>ecx</i> remains
+										unchanged. &nbsp;When <i>write()</i> is called, the buffer is protected because it is used as <i>const</i>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/readfile/15-after-call.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/readfile/16-before-write.png" alt="" /></div></center><br>
 
 									<p>
-										Verify the opcode bytes of <code>mov edx, DWORD PTR [ecx-0x4]</code> by dumping it into shell-storm's online
-										<a href="http://shell-storm.org/online/Online-Assembler-and-Disassembler/" target="_blank" style="color:blue;">assembler/disassembler tool</a>.
-										 &nbsp;
+										Step over the syscall to return the number of bytes successfully written. &nbsp;Once again this function is symmetrical to <i>read()</i>. &nbsp;Most importantly,
+										the bytes appear in <i>GDB</i>! &nbsp;The final syscall is <i>exit()</i> which is easy and takes 0 as its only argument in <i>ebx</i>. &nbsp;Step through to
+										observe a successful exit!
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/readfile/16-assemble-instructions.png" alt="" /></div></center><br>
-
-									<p>
-										The output matches the next 3 opcode bytes from the <i>ndisasm</i> disassembly. &nbsp;Below is the snipped output (before executing
-										<code>call 0x53</code>) to show relevant sections of the payload. &nbsp;Byte 0x59 is indeed followed by opcode bytes 0x8b, 0x51, and 0xfc.
-									</p>
-									<pre>
-										<code class="x86asm" style=display:block;white-space:pre-wrap>
-
-00000026  E828000000        call 0x53           ; next instruction's address loaded onto the stack (0x5655704b)
-0000002B  6D                insd
-
-; snip garbage instructions / payload
-
-00000050  7368              jnc 0xba
-; byte 0x59 is called so the below instructions change to "pop ecx; mov edx, DWORD PTR [ecx-0x4]"
-00000052  0A 59 8B          or bl,[ecx-0x75]
-00000055  51                push ecx
-00000056  FC                cld
-
-; continue valid instructions below
-
-00000057  6A04              push byte +0x4
-00000059  58                pop eax
-0000005A  CD80              int 0x80
-0000005C  6A01              push byte +0x1
-0000005E  58                pop eax
-0000005F  CD80              int 0x80
-										</code>
-									</pre>
-
-									<p>
-										Step through <code>mov edx, DWORD PTR [ecx-0x4]</code> to load 0x21 into <i>edx</i>. &nbsp;According to the <i>write()</i> man page, <i>edx</i> holds the
-										number of bytes to write; 33 in this case. &nbsp;Register <i>ecx</i> contains the address holding the contents to write; in this case, it's the starting point of the
-										33 bytes to write. &nbsp;The file descriptor is loaded into <i>ebx</i> and the system call number, 0x4, is loaded into <i>eax</i>.
-
-										<!-- &nbsp;Parameters before <i>write()</i> instruction. &nbsp;-->
-									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/readfile/17-before-write.png" alt="" /></div></center><br>
-
-									<p>
-										A successful execution of <i>write()</i> returns the number of bytes written. &nbsp;33 bytes were successfully written according to the <i>eax</i> value. &nbsp;All
-										bytes of the sub-payload were written because 0x5655704b + 0x21 = 0x5655706c, which is the start of instruction <code>pop ecx</code>!
-									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/readfile/18-after-write.png" alt="" /></div></center><br>
-
-									<p>
-										The contents written to <i>/etc/passwd</i> can be checked by dumping 33 bytes. &nbsp;Below shows the string of user <i>bob</i>, their password,
-										User ID (UID), Group ID (GID), home directory, and starting program (typically an interactive shell).
-									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/readfile/19-dump-subpayload.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/readfile/18-exit.png" alt="" /></div></center><br>
 
 
 
 		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
 
 									<p>
-										&emsp; &emsp;Analyzing payloads from <i>msfvenom</i> is great way to familiarize with other types of shellcode. &nbsp;Not all exploits
-										involve reverse shells! &nbsp;It is also important to understand not every tool will yield fruitful analysis. &nbsp;<i>Libemu</i>
-										provided little help with this analysis but is much friendlier towards shell-type payloads. &nbsp;The next <i>msfvenom</i> analysis
-										involves <i>read_file</i>.
+										&emsp; &emsp;This payload was much simpler than <i>adduser</i> and it was an easy demonstration to write to <i>stdout</i>. &nbsp;In a real-life application,
+										the <i>write()</i>output can be set to a file descriptor established by bind or reverse shells. &nbsp;Unfortunately <i>Libemu</i> again
+										provided no assistance in analysis. &nbsp;The next <i>msfvenom</i> analysis involves <i>shell_find_tag</i>.
 									</p>
 
 									<p>
