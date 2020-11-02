@@ -178,7 +178,7 @@
 								<p>
 									After navigating to the folder, run the following command to pipe raw shellcode into <i>sctest</i>. &nbsp;For some reason the output stops at the
 									first syscall, thus a proper Control Flow Graph (CFG) file cannot be made using the <i>-G</i> option. &nbsp;Proper functionality was tested on a
-									<i>Libemu</i> install by running <code>sctest -vvv -Sc 100000 -G bind-shell.dot</code> on the <i>linux/x86/shell_bind_tcp</i> raw payload. &nbsp;A
+									<i>Libemu</i> install by running <code>sctest -vvv -Ss 100000 -G bind-shell.dot</code> on the <i>linux/x86/shell_bind_tcp</i> raw payload. &nbsp;A
 									png file depicting the payload's control flow was successfully created with the <i>dot</i> tool. &nbsp;The <i>adduser</i> payload provides no
 									further analysis vectors with <i>Libemu</i>.
 
