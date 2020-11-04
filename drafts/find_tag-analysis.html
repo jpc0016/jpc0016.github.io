@@ -59,7 +59,7 @@
                       <article id="first-post">
 												<a href="index.html"><img src="../images/tomlin.png" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Analyzing Shell_Find_Tag Payload</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; November 3, 2020</h5>
+												<h5>&emsp; &emsp; &emsp; &emsp; November 4, 2020</h5>
                         <div class="box">
 
 													<br><h2>Contents</h2>
@@ -154,7 +154,6 @@
 										the tag is shown along with a couple of DWORDs pushed onto the stack. &nbsp;This is only a cursory review and more will be revealed. &nbsp;Static analysis
 										works but <i>Libemu</i> and <i>GDB</i> will provide more insight.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/shell/3-.png" alt="" /></div></center><br>
 
 
 
@@ -163,23 +162,55 @@
 								Libemu appears to work on this payload.  This section needs further work.
 								-->
 								<p>
-									&emsp; &emsp;<i>Libemu</i> is a tricky tool to install so most of its analysis is done on the web VM. &nbsp;A successful install comes from this
-									<a href="https://github.com/buffer/libemu" target="_blank" style="color:blue;">repository</a> as it is the most recently supported version. &nbsp;Note
-									that in the repository's installation, tools are already included in the path so there is no need to search for binaries in <i>/tools/</i>. &nbsp;The only
-									<i>Libemu</i> tool missing from the VM is <i>dot</i>, which allows visual analysis via the creation of <i>png</i> files. &nbsp;Unfortunately <i>dot</i>
-									 cannot be used because the <i>sctest</i> output is incomplete.<br>
-								 </p>
-								 <center><div class="image post"><img src="../images/slae/assignment5/shell/3-sctest-messages.png" alt="" /></div></center><br>
+									&emsp; &emsp;<i>Libemu</i> is a tricky tool to install from <i>git</i>. &nbsp;Luckily an easier option exists for 32-bit Linux systems using simple install commands:
+								</p>
+								<pre>
+									<code class="bash" style=display:block;white-space:pre-wrap>
+jpc0016@bob:~$ sudo apt-get install libemu2
+jpc0016@bob:~$ sudo apt install graphviz
+									</code>
+								</pre>
+
+								<p>
+									It is also recommended to install the 32-bit version of
+									<a href="https://metasploit-for-linux-32-bit.soft112.com/download.html" target="_blank" style="color:blue;"><i>Metasploit Framework</i></a>
+									 to directly pipe raw output into <i>Libemu</i>; however, copy/pasting can still happen should problems arise. &nbsp;The
+									process will take more steps but analysis can continue. &nbsp;Once downloaded, run <code>chmod +x</code> on the <i>.run</i> file and execute
+									with <i>sudo</i>. &nbsp;Navigate through the installer GUI and finally confirm functionality with <code>msfvenom --help</code>!<br>
+									&emsp; &emsp;A bit of caution: 32-bit <i>Metasploit</i> contains problems with gemfiles that require remediation. &nbsp;Rapid7
+									<a href="https://docs.rapid7.com/metasploit/support-for-32-bit-operation-systems/" target="_blank" style="color:blue;">discontinued support</a> for 32-bit
+									 installers on July 5, 2017 which means finding relevant help is more difficult. &nbsp;The gem issue is likely not a problem if analysis happens
+									 on a 32-bit Kali machine.
+									<br>
+								</p>
+								<center><div class="image post"><img src="../images/slae/assignment5/shell/3-msf-install.png" alt="" /></div></center><br>
+
+								<p>
+									<i>sctest</i> produced new messages and produced many more syscalls than the previous 2 payloads. &nbsp;This is a good sign as a Control Flow Graph (CFG) file
+									can be generated from the output. &nbsp;The command is: <br>
+									 <code>msfvenom -p linux/x86/shell_find_tag R | ./sctest -vvv -Ss 100000 -G find-tag.dot</code>
+							 </p>
+								<center><div class="image post"><img src="../images/slae/assignment5/shell/4-sctest-messages.png" alt="" /></div></center><br>
 
 								 <p>
-									 &emsp; &emsp;Run the below command to pipe raw shellcode into <i>sctest</i>. &nbsp;Once again <i>sctest</i> stops after the
-									first syscall, thus a proper Control Flow Graph (CFG) file cannot be made using the <i>-G</i> option. &nbsp;Proper functionality was tested on a
-									<i>Libemu</i> install by running <code>sctest -vvv -Ss 100000 -G bind-shell.dot</code> on the <i>linux/x86/shell_bind_tcp</i> raw payload. &nbsp;A
-									png file depicting the payload's control flow was successfully created with the <i>dot</i> tool. &nbsp;The <i>read_file</i> payload provides no
-									additional analysis vectors with <i>Libemu</i>.
-
+									A <i>dot</i> file is generated in addition to the <i>sctest</i> output. &nbsp;Graph output indicators are included in the first line of the output followed by
+									verbosity. &nbsp;The purpose of <i>dot</i> is to organize the shellcode's behaviour by instruction groups and present that illustration to analysts; similar to a
+									decompiler. &nbsp;Dump the <i>dot</i> file contents for inspection or copy/paste.
 								</p>
-								<center><div class="image post"><img src="../images/slae/assignment5/shell/4-dump-dot.png" alt="" /></div></center><br>
+								<center><div class="image post"><img src="../images/slae/assignment5/shell/5-dump-dot.png" alt="" /></div></center><br>
+
+								<p>
+									Generate the <i>png</i> file using <i>dot</i>. &nbsp;The <i>-T</i> option sets the output format, which is <i>png</i> in this case. &nbsp;The <i>-o</i> option sets
+									output file name. &nbsp;A png file depicting the payload's control flow was successfully created!
+							 </p>
+								<center><div class="image post"><img src="../images/slae/assignment5/shell/6-create-png.png" alt="" /></div></center><br>
+
+								<p>
+									Finally check the output image to find a populated CFG. &nbsp;On first inspection, the shellcode cycles around the <i>recv()</i> syscall and increments the DWORD
+									parameter at <i>ecx</i> if it does not equal 0x41414141. &nbsp;Basically it is checking for the specified tag: "AAAA". &nbsp;Other <i>Libemu</i> tools are unsupported
+									 in the current version so dynamic analysis is naturally the next step.
+							 </p>
+								<center><div class="image post"><img src="../images/slae/assignment5/shell/7-png-created.png" alt="" /></div></center><br>
 
 
 
@@ -190,36 +221,32 @@
 										 &nbsp;Use the below command to create a payload in C-code format. &nbsp;The specified tag can be seen clear as day! &nbsp;To list additional formats,
 										 simply run <code>msfvenom --list formats</code>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/shell/5-create-shellcode.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/shell/8-create-shellcode.png" alt="" /></div></center><br>
 
 									<p>
 										Copy and paste shellcode into the C-code harness.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/shell/6-paste-harness.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/shell/9-paste-harness.png" alt="" /></div></center><br>
 
 									<p>
 										Save the file and compile it with <code>gcc -fno-stack-protector -z execstack shellcode.c -o shellcode</code>. &nbsp;Start
 										<i>GDB</i> in quiet mode and disassemble the <i>main()</i> function. &nbsp;Stop at instruction <code>call eax</code>. &nbsp;This
 										is where the shellcode is passed control.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/shell/7-gdb-main.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/shell/10-gdb-main.png" alt="" /></div></center><br>
 
 									<p>
 										Step one more instruction then disassemble the payload. &nbsp;This should look identical to the <i>nasm</i> disassembly.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/shell/8-assembly-dump.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/shell/11-assembly-dump.png" alt="" /></div></center><br>
 
 									<p>
 										As mentioned earlier, the above assembly shows 3 syscalls and a couple ascii DWORDs pushed onto the stack. &nbsp;By noting the values of <i>eax</i>,
-										each syscall can be mapped in order using the <a href="http://shell-storm.org/shellcode/files/syscalls.html" target="_blank" style="color:blue;">syscall table</a>: <br>
+										each syscall can be mapped in order using the <a href="http://shell-storm.org/shellcode/files/syscalls.html" target="_blank" style="color:blue;">syscall table</a>:
 										<li><a href="https://man7.org/linux/man-pages/man2/socketcall.2.html" target="_blank" style="color:blue;"><i>socketcall()</i></a></li>
 										<li><a href="https://man7.org/linux/man-pages/man2/dup2.2.html" target="_blank" style="color:blue;"><i>dup2()</i></a></li>
-										<li><a href="https://man7.org/linux/man-pages/man2/execve.2.html" target="_blank" style="color:blue;"><i>execve()</i></a></li>
+										<li><a href="https://man7.org/linux/man-pages/man2/execve.2.html" target="_blank" style="color:blue;"><i>execve()</i></a></li><br>
 
-									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/shell/9-syscall-number.png" alt="" /></div></center><br>
-
-									<p>
 										Starting with <i>socketcall()</i>, 0x66 (103) is loaded into <i>eax</i> while the program sets <i>ebx</i> and <i>ecx</i>.
 										 &nbsp;A hook-stop should be used to visualize program behaviour when setting <i>socketcall()</i> parameters. &nbsp;The corresponding
 										 hook-stop is defined below:
@@ -243,15 +270,23 @@ End with a line saying just "end".
 									</pre>
 
 									<p>
-										Before stepping through instructions, it is worth investigating the function's man page. &nbsp;Register <i>ebx</i> 
+										Before stepping through instructions, it is worth investigating the function's man page. &nbsp;<i>socketcall()</i> is a deprecated syscall present exclusively on Linux
+										systems. &nbsp;It is a socket type syscall used to perform socket functions. &nbsp;Register <i>ebx</i> is its first parameter and contains the number referring to
+										 the <b>actual</b> syscall. &nbsp;These syscall values are located in <code>/usr/include/linux/net.h</code>.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/shell/10-before-setreuid.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/shell/12-net-header.png" alt="" /></div></center><br>
+
+									<p>
+										These are the parameters before invoking <i>int 0x80</i>. &nbsp;According to the <i>net.h</i> file and <i>Libemu</i> output, a call to <i>recv()</i> will be executed
+										below. &nbsp;
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/shell/13-before-recv.png" alt="" /></div></center><br>
 
 									<p>
 										Step again to observe results from the call to <i>setreuid()</i>. &nbsp;Register <i>eax</i> is zero meaning the call was successful. &nbsp;Furthermore,
 										nothing was changed on the stack.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment5/shell/11-after-setreuid.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment5/shell/14-after-recv.png" alt="" /></div></center><br>
 
 									<p>
 										The next syscall is to <i>open()</i> shown by loading 0x5 into <i>eax</i>. &nbsp;It takes two parameters: pathname to the requested file as a pointer,
