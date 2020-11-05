@@ -277,7 +277,7 @@ End with a line saying just "end".
 									<center><div class="image post"><img src="../images/slae/assignment5/shell/12-net-header.png" alt="" /></div></center><br>
 
 									<p>
-										Further review of <i>recv()</i> is needed to understand values located at <i>ecx</i>.
+										Further review of <i>recv()</i> is needed to understand values located at <i>ecx</i>. &nbsp;The syscall takes 4 parameters shown below; each being 4 bytes long (32 bits).
 									</p>
 									<pre>
 										<code class="c-like" style=display:block;white-space:pre-wrap>
@@ -285,6 +285,7 @@ End with a line saying just "end".
 ssize_t recv(int sockfd, void *buf, size_t len, int flags);
 										</code>
 									</pre>
+									<center><div class="image post"><img src="../images/slae/assignment5/shell/BACKUP-msg_dontwait.png" alt="" /></div></center><br>
 
 									<p>
 										These are the parameters before invoking <i>int 0x80</i>. &nbsp;According to the <i>net.h</i> file and <i>Libemu</i> output, a call to <i>recv()</i> will be executed
