@@ -270,23 +270,46 @@ End with a line saying just "end".
 									</pre>
 
 									<p>
-										Before stepping through instructions, it is worth investigating the function's man page. &nbsp;<i>socketcall()</i> is a deprecated syscall present exclusively on Linux
-										systems. &nbsp;It is a socket type syscall used to perform socket functions. &nbsp;Register <i>ebx</i> is its first parameter and contains the number referring to
-										 the <b>actual</b> syscall. &nbsp;These syscall values are located in <code>/usr/include/linux/net.h</code>.
+										Before stepping through instructions, it is worth investigating the function's man page. &nbsp;<i>socketcall()</i> is a syscall that defers to other socket-based functions and is
+										exclusive to Linux systems. &nbsp;Register <i>ebx</i> is its first parameter and contains the number
+										 referring to the <b>actual</b> syscall. &nbsp;These syscall values are located in <code>/usr/include/linux/net.h</code>:
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment5/shell/12-net-header.png" alt="" /></div></center><br>
 
 									<p>
+										Further review of <i>recv()</i> is needed to understand values located at <i>ecx</i>.
+									</p>
+									<pre>
+										<code class="c-like" style=display:block;white-space:pre-wrap>
+// Function definition
+ssize_t recv(int sockfd, void *buf, size_t len, int flags);
+										</code>
+									</pre>
+
+									<p>
 										These are the parameters before invoking <i>int 0x80</i>. &nbsp;According to the <i>net.h</i> file and <i>Libemu</i> output, a call to <i>recv()</i> will be executed
-										below. &nbsp;
+										below since <i>ebx</i> equals 0xa (10). &nbsp;Register <i>ecx</i> holds a pointer to the <i>recv()</i> parameters.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment5/shell/13-before-recv.png" alt="" /></div></center><br>
 
 									<p>
-										Step again to observe results from the call to <i>setreuid()</i>. &nbsp;Register <i>eax</i> is zero meaning the call was successful. &nbsp;Furthermore,
-										nothing was changed on the stack.
+										Step again to observe results after the syscall. &nbsp;Register <i>eax</i> is 0xfffffff7 (-1) meaning the call returned a bad file descriptor. &nbsp;Nothing was changed
+										on the stack; however, the word at <i>ecx</i> is incremented to 0xa02 in the following steps. &nbsp;This repeats for every bad file descriptor encountered.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment5/shell/14-after-recv.png" alt="" /></div></center><br>
+
+									<p>
+										Cyclic activity is confirmed when running the binary with <i>strace</i>. &nbsp;
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment5/shell/15-recv-activity.png" alt="" /></div></center><br>
+
+
+
+
+
+
+
+
 
 									<p>
 										The next syscall is to <i>open()</i> shown by loading 0x5 into <i>eax</i>. &nbsp;It takes two parameters: pathname to the requested file as a pointer,
