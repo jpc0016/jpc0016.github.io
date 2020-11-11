@@ -64,15 +64,15 @@
 
 													<br><h2>Contents</h2>
 													<a href="#Kill" style="color:blue;">Kill Process</a><br>
-													<a href="#Assembly" style="color:blue;">Writing the Assembly</a><br>
-													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
+													<a href="#Sudoers" style="color:blue;">Add to Sudoers</a><br>
+													<a href="#Iptables" style="color:blue;">Flush Iptables</a><br>
 													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 													<p>
-														&emsp; &emsp;This post involves creating polymorphic versions of three shellcode samples from
+														&emsp; &emsp;This post involves creating polymorphic versions of three <i>linux/x86</i> shellcode samples from
 														<a href="http://shell-storm.org/shellcode/" target="_blank" style="color:blue;">Shell-Storm</a>.
-														 &nbsp;Some background of polymorphism will help provide context to everything later.<br>
+														 &nbsp;Some background on polymorphism will help provide context to everything later.<br>
 														&emsp; &emsp;
 											 	</p>
 												<center><div class="image post"><img src="../images/slae/assignment6/1-reverse-shell.png" alt="" /></div></center><br>
@@ -132,7 +132,7 @@
 
 
 
-			<br><section id="Assembly"><h2>Writing the Assembly</h2></section>
+			<br><section id="Sudoers"><h2>Add to Sudoers</h2></section>
 
 									<p>
 										&emsp; &emsp;Writing assembly
@@ -143,10 +143,12 @@
 
 
 
-			<br><section id="Demonstration"><h2>Demonstration</h2></section>
+			<br><section id="Iptables"><h2>Flush Iptables</h2></section>
 										<!--
 										OBJDUMP Special Command:
 										objdump -d ./PROGRAM|grep '[0-9a-f]:'|grep -v 'file'|cut -f2 -d:|cut -f1-6 -d' '|tr -s ' '|tr '\t' ' '|sed 's/ $//g'|sed 's/ /\\x/g'|paste -d '' -s |sed 's/^/"/'|sed 's/$/"/g'
+
+										demonstration help: https://www.cyberciti.biz/tips/linux-iptables-how-to-flush-all-rules.html
 										-->
 									<p>
 										&emsp; &emsp;Demonstrate shellcode here
