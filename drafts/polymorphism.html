@@ -57,13 +57,13 @@
                   <section class="post">
                     <body>
                       <article id="first-post">
-												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
+												<a href="index.html"><img src="../images/michst.jpg" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Creating Polymorphic Shellcode</h2>
 												<h5>&emsp; &emsp; &emsp; &emsp; November 14, 2020</h5>
                         <div class="box">
 
 													<br><h2>Contents</h2>
-													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
+													<a href="#Kill" style="color:blue;">Kill Process</a><br>
 													<a href="#Assembly" style="color:blue;">Writing the Assembly</a><br>
 													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
 													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
@@ -71,35 +71,60 @@
 
 													<p>
 														&emsp; &emsp;This post involves creating polymorphic versions of three shellcode samples from
-														<a href="http://shell-storm.org/shellcode/" target="_blank" style="color:blue;">Shell-Storm</a>
-														. &nbsp;A bit of familiarity is
-														needed before continuing. &nbsp;The purpose of encoding is to obfuscate shellcode in order to maneuver a payload.
-														 &nbsp;A review of the reverse TCP shell is below:<br><br>
-														From the previous <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">article</a>: &nbsp;
-														Reverse shells are functionally similar to bind shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
-														for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
-														machine by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
+														<a href="http://shell-storm.org/shellcode/" target="_blank" style="color:blue;">Shell-Storm</a>.
+														 &nbsp;Some background of polymorphism will help provide context to everything later.<br>
+														&emsp; &emsp;
 											 	</p>
-												<center><div class="image post"><img src="../images/slae/assignment2/1-reverse-shell.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/slae/assignment6/1-reverse-shell.png" alt="" /></div></center><br>
 												<br>
 
 
-			<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
+			<br><section id="Kill"><h2>Kill Process</h2></section>
 
 											<p>
-												Similar to the bind shell, a Proof of Concept (PoC) is developed using the same methodology. &nbsp;Look for the unstaged
-												version of <i>Shell Reverse TCP</i> payload in <i>msfvenom</i> and break it apart with <i>libemu's sctest</i> tool.
+												The first payload kills all processes using the <a href="https://man7.org/linux/man-pages/man2/kill.2.html" target="_blank" style="color:blue;"><i>kill()</i></a> system call (syscall).
+												 &nbsp;Its source code can be found <a href="http://shell-storm.org/shellcode/files/shellcode-212.php" target="_blank" style="color:blue;">here</a>.
 											</p>
 
 											<pre>
-												<code class="bash" style=display:block;white-space:pre-wrap>
--- snip --
-
-
+												<code class="x86asm" style=display:block;white-space:pre-wrap>
+	push byte 37
+	pop eax         ; eax = sys_kill syscall
+	push byte -1
+	pop ebx         ; ebx = 0xff. Send kill() to all processes
+	push byte 9
+	pop ecx         ; ecx = 0x9 = SIGKILL
+	int 0x80
 												</code>
 											</pre>
 
+											<p>
+											After compiling and dumping, the shellcode size is indeed 11 bytes long.
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment6/2-original-size.png" alt="" /></div></center><br>
 
+											<p>
+											Create a new version of the assembly and add garbage instructions. &nbsp; &nbsp;To meet the 150% original size requirement, the size should be no larger than 16 bytes. &nbsp;As discussed at the beginning,
+											the intent is to obfuscate activity and reach the same objective.
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment6/3-new-payload.png" alt="" /></div></center><br>
+
+											<p>
+											Compile and dump the new version to confirm a 15 byte size! &nbsp;This meets the requirement of being within 150% of the original size.
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment6/4-new-size.png" alt="" /></div></center><br>
+
+											<p>
+											Dump the shellcode again without the special instruction for normal single-byte visibility. &nbsp;Since the shellcode can have 1 more byte up to 16 bytes, another single byte instruction
+											can be added.
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment6/5-objdump-normal.png" alt="" /></div></center><br>
+
+											<p>
+											Notice the decrement instruction is only one byte. &nbsp;A similar adjustment can be made to the <i>ecx</i> register value for example. &nbsp;Increment the value to 0x9 popping 0x8 into
+											 <i>ecx</i>. &nbsp;This will make the total payload size 16 bytes.
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment6/6-shellcode-tweak.png" alt="" /></div></center><br>
 
 
 
@@ -112,7 +137,7 @@
 									<p>
 										&emsp; &emsp;Writing assembly
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment6/.png" alt="" /></div></center><br>
 
 
 
@@ -126,7 +151,7 @@
 									<p>
 										&emsp; &emsp;Demonstrate shellcode here
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment6/.png" alt="" /></div></center><br>
 
 
 
@@ -137,7 +162,7 @@
 									<p>
 										&emsp; &emsp;Debugging and Troubleshooting
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment6/.png" alt="" /></div></center><br>
 
 
 
@@ -147,7 +172,7 @@
 									<p>
 										&emsp; &emsp;Conclusion goes here
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment6/.png" alt="" /></div></center><br>
 
 
 
