@@ -1,6 +1,6 @@
 <!DOCTYPE HTML>
 <!--
-	Solution for SLAE question #6
+	Solution for SLAE question #7
 
 -->
 <html>
@@ -52,7 +52,7 @@
 									Post body goes here.
 									-->
                   <!--
-                  Solving slae question 6
+                  Solving slae question 7
                   -->
                   <section class="post">
                     <body>
@@ -70,22 +70,25 @@
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 													<p>
-														&emsp; &emsp;This post involves making a custom crypter. &nbsp;A bit of familiarity is
-														needed before continuing. &nbsp;The purpose of encoding is to obfuscate shellcode in order to maneuver a payload.
-														 &nbsp;A review of the reverse TCP shell is below:<br><br>
+														&emsp; &emsp;Good evening Tim and Aaron! &nbsp;The final post is about building a custom decrypter that operates on encrypted shellcode at
+														runtime. &nbsp;This will be a challenging assignment as crypters are typically above average in size. &nbsp;Much like encoding and polymorphism,
+														the purpose of encrypting shellcode is to hide it from defense mechanisms such as AntiVirus (AV) and Intrusion Detection Systems (IDSs).
+														 &nbsp;A review of encryption is below:<br><br>
+														 <!-- High level encryption basics here -->
+
 														From the previous <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">article</a>: &nbsp;
 														Reverse shells are functionally similar to bind shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
 														for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
 														machine by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
 											 	</p>
-												<center><div class="image post"><img src="../images/slae/assignment2/1-reverse-shell.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/slae/assignment7/1-.png" alt="" /></div></center><br>
 												<br>
 
 
 			<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
 
 											<p>
-												Similar to the bind shell, a Proof of Concept (PoC) is developed using the same methodology. &nbsp;Look for the unstaged
+												Similar to bind and reverse shells, a Proof of Concept (PoC) is developed using a higher level language. &nbsp;Look for the unstaged
 												version of <i>Shell Reverse TCP</i> payload in <i>msfvenom</i> and break it apart with <i>libemu's sctest</i> tool.
 											</p>
 
@@ -110,7 +113,14 @@
 									<p>
 										&emsp; &emsp;Writing assembly
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<pre>
+										<code class="x86asm" style=display:block;white-space:pre-wrap>
+; -- snip --
+
+
+										</code>
+									</pre>
+									<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>
 
 
 
@@ -124,7 +134,7 @@
 									<p>
 										&emsp; &emsp;Demonstrate shellcode here
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>
 
 
 
@@ -135,7 +145,7 @@
 									<p>
 										&emsp; &emsp;Debugging and Troubleshooting
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>
 
 
 
@@ -145,7 +155,7 @@
 									<p>
 										&emsp; &emsp;Conclusion goes here
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment2/.png" alt="" /></div></center><br>
+									<!--<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>-->
 
 
 
