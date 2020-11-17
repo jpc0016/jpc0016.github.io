@@ -57,7 +57,7 @@
                   <section class="post">
                     <body>
                       <article id="first-post">
-												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
+												<a href="index.html"><img src="../images/gus.jpg" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Creating a Custom Crypter</h2>
 												<h5>&emsp; &emsp; &emsp; &emsp; November 30, 2020</h5>
                         <div class="box">
@@ -73,15 +73,18 @@
 														&emsp; &emsp;Good evening Tim and Aaron! &nbsp;The final post is about building a custom decrypter that operates on encrypted shellcode at
 														runtime. &nbsp;This will be a challenging assignment as crypters are typically above average in size. &nbsp;Much like encoding and polymorphism,
 														the purpose of encrypting shellcode is to hide it from defense mechanisms such as AntiVirus (AV) and Intrusion Detection Systems (IDSs).
-														 &nbsp;A review of encryption is below:<br><br>
+														 &nbsp;A quick review of encryption is below:<br><br>
 														 <!-- High level encryption basics here -->
 
-														From the previous <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">article</a>: &nbsp;
-														Reverse shells are functionally similar to bind shells but work in the opposite direction. &nbsp;Instead, the attacker machine listens
-														for incoming connections from the vicitim machine over a preconfigured port (such as 4444). &nbsp;The connection attempt is initiated by the victim
-														machine by invoking a reverse shell. &nbsp;Below is what a reverse TCP shell looks like.
+														Encryption is a fundamental building block of computer security in which plaintext is scrambled into unreadable form using a key. &nbsp;In a symmetric
+														algorithm, the key is shared between encryption and decryption functions.
 											 	</p>
-												<center><div class="image post"><img src="../images/slae/assignment7/1-.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/slae/assignment7/1-encryption.png" width="700" alt="" /></div></center><br>
+
+												<p>The above diagram depicts a symmetric encryption/decryption scheme that will be developed in this post. &nbsp;In addition to this graph, the custom
+												encoding/decoding scheme from <a href="https://thestunneddefense.com/pages/custom-encoding.html" target="_blank" style="color:blue;">blog post 4</a> will be
+												layered into the system.
+												</p>
 												<br>
 
 
