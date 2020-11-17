@@ -69,11 +69,10 @@
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 													<p>
-														&emsp; &emsp;Good evening Tim and Aaron! &nbsp;The final post is about building a custom decrypter that operates on encrypted shellcode at
-														runtime. &nbsp;This will be a challenging assignment as crypters are typically above average in size. &nbsp;Much like encoding and polymorphism,
-														the purpose of encrypting shellcode is to hide it from defense mechanisms such as AntiVirus (AV) and Intrusion Detection Systems (IDSs).
+														&emsp; &emsp;Good evening Tim and Aaron! &nbsp;The final post is about building a custom crypter that operates on encrypted shellcode to decrypt and
+														execute it at runtime. &nbsp;This will be a challenging assignment as crypters are typically above average in size. &nbsp;Much like encoding and
+														polymorphism, the purpose of encrypting shellcode is to hide it from defense mechanisms such as AntiVirus (AV) and Intrusion Detection Systems (IDSs).
 														 &nbsp;A quick review of encryption is below:<br><br>
-														 <!-- High level encryption basics here -->
 
 														Encryption is a fundamental building block of computer security in which plaintext is scrambled into unreadable form using a key and sometimes
 														an Initialization Vector (IV). &nbsp;Scrambling sophistication depends on an encryption scheme's algorithm. &nbsp;Some algorithms have more
@@ -84,9 +83,11 @@
 
 												<p>The above diagram depicts a symmetric encryption/decryption scheme that will be developed in this post. &nbsp;In addition to this graph, the custom
 												encoding/decoding scheme from <a href="https://thestunneddefense.com/pages/custom-encoding.html" target="_blank" style="color:blue;">blog post 4</a> will be
-												layered into the system. &nbsp;Below is the final product when everything is tied together.
+												layered into the system. &nbsp;Finally, the payload used will be the familiar <i>execve-stack</i> shellcode used to pop a <i>/bin/sh</i> shell. &nbsp;Below
+												 is the final product when everything is tied together.
 												</p>
 												<center><div class="image post"><img src="../images/slae/assignment7/2-crypter.png" alt="" /></div></center><br>
+
 
 
 			<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
@@ -97,12 +98,26 @@
 												 than decoders. &nbsp;It is simply infeasable to write a decryptor in x86 assembly when shellcode must often meet a length requirement.<br>
 												&emsp; &emsp;Based on the graph above, both an encryptor and decryptor need to be produced. &nbsp;They can be developed in Python or C due to their common
 												handling of bytes. &nbsp;Both programs must take a key string as a parameter. &nbsp;Luckily, the decryptor will be similar to the encryptor; just
-												backwards!
-
+												backwards! &nbsp;Assignment constraints are below:<br>
+												<li>Any existing encryption schema can be used.</li>
+												<li>Any programming language can be used.</li><br>
+												This is good news as developing a brand new algorithm requires significantly more time. &nbsp;Simply pick an algorithm from the list of encryption schemes
+												<a href="https://en.wikipedia.org/wiki/Symmetric-key_algorithm#Implementations" target="_blank" style="color:blue;">here</a>
+												and choose a langauge comfortable for developing both programs.
 											</p>
+											<center><div class="image post"><img src="../images/slae/assignment7/3-algorithms.png" alt="" /></div></center><br>
 
 											<pre>
 												<code class="bash" style=display:block;white-space:pre-wrap>
+-- snip --
+
+
+												</code>
+											</pre>
+
+
+											<pre>
+												<code class="c-like" style=display:block;white-space:pre-wrap>
 -- snip --
 
 
