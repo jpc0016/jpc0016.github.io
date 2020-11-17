@@ -64,7 +64,6 @@
 
 													<br><h2>Contents</h2>
 													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
-													<a href="#Assembly" style="color:blue;">Writing the Assembly</a><br>
 													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
 													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
@@ -76,23 +75,30 @@
 														 &nbsp;A quick review of encryption is below:<br><br>
 														 <!-- High level encryption basics here -->
 
-														Encryption is a fundamental building block of computer security in which plaintext is scrambled into unreadable form using a key. &nbsp;In a symmetric
+														Encryption is a fundamental building block of computer security in which plaintext is scrambled into unreadable form using a key and sometimes
+														an Initialization Vector (IV). &nbsp;Scrambling sophistication depends on an encryption scheme's algorithm. &nbsp;Some algorithms have more
+														"rounds" of shifting than others. &nbsp;Symmetric encryption will be used in this post. &nbsp;In a symmetric
 														algorithm, the key is shared between encryption and decryption functions.
 											 	</p>
 												<center><div class="image post"><img src="../images/slae/assignment7/1-encryption.png" width="700" alt="" /></div></center><br>
 
 												<p>The above diagram depicts a symmetric encryption/decryption scheme that will be developed in this post. &nbsp;In addition to this graph, the custom
 												encoding/decoding scheme from <a href="https://thestunneddefense.com/pages/custom-encoding.html" target="_blank" style="color:blue;">blog post 4</a> will be
-												layered into the system.
+												layered into the system. &nbsp;Below is the final product when everything is tied together.
 												</p>
-												<br>
+												<center><div class="image post"><img src="../images/slae/assignment7/2-crypter.png" alt="" /></div></center><br>
 
 
 			<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
 
 											<p>
-												Similar to bind and reverse shells, a Proof of Concept (PoC) is developed using a higher level language. &nbsp;Look for the unstaged
-												version of <i>Shell Reverse TCP</i> payload in <i>msfvenom</i> and break it apart with <i>libemu's sctest</i> tool.
+												&emsp; &emsp;Similar to bind and reverse shells, a Proof of Concept (PoC) is developed using a higher level language. &nbsp;The difference this time is
+												that no assembly will be coded as a result of the PoCs produced. &nbsp;This is because decryptors require many more assembly instructions
+												 than decoders. &nbsp;It is simply infeasable to write a decryptor in x86 assembly when shellcode must often meet a length requirement.<br>
+												&emsp; &emsp;Based on the graph above, both an encryptor and decryptor need to be produced. &nbsp;They can be developed in Python or C due to their common
+												handling of bytes. &nbsp;Both programs must take a key string as a parameter. &nbsp;Luckily, the decryptor will be similar to the encryptor; just
+												backwards!
+
 											</p>
 
 											<pre>
@@ -103,27 +109,6 @@
 												</code>
 											</pre>
 
-
-
-
-
-
-
-
-
-			<br><section id="Assembly"><h2>Writing the Assembly</h2></section>
-
-									<p>
-										&emsp; &emsp;Writing assembly
-									</p>
-									<pre>
-										<code class="x86asm" style=display:block;white-space:pre-wrap>
-; -- snip --
-
-
-										</code>
-									</pre>
-									<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>
 
 
 
