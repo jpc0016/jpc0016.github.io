@@ -59,16 +59,17 @@
                       <article id="first-post">
 												<a href="index.html"><img src="../images/gus.jpg" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Creating a Custom Crypter</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; November 30, 2020</h5>
+												<h5>&emsp; &emsp; &emsp; &emsp; December 8, 2020</h5>
                         <div class="box">
 
 													<br><h2>Contents</h2>
 													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
+													<a href="#Outline" style="color:blue;">System Outline</a><br>
 													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
 													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
-													<p>
+												<p>
 														&emsp; &emsp;Good evening Tim and Aaron! &nbsp;The final post is about building a custom crypter that operates on encrypted shellcode to decrypt and
 														execute it at runtime. &nbsp;This will be a challenging assignment as crypters are typically above average in size. &nbsp;Much like encoding and
 														polymorphism, the purpose of encrypting shellcode is to hide it from defense mechanisms such as AntiVirus (AV) and Intrusion Detection Systems (IDSs).
@@ -106,6 +107,44 @@
 												and choose a langauge comfortable for developing both programs.
 											</p>
 											<center><div class="image post"><img src="../images/slae/assignment7/3-algorithms.png" alt="" /></div></center><br>
+
+											<p>This project will be written in C to construct an Advanced Encryption Standard (AES) crypter in 128-bit mode. &nbsp;C was selected because the crypter
+											operates on bytes of data and C enables more control over 8-bit data types. &nbsp;128-bit mode was selected because it is easier to implement and has more open-source
+											 test cases. &nbsp;256-bit mode could be implemented as well; however, along with fewer test cases, 256-bit mode requires key padding based on whichever
+											 standard is used (ECB, CBC, CTR, etc.). &nbsp;Padding occurs to ensure the first 32 bytes of key data are filled when operating in 256-bit mode. &nbsp;This
+											  is because in 256-bit mode, the first 32 bytes of the key schedule are filled with bytes from the user-provided secret key and padded to meet 32 bytes
+												should the key come up short. &nbsp;In contrast, 128-bit mode only requires 16 bytes of the secret key. &nbsp;The next step is determining the general
+												makeup of AES then worry about 128-bit specific implementations.
+										</p>
+
+			<br><section id="Outline"><h2>System Outline</h2></section>
+
+											<p>
+												&emsp; &emsp;Before jumping into any code, it is important to get a strategic view of AES in a systems engineering approach. &nbsp;What are sub-methods are used,
+												the data types, input and output, etc? &nbsp;The diagram below
+						(<a href="https://www.amazon.com/Cryptography-Network-Security-Principles-Practice/dp/0134444280/ref=sr_1_2?dchild=1&keywords=ISBN+13%3A+978-1-292-15858-7&qid=1606786625&sr=8-2" target="_blank" style="color:blue;">source</a>, pg 178)
+												illustrates a much needed breakdown of AES to determine number of functions to write. &nbsp;
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment7/4-aes-system.png" alt="" /></div></center><br>
+
+											<p>
+												There are ten encryption rounds (for 128-bit mode) made up of four functions in order: <i>Substitute bytes</i>, <i>Shift rows</i>, <i>Mix columns</i>, and
+												<i>Add round key</i>. &nbsp;Note that <i>Mix columns</i> is omitted from the final encryption round. &nbsp;A similar removal also occurs in decryption when
+												<i>Inverse mix columns</i> is omitted.<br>
+												&emsp; &emsp;In addition to the above functions, AES uses a key expansion technique to transform 16 bytes of a user-supplied secret key into 44 words
+												(44 words x 4 bytes = 176 bytes) used during encryption rounds. &nbsp;The key expansion algorithm has internal functions of their own and can be observed below
+					(<a href="https://www.amazon.com/Cryptography-Network-Security-Principles-Practice/dp/0134444280/ref=sr_1_2?dchild=1&keywords=ISBN+13%3A+978-1-292-15858-7&qid=1606786625&sr=8-2" target="_blank" style="color:blue;">source</a>, pg 191).
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment7/5-key-expansion.png" alt="" /></div></center><br>
+
+											<p>
+												The 16-byte key is saved in a 4x4 matrix with bytes grouped into words by columns, which may seem counterintuitive to naturally viewing data by rows. &nbsp;Every fourth word group
+												is sent through a function called <i>g()</i>
+
+
+											</p>
+
+
 
 											<pre>
 												<code class="bash" style=display:block;white-space:pre-wrap>
