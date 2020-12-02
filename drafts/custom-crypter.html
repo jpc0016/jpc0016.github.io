@@ -65,6 +65,7 @@
 													<br><h2>Contents</h2>
 													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
 													<a href="#Outline" style="color:blue;">System Outline</a><br>
+													<a href="#Testing" style="color:blue;">Test Methodology</a><br>
 													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
 													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
@@ -139,17 +140,67 @@
 
 											<p>
 												The 16-byte key is saved in a 4x4 matrix with bytes grouped into words by columns, which may seem counterintuitive to naturally viewing data by rows. &nbsp;Every fourth word group
-												is sent through a function called <i>g()</i>
+												is sent through a function called <i>g()</i> which contains subfunctions: <i>Rotate Word</i> and <i>Substitute bytes</i>. &nbsp;The result is XORed by a round constant (RC<sub>j</sub>) in
+												the left-most byte.
 
 
 											</p>
 
-
-
+			<br><section id="Testing"><h2>Test Methodology</h2></section>
+											<p>
+												&emsp; &emsp;With a general outline in place, the question becomes a matter of where to begin. &nbsp;This much code can be overwhelming if incorrectly approached. &nbsp;One
+												strategy is to write one function, preferably a simple one, and pass test values to observe its output. &nbsp;It also helps to know the exact output expected, which a simple
+												function further guarantees. &nbsp;For example, starting with <i>RotWord()</i> (Rotate word) is ideal because it is small, takes fewer input, and its expected output is
+												very predictable!<br>
+												&emsp; &emsp;Below is an example of testing the <i>SubBytes()</i> function. &nbsp;In practice, this function will take a 16 byte state matrix as input, look up the
+												sbox value of each byte, and replace that state matrix byte with its sbox lookup value. &nbsp;Check the returned state matrix by manually looking at the sbox value for each
+												byte. &nbsp;Although a bit tedious, it ensures a valid test case which is important when building the remaining program. &nbsp;Specifics of each function will be covered
+												later. &nbsp;The most important concept in this section is having a test setup that will ensure success. &nbsp;Test cases are incredibly important as well since they validate
+												working functions.
+											</p>
 											<pre>
-												<code class="bash" style=display:block;white-space:pre-wrap>
--- snip --
+												<code class="c-like" style=display:block;white-space:pre-wrap>
+/************  SAMPLE TEST-BED FOR SINGLE FUNCTION  ************/
 
+// Cipher transformation that processes the state using S-box substitutions
+void SubBytes(uint8_t state[4][4]){
+
+    // Execute SubBytes function per 'Ch06 Crypto7e.pdf' pg. 12
+    // Each byte is an index of row x column. Ex: 0x95 = row 9, column 5
+    int i, j;
+    for (i = 0; i&lt;4; i++){
+        for (j = 0; j&lt;4; j++){
+            // for each byte need to look up sbox at specific index and assign to spot
+            state[i][j] = sbox[HI_NIBBLE(state[i][j])][LO_NIBBLE(state[i][j])];
+        }
+    }
+
+    // test variable state
+    printf("\n\n======================================\n\n");
+    printf("After S-box Substitution:\n\n");
+    int row, col;
+    for (row=0; row&lt;4; row++){
+        for (col=0; col&lt;4; col++){
+            printf("state&lsqb;%d]&lsqb;%d] = \\x%02x\n", row, col, state[row][col]);
+        }
+    }
+
+    return;
+}
+
+int main(){
+
+    // Single state value for testing
+    // stored by state[row][column]; so state[0][1] = 0x23
+    uint8_t state[4][4] = { {0x01, 0x23, 0x45, 0x67},
+			    {0x89, 0xab, 0xcd, 0xef},
+			    {0xfe, 0xdc, 0xba, 0x98},
+			    {0x76, 0x54, 0x32, 0x10}
+			  };
+
+    SubBytes(state);
+    return 0;
+}
 
 												</code>
 											</pre>
