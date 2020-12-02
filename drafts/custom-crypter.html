@@ -66,8 +66,11 @@
 													<a href="#POC" style="color:blue;">Drafting the Proof of Concept</a><br>
 													<a href="#Outline" style="color:blue;">System Outline</a><br>
 													<a href="#Testing" style="color:blue;">Test Methodology</a><br>
-													<a href="#Demonstration" style="color:blue;">Demonstration</a><br>
-													<a href="#Troubleshooting" style="color:blue;">Troubleshooting</a><br>
+													<a href="#Simple" style="color:blue;">Constructing the Simple Functions</a><br>
+													<a href="#MixColumns" style="color:blue;">Mix Columns</a><br>
+													<a href="#ExpandKey" style="color:blue;">Key Expansion</a><br>
+													<a href="#Cipher" style="color:blue;">Cipher Repetitions</a><br>
+													<a href="#Integration" style="color:blue;">Integration and Demonstration</a><br>
 													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
 
 												<p>
@@ -141,22 +144,21 @@
 											<p>
 												The 16-byte key is saved in a 4x4 matrix with bytes grouped into words by columns, which may seem counterintuitive to naturally viewing data by rows. &nbsp;Every fourth word group
 												is sent through a function called <i>g()</i> which contains subfunctions: <i>Rotate Word</i> and <i>Substitute bytes</i>. &nbsp;The result is XORed by a round constant (RC<sub>j</sub>) in
-												the left-most byte.
+												the leftmost byte.
 
 
 											</p>
 
 			<br><section id="Testing"><h2>Test Methodology</h2></section>
 											<p>
-												&emsp; &emsp;With a general outline in place, the question becomes a matter of where to begin. &nbsp;This much code can be overwhelming if incorrectly approached. &nbsp;One
-												strategy is to write one function, preferably a simple one, and pass test values to observe its output. &nbsp;It also helps to know the exact output expected, which a simple
+												&emsp; &emsp;With a general outline in place, the question becomes "where to start?" &nbsp;This much code can be overwhelming if approached haphazardly. &nbsp;One
+												strategy is to write one function, preferably a simple one, and pass test values to observe its output. &nbsp;It also helps to know the expected output, which a simple
 												function further guarantees. &nbsp;For example, starting with <i>RotWord()</i> (Rotate word) is ideal because it is small, takes fewer input, and its expected output is
 												very predictable!<br>
 												&emsp; &emsp;Below is an example of testing the <i>SubBytes()</i> function. &nbsp;In practice, this function will take a 16 byte state matrix as input, look up the
 												sbox value of each byte, and replace that state matrix byte with its sbox lookup value. &nbsp;Check the returned state matrix by manually looking at the sbox value for each
 												byte. &nbsp;Although a bit tedious, it ensures a valid test case which is important when building the remaining program. &nbsp;Specifics of each function will be covered
-												later. &nbsp;The most important concept in this section is having a test setup that will ensure success. &nbsp;Test cases are incredibly important as well since they validate
-												working functions.
+												later.
 											</p>
 											<pre>
 												<code class="c-like" style=display:block;white-space:pre-wrap>
@@ -205,21 +207,212 @@ int main(){
 												</code>
 											</pre>
 
+											<p>
+												The most important concept of this section is having a test setup that will ensure success. &nbsp;Test cases are incredibly important as well since they validate
+												working functions. &nbsp;<a href="https://kavaliro.com/wp-content/uploads/2014/03/AES.pdf" target="_blank" style="color:blue;">Encryption</a> and
+												<a href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197.pdf" target="_blank" style="color:blue;">decryption</a> (page 40) test values can be found their respective
+												 links. &nbsp;The encryption link includes a test case for key expansion as well. &nbsp;For more complicated functions like <i>Inverse Mix Columns</i>, test cases can be found
+												 <a href="http://www.infosecwriters.com/text_resources/pdf/AESbyExample.pdf" target="_blank" style="color:blue;">here</a> on page 8.<br>
+												 &emsp; &emsp;Finally when in doubt, use print statements. &nbsp;Data visualization goes a long way when it comes to fault isolation. &nbsp;Sometimes the most difficult part of
+												 debugging is figuring out the problem location and visualization helps tremendously.
 
+											</p>
+
+			<br><section id="Simple"><h2>Constructing the Simple Functions</h2></section>
+
+										<p>
+										&emsp; &emsp;Start coding in baby steps by constructing a word rotation function (<i>RotWord</i>) that takes four input bytes and rotates their positions
+										one byte to the left. &nbsp;Note the leftmost byte, B<sub>0</sub>, wraps around to become the rightmost byte, B<sub>3</sub>. &nbsp;This is one of the sub-functions of <i>g()</i> in the
+										key expansion algorithm.
+										</p>
+										<center><div class="image post"><img src="../images/slae/assignment7/6-rotword.png" alt="" /></div></center><br>
+
+										<p>
+										 &nbsp;It is important to note in C, individual bytes are
+										handled using the <i>uint8_t</i> data type for "unsigned integer 8 bit." &nbsp;These integer types are defined in
+										<a href="https://www.gnu.org/software/libc/manual/html_node/Integers.html" target="_blank" style="color:blue;"><i>stdint.h</i></a>
+										so the header is required. &nbsp;In order for shifting to occur, the leftmost byte must be stored in a temporary location while the new positions are overwritten. &nbsp;Without
+										 temporary storage, the leftmost byte will be overwritten and lost!<br>
+										&emsp; &emsp;A simple outline is to declare a uint8_t emporary variable, <i>temp</i>, and assign it the leftmost byte. &nbsp;Assign the leftmost byte position the value of
+										the next byte position. &nbsp;Once the rightmost position is reached, assign it the <i>temp</i> value. &nbsp;The resultant code is below!
+										</p>
 											<pre>
 												<code class="c-like" style=display:block;white-space:pre-wrap>
--- snip --
+// Rotates a 4-byte word to the left by 8 bits.
+// Ex: w0 = [01, 23, 45, 67] ===> w0' = [23, 45, 67, 01]
+void RotWord(uint8_t wordIn[]){
 
+    // temporarily store first byte
+    uint8_t temp = wordIn[0];
+
+    // manually shift other bytes to the left 1 position. Place temporarily
+    // stored byte into last position.
+    wordIn[0] = wordIn[1];
+    wordIn[1] = wordIn[2];
+    wordIn[2] = wordIn[3];
+    wordIn[3] = temp;
+
+    return;
+}
 
 												</code>
 											</pre>
 
+											<p>
+												Give <i>RotWord()</i> a test case similar to what is done in <a href="#Testing" style="color:blue;">Test Methodology</a>; however, the test value should
+												be a single array of 4 bytes. &nbsp;Add a few cosmetic print statements to help with data visualization. &nbsp;A successful test result is shown below!
+											</p>
+											<center><div class="image post"><img src="../images/slae/assignment7/7-rotword-demo.png" alt="" /></div></center><br>
+
+										<p>
+											Repeat the process for <i>SubBytes</i>. &nbsp;This can be written to handle either 4x4 byte matrices or 4 byte arrays; both are required in this program. &nbsp;
+											Refer to its code in <a href="#Testing" style="color:blue;">Test Methodology</a> above to find a couple gaps:<br>
+											<ol>
+												<li>Where is the sbox array? &nbsp;</li>
+												<li>Where are <code>HI_NIBBLE</code> and <code>LO_NIBBLE</code> defined?</li>
+											</ol>
+											 &nbsp;Refer once again to
+											<a href="https://www.amazon.com/Cryptography-Network-Security-Principles-Practice/dp/0134444280/ref=sr_1_2?dchild=1&keywords=ISBN+13%3A+978-1-292-15858-7&qid=1606786625&sr=8-2" target="_blank" style="color:blue;">Cryptography and Network Security 7th Edition</a>
+											 on page 181 for the substitution boxes (S-boxes). &nbsp;The left four bits is the row lookup, and the right four bits is the column. &nbsp;These lookup tables are the heart of AES
+											 algorithm and rely on finite field mathematics, specifically Galois Field (GF) over 2<sup>8</sup>. &nbsp;The tables can be derived by calculating the multiplicative
+											 inverse over GF(2<sup>8</sup>), which is beyond the scope of this article. &nbsp;The S-boxes can be hardcoded in their own 16 x 16 byte matrices.
+										</p>
+											<center><div class="image post"><img src="../images/slae/assignment7/8-sbox.png" alt="" /></div></center><br>
+
+										<p>
+											Performing lookups on single bytes requires they be split apart. &nbsp;Performing this requires a couple definitions below. &nbsp;These definitions manipulate bit
+											shifting and ANDing with 0x0F to ensure only appropraite values are returned. &nbsp;For example <code>HI_NIBBLE(0x01)</code> equals 0 and <code>LO_NIBBLE(0x23)</code> equals
+											 3. &nbsp;These definitions ensure accurate S-box lookups for each value.
+										</p>
+											<pre>
+												<code class="c-like" style=display:block;white-space:pre-wrap>
+#define HI_NIBBLE(b) (((b) >> 4) & 0x0F)
+#define LO_NIBBLE(b) ((b) & 0x0F)
+												</code>
+											</pre>
+
+											<p>
+												Nested for-loops are used to handle individual matrix elements. &nbsp;Compile and test function <i>SubBytes()</i> and manually verify the output by inspecting the S-box.
+											</p>
+										<center><div class="image post"><img src="../images/slae/assignment7/9-subbytes-works.png" alt="" /></div></center><br>
+
+										<p>
+											Shift rows is another relatively easy function to write and test. &nbsp;Start with <i>RotWord()</i> and expand it to handle a 16 byte state matrix.
+											 &nbsp;Below is yet another example from
+											 <a href="https://www.amazon.com/Cryptography-Network-Security-Principles-Practice/dp/0134444280/ref=sr_1_2?dchild=1&keywords=ISBN+13%3A+978-1-292-15858-7&qid=1606786625&sr=8-2" target="_blank" style="color:blue;">Cryptography and Network Security 7th Edition</a>
+											  of how AES row shifting works on page 186. &nbsp;The first row is unchanged, the second row shifts left by one, the third row shifts left by two, and
+											  the last row shifts left by three (or right by one).
+										</p>
+										<center><div class="image post"><img src="../images/slae/assignment7/10-shiftrows.png" alt="" /></div></center><br>
+
+										<p>
+											Basically take <i>RotWord()</i>, change its argument, and rotate the rows by their proper offsets. &nbsp;For optimization, <i>RotWord()</i> could include
+											an integer parameter to express the number of positions to shift. &nbsp;If that is done, simply call <i>RotWord()</i> three times like this:
+											<i>RotWord(w1, 1)</i>; <i>RotWord(w2, 2)</i>; <i>RotWord(w3, 3)</i>; &nbsp;Below is the final code for <i>ShiftRows()</i>.
+
+										</p>
+										<pre>
+											<code class="c-like" style=display:block;white-space:pre-wrap>
+// Cipher transformation that shifts last 3 rows by different offsets
+void ShiftRows(uint8_t shiftedRows[4][4]){
+
+	// Execute ShiftRows function per 'Ch06 Crypto7e.pdf' pg. 17
+	int row;
+	uint8_t temp, temp2;
+	for (row = 0; row&lt;4; row++){
+		if (row == 0) {
+			// members are simply copied for first row
+			shiftedRows[row][0] = shiftedRows[0][0];
+			shiftedRows[row][1] = shiftedRows[0][1];
+			shiftedRows[row][2] = shiftedRows[0][2];
+			shiftedRows[row][3] = shiftedRows[0][3];
+		}
+		else if (row == 1) {
+			temp = shiftedRows[row][0];
+			// shift second row left 1 byte
+			shiftedRows[row][0] = shiftedRows[1][1];
+			shiftedRows[row][1] = shiftedRows[1][2];
+			shiftedRows[row][2] = shiftedRows[1][3];
+			shiftedRows[row][3] = temp;
+		}
+		else if (row == 2) {
+			temp = shiftedRows[row][0];
+			temp2 = shiftedRows[row][1];
+			// shift third row left 2 bytes
+			shiftedRows[row][0] = shiftedRows[2][2];
+			shiftedRows[row][1] = shiftedRows[2][3];
+			shiftedRows[row][2] = temp;
+			shiftedRows[row][3] = temp2;
+		}
+		else {
+			temp = shiftedRows[row][3];
+			// shift fourth row left 3 bytes (or right 1 byte)
+			shiftedRows[row][3] = shiftedRows[3][2];
+			shiftedRows[row][2] = shiftedRows[3][1];
+			shiftedRows[row][1] = shiftedRows[3][0];
+			shiftedRows[row][0] = temp;
+		}
+	}
+
+	return;
+}
+											</code>
+										</pre>
+
+										<p>
+											Compile and run it with a test matrix to confirm functionality!
+										</p>
+										<center><div class="image post"><img src="../images/slae/assignment7/11-shiftrows-demo.png" alt="" /></div></center><br>
+
+										<p>
+											The final "easy" function is <i>Add round key</i>, which is a simple 1-to-1 XOR operation of two 16 byte matrices. &nbsp;For example in the below example,
+											a<sub>2,2</sub> is XORed with b<sub>2,2</sub> and the result is stored in k<sub>2,2</sub>. &nbsp;This linear calculation happens 16 times to cover all bytes
+											in the state matrix.
+										</p>
+										<center><div class="image post"><img src="../images/slae/assignment7/12-addroundkey.png" width="560"alt="" /></div></center><br>
+
+										<p>
+											Once again use nested for-loops to traverse all bytes of the state matrix. &nbsp;The resultant code is below.
+										</p>
+										<pre>
+											<code class="c-like" style=display:block;white-space:pre-wrap>
+// Cipher transformation in which a round key is added to the state using a XOR operation
+void AddRoundKey(uint8_t state[4][4], uint8_t key[4][4]){
+
+    // Simple 1-to-1 XOR operation
+    int i, j;
+    for (i = 0; i&lt;4; ++i){
+        for (j = 0; j&lt;4; ++j) {
+            state[i][j] ^= key[i][j];
+        }
+    }
+
+    return;
+}
+											</code>
+										</pre>
+
+										<p>
+											Compile and run the code using two test matrices. &nbsp;<a href="https://kavaliro.com/wp-content/uploads/2014/03/AES.pdf" target="_blank" style="color:blue;">Here</a>
+											 is the test case on page 4.
+										</p>
+										<center><div class="image post"><img src="../images/slae/assignment7/13-addroundkey-demo.png" alt="" /></div></center><br>
 
 
 
 
 
-			<br><section id="Demonstration"><h2>Demonstration</h2></section>
+
+
+			<br><section id="MixColumns"><h2>Mix Columns</h2></section>
+									<p>
+
+
+									</p>
+
+
+
+			<br><section id="ExpandKey"><h2>Key Expansion</h2></section>
 			<!--
 			OBJDUMP Special Command:
 			objdump -d ./PROGRAM|grep '[0-9a-f]:'|grep -v 'file'|cut -f2 -d:|cut -f1-6 -d' '|tr -s ' '|tr '\t' ' '|sed 's/ $//g'|sed 's/ /\\x/g'|paste -d '' -s |sed 's/^/"/'|sed 's/$/"/g'
@@ -233,13 +426,22 @@ int main(){
 
 
 
-			<br><section id="Debugging"><h2>Debugging</h2></section>
+			<br><section id="Cipher"><h2>Cipher Repetitions</h2></section>
 
 									<p>
 										&emsp; &emsp;Debugging and Troubleshooting
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>
 
+
+
+			<br><section id="Integration"><h2>Integration and Demonstration</h2></section>
+
+									<p>
+
+
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>
 
 
 
