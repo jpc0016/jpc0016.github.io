@@ -405,10 +405,196 @@ void AddRoundKey(uint8_t state[4][4], uint8_t key[4][4]){
 
 
 			<br><section id="MixColumns"><h2>Mix Columns</h2></section>
+
 									<p>
+										&emsp; &emsp;Covering more difficult functions begins here and includes both <i>Mix columns</i> and its inverse function. &nbsp;According to Googlepedia,
+										<i>Mix columns</i> is a four byte linear transformation in a GF(2<sup>8</sup>) finite field. &nbsp;The operation treats each group of bytes as coefficients
+										of a polynomial over GF(2<sup>8</sup>) and reduced by the irreducible polynomial: x<sup>8</sup> + x<sup>4</sup> + x<sup>3</sup> + x + 1. &nbsp;Because of
+										that finite field property, the multiplication must check if the leftmost byte is 1 and subsequently XOR by x<sup>8</sup> + x<sup>4</sup> + x<sup>3</sup>
+										 + x + 1. &nbsp;Below are the derived constant matrices for both <i>MixColumns()</i> and <i>InvMixColumns()</i> courtesy of this
+										<a href="https://www.semanticscholar.org/paper/Area-Optimized-Architecture-for-AES-Mix-Column-Shaji-BonifusP./385db46392682b99e72f822cb291986fb112009d/figure/2" target="_blank" style="color:blue;">Semantic Scholar paper</a>.
+										 &nbsp;These will be known as 'mixer' and 'inverse_mixer' from now on.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/14-mixcolumns-matrices.png" alt="" /></div></center><br>
+
+									<p>
+										Below is an example of matrix multiplication specific to <i>MixColumns</i> (<a href="https://www.angelfire.com/biz7/atleast/mix_columns.pdf" target="_blank" style="color:blue;">source</a>).
+ 									Standard matrix multiplication applies so <code>0x04 = (0x02)(0xd4) + (0x03)(0xbf) + (0x01)(0x5d) + (0x01)(0x30)</code> and <br>
+									<code>0x66 = (0x01)(0xd4) + (0x02)(0xbf) + (0x03)(0x5d) + (0x01)(0x30)</code>.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/15-mixcolumns.png" width="500" alt="" /></div></center><br>
+
+									<p>
+										Since <i>MixColumns()</i> operates on a 4x4 state matrix, it must make an additional iteration over columns. &nbsp;Not only would it iterate again, the
+										function must remember the original index to place the result. &nbsp;Luckily there is a freely available
+										<a href="https://www.programiz.com/c-programming/examples/matrix-multiplication" target="_blank" style="color:blue;">template</a> to start with! &nbsp;The
+										 template's implementation ensures sub-calculations are added to the target location each iteration. &nbsp;For example, the operation
+										 (0x01)(0xd4) above is calculated and stored in the 0x04 spot before continuing with (0x02)(0xbf). &nbsp;(0x02)(0xbf) is then calculated and added
+										 to the (0x01)(0xd4) result. &nbsp;Luckily the bitwise XOR and assignment operator <code>^=</code> handles this task since XOR is additive! &nbsp;Just
+										 make sure the result matrix is initialized to zero beforehand.<br>
+										&emsp; &emsp;Different implementations must be handled when multiplying by each number in mixer (0x01, 0x02, or 0x03). &nbsp;If the multiplied
+										 number from mixer is 0x01, simply multiply it with the state matrix value and store it into its result matrix spot. &nbsp;Things get interesting when
+										 multiplying by 0x02 or 0x03. &nbsp;Revisiting the finite field property, a simple bitwise left shift will mutliply a byte by two; however, it must also be XORed with
+										 0x1b if the leftmost bit is 1. &nbsp;0x1b is the bitwise expression of the irreducible polynomial x<sup>8</sup> + x<sup>4</sup> + x<sup>3</sup> + x + 1.
+										  &nbsp;All of this can be handled using if-statements and checking for a high nibble greater than 0x8. &nbsp;Perform the same check when 0x03 is
+										  multiplied. &nbsp;The only addition is XORing the result with the state value one more time to get a multiplication of 0x03. &nbsp;Below is the resultant code.
 
 
 									</p>
+									<pre>
+										<code class="c-like" style=display:block;white-space:pre-wrap>
+uint8_t mixer[4][4] = { {0x02, 0x03, 0x01, 0x01},
+			{0x01, 0x02, 0x03, 0x01},
+			{0x01, 0x01, 0x02, 0x03},
+			{0x03, 0x01, 0x01, 0x02}
+		      };
+
+// Cipher transformation that takes all of the columns of the state and mixes their data to produce new columns
+void MixColumns(uint8_t state[4][4]){
+    // Execute MixColumns function per source: `angelfire.com/biz7/atleast/mix_columns.pdf`
+    // character '<<' means left shift by x bits
+    int i, j, k;
+    uint8_t result[4][4] = { 0 };
+    for (i = 0; i&lt;4; ++i){
+        for (j = 0; j&lt;4; ++j) {
+            for (k = 0; k&lt;4; ++k){
+                // Iterate over COLUMNS in state, while iterating by Mixer ROWS on the outside loop
+                // hence mixer[i][k] and state[k][j]
+                if (mixer[i][k] == 0x01){
+                    // Do normal multiplication (0x01 * column value)
+                    result[i][j] ^= mixer[i][k]*state[k][j];
+                }
+                else if (mixer[i][k] == 0x02){
+                    // slightly more complicated instructions
+                    // left shift state[i][j] value 1 byte then XOR with 0x1b if leftmost bit is 1
+                    // source: `cs.purdue.edu/homes/ssw/cs655/rij.pdf`
+                    if (HI_NIBBLE(state[k][j]) >= 8){
+                        result[i][j] ^= (state[k][j] &lt;&lt;1) ^ 0x1b;
+                    }
+                    else {
+                        result[i][j] ^= (state[k][j] &lt;&lt; 1);
+                    }
+                }
+                else {
+                    // Same instructions as mixer[j][i] == 0x02 with an additional XOR of state[k][j]
+                    if (HI_NIBBLE(state[k][j]) >= 8){
+                        result[i][j] ^= (state[k][j] &lt;&lt;1) ^ 0x1b;
+                    }
+                    else {
+                        result[i][j] ^= (state[k][j] &lt;&lt; 1);
+                    }
+                    result[i][j] ^= state[k][j];
+                } // end else
+            } // end k
+        } // end j
+    } // end i
+
+    // Store all results back into state matrix
+    int row, col;
+    for (row=0; row&lt;4; row++){
+        for (col=0; col&lt;4; col++){
+            state[row][col] = result[row][col];
+        }
+    }
+
+    return;
+}
+										</code>
+									</pre>
+
+									<p>
+									Compile and validate the function using <a href="https://kavaliro.com/wp-content/uploads/2014/03/AES.pdf" target="_blank" style="color:blue;">this</a> test
+									case on page 7.
+								</p>
+
+									<center><div class="image post"><img src="../images/slae/assignment7/16-mixcolumns-demo.png" alt="" /></div></center><br>
+
+									<p>
+										Inverse Mix columns operates the same way although a small challenge is presented: the numbers to multiply with are much larger
+										(0x09, 0x0b, 0x0d, and 0x0e). &nbsp;Luckily
+										<a href="http://www.infosecwriters.com/text_resources/pdf/AESbyExample.pdf" target="_blank" style="color:blue;">InfosecWriters</a> published
+										a couple tables on page 8 to help multiply over finite fields. &nbsp;These lookup tables similar to the S-boxes above. &nbsp;For each value being multiplied,
+										perform an L[][] lookup on them then add together. &nbsp;Once added together, perform an E[][] lookup on the result and <code>^=</code> it to the target
+										position. &nbsp;Iterate over the matrix indeces the same way in <i>MixColumns()</i>. &nbsp;If an encrypted byte passed into L[][] is 0x00, then it is
+										equivalent to multiplying by 0. &nbsp;Simply XOR the result with 0x00. &nbsp;Below is the final code.
+									</p>
+									<pre>
+										<code class="c-like" style=display:block;white-space:pre-wrap>
+uint8_t inverse_mixer[4][4] = { {0x0e, 0x0b, 0x0d, 0x09},
+				{0x09, 0x0e, 0x0b, 0x0d},
+				{0x0d, 0x09, 0x0e, 0x0b},
+				{0x0b, 0x0d, 0x09, 0x0e}
+			      };
+
+// Cipher transformation that takes all of the columns of the state and mixes their data to produce new columns
+void InvMixColumns(uint8_t state[4][4]){
+
+    // Execute Inverse MixColumns function per source: `http://infosecwriters.com/text_resources/pdf/AESbyExample.pdf` pgs. 8-9
+    int i, j, k;
+    uint8_t result[4][4] = { 0 };
+    uint8_t L_state, L_invmixer, byte;
+
+    for (i = 0; i&lt;4; ++i){
+        for (j = 0; j&lt;4; ++j) {
+            for (k = 0; k&lt;4; ++k) {
+                /* Iterate over COLUMNS in state, while iterating by inverse_mixer ROWS on the outside loop
+                hence inverse_mixer[i][k] and state[k][j]
+                Matrix multiplication is more complicated in inverse MixColumns.  That is why lookup tables
+                E and L are used to represent Galois Field finite field multiplication
+                */
+
+                // Handle multiplication instance for a null byte in state[k][j]; There are no NULL bytes in inverse_mixer
+                if (state[k][j] == 0x00){
+                    result[i][j] ^= 0x00;
+                }
+                else {
+
+                    // First stage results from L lookup table over GF2
+                    L_state = L[HI_NIBBLE(state[k][j])][LO_NIBBLE(state[k][j])];
+                    L_invmixer = L[HI_NIBBLE(inverse_mixer[i][k])][LO_NIBBLE(inverse_mixer[i][k])];
+
+                    // Check if byte overflow occurs when summing L_state and L_invmixer. Subtract 0xff if overflow occurs.
+                    if (L_state + L_invmixer > 0xff) {
+                        byte = L_state + L_invmixer - 0xff;
+                    }
+                    else {
+                        // else do normal byte addition
+                        byte = L_state + L_invmixer;
+                    }
+
+                    // Add E-lookup result into temporary state matrix
+                    result[i][j] ^= E[HI_NIBBLE(byte)][LO_NIBBLE(byte)];
+
+                } // end normal else statement
+
+            } // end k
+        } // end j
+    } // end i
+
+    // Store all results back into state matrix
+    int row, col;
+    for (row=0; row&lt;4; row++){
+        for (col=0; col&lt;4; col++){
+            state[row][col] = result[row][col];
+        }
+    }
+
+    return;
+}
+
+										</code>
+									</pre>
+
+									<p>
+										Use the highlighted test values below from <a href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197.pdf" target="_blank" style="color:blue;">NIST FIPS 197</a>
+										page 37 as the input state matrix.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/17-invmixcolumns-test.png" alt="" /></div></center><br>
+
+									<p>
+										Compile and run to verify the output matches the start of round 2 values above.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/18-invmixcolumns-demo.png" alt="" /></div></center><br>
 
 
 
@@ -418,19 +604,155 @@ void AddRoundKey(uint8_t state[4][4], uint8_t key[4][4]){
 			objdump -d ./PROGRAM|grep '[0-9a-f]:'|grep -v 'file'|cut -f2 -d:|cut -f1-6 -d' '|tr -s ' '|tr '\t' ' '|sed 's/ $//g'|sed 's/ /\\x/g'|paste -d '' -s |sed 's/^/"/'|sed 's/$/"/g'
 			-->
 									<p>
-										&emsp; &emsp;Demonstrate shellcode here
+										&emsp; &emsp;Key expansion consists of using the earlier "easy" functions as building blocks; however, these functions are only used on every
+										fourth word. &nbsp;More logic must be built out in key expansion to handle all other words. &nbsp;Below is the algorithm from the most reliable source,
+										<a href="https://www.amazon.com/Cryptography-Network-Security-Principles-Practice/dp/0134444280/ref=sr_1_2?dchild=1&keywords=ISBN+13%3A+978-1-292-15858-7&qid=1606786625&sr=8-2" target="_blank" style="color:blue;">Cryptography and Network Security 7th Edition</a>
+										 from page 191.
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>
+									<center><div class="image post"><img src="../images/slae/assignment7/19-keyexpansion-algorithm.png" alt="" /></div></center><br>
 
+									<p>
+									Because this is AES-128 bit, the first four words of the key are simply the first 16 bytes of the user provided key. &nbsp;This assignment is easy
+									and is handled with a simple XOR operation looping over the words. &nbsp;Words 4 to 44 require an XOR of the previous word and its [i - 4] indexed
+									word. &nbsp;Because of the special function implemented every fourth word, the previous word must be stored in a temporary word regardless.
+									 &nbsp;Checking every fourth word is handled by a modulo operation in an if-statement allowing the program to branch to the <i>g()</i> function.
+									  &nbsp;Call <i>RotWord()</i> and <i>SubWord()</i> in order then XOR with the round constant mapped by <i>Rcon[i/4]</i>. &nbsp;Rcon is an array
+									  of round constants expresssed as "the exponentiation of 2 to a user-specified value" over a finite field
+									  (<a href="https://cryptography.fandom.com/wiki/Rijndael_key_schedule" target="_blank" style="color:blue;">source</a>). &nbsp;Its definition can
+									  be copied from the source but only the first 11 values are needed. &nbsp;Below is the AES-128 implementation of <i>ExpandKey()</i>. &nbsp;Further
+									  changes must be made if working with AES-256 such as 60 words, up to 32 bytes of user provided key in the first eight words, and implementing key
+									  padding standards should the input key not be 32 bytes long.
+									</p>
 
+									<pre>
+										<code class="c-like" style=display:block;white-space:pre-wrap>
+
+// Cipher transformation that takes all of the columns of the state and mixes their data to produce new columns
+// Algorithm source: `brainkart.com/article/AES-Key-Expansion_8410/`
+void ExpandKey(uint8_t key[4][4], uint8_t word[44][4]){
+
+    int i, j, k;
+    uint8_t temp[4];
+
+    // First 4 words of expanded key are just the key copied
+    for (i = 0; i&lt;4; ++i) {
+        for (j=0; j&lt;4; j++) {
+            word[j][i] ^= key[i][j];
+        }
+    }
+
+    // Handle remaining words of key expansion
+    for (i = 4; i&lt;44; i++) {
+        for (j = 0; j&lt;4; j++) {
+            // Copy previous word into temporary location
+            temp[j] = word[i - 1][j];
+        }
+
+        // for every fourth word, execute g(word[]) operation
+        if (i % 4 == 0) {
+            RotWord(temp);
+            SubWord(temp);
+            temp[0] ^= Rcon[i/4];
+        }
+
+        // At i = 4, w[4] = w[0] ^ g(w[3])
+        for (k=0; k&lt;4; k++){
+            // word[4][k] = word[0][k] XOR temp[k]
+            word[i][k] = word[i - 4][k] ^ temp[k];
+        }
+    } // end i
+
+} // end ExpandKey()
+										</code>
+									</pre>
+
+									<p>
+									Compile and run using the <a href="https://kavaliro.com/wp-content/uploads/2014/03/AES.pdf" target="_blank" style="color:blue;">test case</a> on
+									pages 2 and 3. &nbsp;Test output is much too long to display but values match results on page 3.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/20-keyexpansion-demo.png" alt="" /></div></center><br>
 
 
 
 			<br><section id="Cipher"><h2>Cipher Repetitions</h2></section>
 
 									<p>
-										&emsp; &emsp;Debugging and Troubleshooting
+										&emsp; &emsp;Return to the <a href="https://thestunneddefense.com/pages/custom-crypter.html#Outline" target="_blank" style="color:blue;">system outline</a>
+										 once all subfunctions have been written and tested. &nbsp;Encryption and decryption functions must occur in an iterated fashion according to the
+										 outline. &nbsp;Furthermore, these rounds all happen on 16 byte blocks of data at a time. &nbsp;This means another function is required to implement encryption
+										 rounds for every 16 bytes of data that gets encrypted.<br>
+										 &emsp; &emsp;Before any encryption rounds happen, <i>AddRoundKey()</i> is called with the first four words of the key schedule. &nbsp;Then functions
+										 <i>SubBytes()</i>, <i>ShiftRows()</i>, <i>MixColumns()</i>, and <i>AddRoundKey()</i> are called in a row nine times. &nbsp;The tenth round omits
+										 <i>MixColumns()</i>.
 									</p>
+									<pre>
+										<code class="c-like" style=display:block;white-space:pre-wrap>
+// Main cipher function that calls sub-functions in order: SubBytes(), ShiftRows(), MixColumns(), and AddRoundKey()
+// RoundKey is produced in the key expansion function, ExpandKey(),
+void Cipher(uint8_t state[4][NB], uint8_t keySchedule[44][NB]){
+    /*
+        Cipher function performs the actual encryption operations on 16-byte blocks
+        of plaintext and keys.
+
+        plaintext matrix is already set (from state[][]) but Key Expansion must take
+        place in ExpandKey(). Round keys are loaded into inputKey[4][4] one round at a time.
+    */
+
+    // Load first 4 words of keySchedule[][] for use with AddRoundKey()
+    uint8_t inputKey[4][4] = { 0 };
+    int a, b;
+    for (a = 0; a&lt;4; a++) {
+        for (b = 0; b&lt;4; b++) {
+            inputKey[b][a] = keySchedule[a][b];
+        }
+    }
+
+	// Call first instance of AddRoundKey() before continuing with normal rounds
+	AddRoundKey(state, inputKey);
+
+    // Perform encryption rounds
+    // Call SubBytes(), ShiftRows(), MixColumns(), and AddRoundKey() 13 times
+    for (int i = 1; i &lt; NR; i++) {
+
+        SubBytes(state);
+        ShiftRows(state);
+        MixColumns(state);
+
+
+        // Load round key from keySchedule for use in AddRoundKey
+        int row, col;
+        for (row = i*NB; row&lt;(i*NB)+4; row++) {
+            for (col = 0; col&lt;4; col++) {
+                inputKey[col][row - (i*NB)] = keySchedule[row][col];
+            }
+        }
+
+            // This index should be a multiple of 4 increasing from 4 up to 40
+            AddRoundKey(state, inputKey);
+
+    } // end round iterations loop
+
+    // Omit MixColumns() for final round; else proceed with SubBytes(),
+    // ShiftRows(), and AddRoundKey() in order
+    SubBytes(state);
+    ShiftRows(state);
+
+    // Load last 4 words from keySchedule for final AddRoundKey
+    int c, d;
+    for (c = 40; c&lt;44; c++) {
+        for (d = 0; d&lt;4; d++) {
+            inputKey[d][c-40] = keySchedule[c][d];
+        }
+    }
+    // 40 is the starting index of last 4 words: 40, 41, 42, 43
+    AddRoundKey(state, inputKey);
+
+    return;
+} // end Cipher function
+										</code>
+									</pre>
+
+
 									<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>
 
 
