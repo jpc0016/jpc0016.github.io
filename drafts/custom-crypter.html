@@ -210,7 +210,7 @@ int main(){
 											<p>
 												The most important concept of this section is having a test setup that will ensure success. &nbsp;Test cases are incredibly important as well since they validate
 												working functions. &nbsp;<a href="https://kavaliro.com/wp-content/uploads/2014/03/AES.pdf" target="_blank" style="color:blue;">Encryption</a> and
-												<a href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197.pdf" target="_blank" style="color:blue;">decryption</a> (page 40) test values can be found their respective
+												<a href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197.pdf" target="_blank" style="color:blue;">decryption</a> (page 36) test values can be found their respective
 												 links. &nbsp;The encryption link includes a test case for key expansion as well. &nbsp;For more complicated functions like <i>Inverse Mix Columns</i>, test cases can be found
 												 <a href="http://www.infosecwriters.com/text_resources/pdf/AESbyExample.pdf" target="_blank" style="color:blue;">here</a> on page 8.<br>
 												 &emsp; &emsp;Finally when in doubt, use print statements. &nbsp;Data visualization goes a long way when it comes to fault isolation. &nbsp;Sometimes the most difficult part of
@@ -683,10 +683,15 @@ void ExpandKey(uint8_t key[4][4], uint8_t word[44][4]){
 										 rounds for every 16 bytes of data that gets encrypted.<br>
 										 &emsp; &emsp;Before any encryption rounds happen, <i>AddRoundKey()</i> is called with the first four words of the key schedule. &nbsp;Then functions
 										 <i>SubBytes()</i>, <i>ShiftRows()</i>, <i>MixColumns()</i>, and <i>AddRoundKey()</i> are called in a row nine times. &nbsp;The tenth round omits
-										 <i>MixColumns()</i>.
+										 <i>MixColumns()</i>. &nbsp;Since the program operates over bytes instead of words, the correct 4 words must be loaded for use in <i>AddRoundKey()</i> with
+										 a nested for-loop. &nbsp;Use a block size constant, <i>Nb</i>, to help calculate the key schedule offset by looping over <i>Nb</i> bytes at a time. &nbsp;The
+										 last key is easy. &nbsp;Simply load the final four words starting at index 40. &nbsp;Below is the resultant code.
 									</p>
 									<pre>
 										<code class="c-like" style=display:block;white-space:pre-wrap>
+// block size
+#define NB 4
+
 // Main cipher function that calls sub-functions in order: SubBytes(), ShiftRows(), MixColumns(), and AddRoundKey()
 // RoundKey is produced in the key expansion function, ExpandKey(),
 void Cipher(uint8_t state[4][NB], uint8_t keySchedule[44][NB]){
@@ -717,7 +722,6 @@ void Cipher(uint8_t state[4][NB], uint8_t keySchedule[44][NB]){
         SubBytes(state);
         ShiftRows(state);
         MixColumns(state);
-
 
         // Load round key from keySchedule for use in AddRoundKey
         int row, col;
@@ -752,18 +756,414 @@ void Cipher(uint8_t state[4][NB], uint8_t keySchedule[44][NB]){
 										</code>
 									</pre>
 
+									<p>
+										Compile and run using the complete <a href="https://kavaliro.com/wp-content/uploads/2014/03/AES.pdf" target="_blank" style="color:blue;">test case</a> to
+										get the ciphertext on page 17.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/21-cipher-demo.png" alt="" /></div></center><br>
 
-									<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>
+									<p>
+										A similar routine is done for decryption except the order is slightly different during the rounds: <i>InvShiftRows()</i>, <i>InvSubBytes()</i>,
+										<i>AddRoundKey()</i>, and <i>InvMixColumns()</i>. &nbsp;<i>InvMixColumns()</i> is omitted from the final round and <i>AddRoundKey()</i> is executed
+										before executing decryption rounds. &nbsp;Note that the first <i>AddRoundKey()</i> uses the last four words of the key schedule and round ten
+										<i>AddRoundKey()</i> uses the first four words of the key schedule. &nbsp;So <i>Decrypt()</i> should look very similar to <i>Cipher()</i>. &nbsp;Below
+										is the final function code.
+									</p>
+									<pre>
+										<code class="c-like" style=display:block;white-space:pre-wrap>
+// block size
+#define NB 4
+
+// Main decryption function that calls sub-functions in order: InvShiftRows(), InvSubBytes(),
+// AddRoundKey(), and InvMixColumns() while omitting InvMixColumns() in the final round
+// keySchedule is produced in the key expansion function: ExpandKey()
+void Decrypt(uint8_t state[4][NB], uint8_t keySchedule[44][NB]){
+    /*
+        Decrypt function performs the actual decryption operations on 16-byte blocks
+        of plaintext and keys.
+
+        ciphertext matrix is already set (from state[][]) but Key Expansion must take
+        place in ExpandKey(). Round keys are loaded into inputKey[4][4] one round at a time.
+    */
+
+    // Load keySchedule for initial AddRoundKey() starting from the last 4 words
+    uint8_t inputKey[4][4] = { 0 };
+    int c, d;
+    for (c = 40; c&lt; 44; c++) {
+        for (d = 0; d&lt;4; d++) {
+            inputKey[d][c-40] = keySchedule[c][d];
+        }
+    }
+
+    // Pass round key and input state into AddRoundKey() before start of normal rounds
+    AddRoundKey(state, inputKey);
+
+    // Do InvShiftRows(), InvSubBytes(), AddRoundKey(), and InvMixColumns() in a row
+    // 9 times starting from the back of key schedule (from i = 9 to 1)
+    for (int i = NR-1; i >= 1; i--) {
+
+        InvShiftRows(state);
+        InvSubBytes(state);
+
+        // Load keySchedule for use in AddRoundKey()
+        // This index should be a multiple of 4 decreasing from 36 down to 4
+        int row, col;
+        // i starts from 9 down to 1; NB = 4; 9*4 = 36; last inputKey group is w[4]-w[7]
+        for (row = i*NB; row &lt;(i*NB)+4; row++) {
+            for (col = 0; col&lt;4; col++) {
+                inputKey[col][row - (i*NB)] = keySchedule[row][col];
+            }
+        }
+
+        AddRoundKey(state, inputKey);
+        InvMixColumns(state);
+
+    } // end round iterations loop
+
+    // Omit InvMixColumns() for final round. Proceed with InvShiftRows(), InvSubBytes(), and AddRoundKey()
+    InvShiftRows(state);
+    InvSubBytes(state);
+
+    // Load first 4 words of keySchedule[][] per 'Ch06 Crypto7e.pdf' pg. 7
+    for (int a = 0; a&lt;4; a++) {
+        for (int b = 0; b&lt;4; b++) {
+            inputKey[b][a] = keySchedule[a][b];
+        }
+    }
+
+    // 0 is starting index of last 4 words: 0, 1, 2, 3
+    AddRoundKey(state, inputKey);
+
+    return;
+}
+										</code>
+									</pre>
+
+									<p>
+										Compile and run the decryption routine using the previous
+										<a href="https://kavaliro.com/wp-content/uploads/2014/03/AES.pdf" target="_blank" style="color:blue;">test case</a> but
+										going backwards. &nbsp;If more debugging is required, use the test case from
+										<a href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197.pdf" target="_blank" style="color:blue;">FIPS 197</a> on page
+										 36. &nbsp;The advantage of this test case is all intermediate state values are shown making fault isolation easier.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/22-decrypt-demo.png" alt="" /></div></center><br>
+
 
 
 
 			<br><section id="Integration"><h2>Integration and Demonstration</h2></section>
 
 									<p>
+									&emsp; &emsp;Now that primary encryption and decryption functions work on single states, alter the main function code to handle multiple blocks of
+									plaintext (unencrypted shellcode bytes). &nbsp;There needs to be a method to load plaintext bytes into the state matrix for processing. &nbsp;The same
+									needs to be done for the user provided key. &nbsp;Furthermore, what happens when the plaintext is not a multiple of 16 bytes? &nbsp;This is
+									where padding is used. &nbsp;If the plaintext is not a multiple of 16 bytes, create a separate implementation that will pad the remaining state matrix
+									once all plaintext bytes are used. &nbsp;This will only happen on the final state matrix. &nbsp;For example, a plaintext of 30 bytes requires only
+									 two bytes of padding to fill the last state. &nbsp;Such an implementation requires a for-loop to fill the state matrix normally while checking the
+									 number of bytes already loaded. &nbsp;Traversing over plaintext bytes requires an index initialized to zero (<code>shell_index = 0</code>) and incremented after each
+									 successfully loaded byte. &nbsp;Another index must be initialized to traverse the key bytes as well (<code>key_index = 0</code>). &nbsp;All plaintext bytes
+									 have been loaded into state matrices once the tracked
+									 <code>shell_index</code> exceeds <code>shellcode_len</code>, so fill the rest of the state matrix with the padded byte, 0x0f. <br>
+									 &emsp; &emsp;Another question must be answered: how many times does the encryption/decryption loop iterate? &nbsp;The answer depends on the length of the
+									 plaintext (<code>shellcode_len</code>). &nbsp;<i>Cipher()</i> is called every 16 bytes, which means an integer division must occur to get the number of
+									  full 16 byte blocks to encrypt (no padding). &nbsp;This value is calculated in the expression <code>rounds = shellcode_len / 16</code>. &nbsp;If the
+									  plaintext length is cleanly divisible by 16, an extra loop is not needed for padding. &nbsp;However if it is not divisible by 16, the final round must
+									  be included in the for-loop; hence the line:<br>
+									   <code>for (iterations = 0; iterations <b>&lt;=</b> rounds; iterations++)</code> instead of using a <code>&lt;</code> sign.<br>
+									   &emsp; &emsp;Since the encryption function returns encrypted shellcode bytes, iterate over the state matrix to print encrypted shellcode bytes after
+									   calling <i>Cipher()</i>. &nbsp;The key can be embedded in the program or handled as a parameter with <code>int argc, char **argv</code>. &nbsp;Either way
+									   there must be a method for the program to retrieve it. &nbsp;Below is the main function for encryption.
 
 
 									</p>
-									<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>
+									<pre>
+										<code class="c-like" style=display:block;white-space:pre-wrap>
+int main(int argc, char **argv) {
+    /*
+    Main function divides plaintext and keys into 16-byte blocks for operation by
+    Cipher() function
+    */
+    unsigned char *encryption_key;
+    int encryption_key_length;
+    int shellcode_len = strlen(shellcode);
+
+    // Extract key parameter and get its length
+    encryption_key = (unsigned char *)argv[1];
+    encryption_key_length = strlen((char *)encryption_key);
+
+    if (encryption_key_length < 16) {
+        printf("Key too small. Should be minimum 16 characters\n");
+        exit(-1);
+    }
+
+    // Number of full rounds.  "Full" means 16 bytes of state[4][4] are filled
+    // with shellcode bytes and not padding.
+    int rounds = shellcode_len / 16;
+
+    // Index counters to traverse shellcode and encryption_key bytes. These are
+    // initialized to zero and set outside the loop
+    int shell_index = 0;
+    int key_index = 0;
+    // master loop counter
+    int iterations;
+
+    // Initialize state and key matrices
+    uint8_t state[4][4] = { 0 };
+    uint8_t key[4][4] = { 0 };
+
+
+    // Load key values from input encryption_key
+    for (int b = 0; b&lt;4; b++){
+        for (int a = 0; a&lt;4; a++){
+            key[a][b] = encryption_key[key_index];
+            key_index += 1;
+        }
+    }
+
+    // Expand the 4x4 key
+    uint8_t key_expanded[44][4] = { 0 };
+    ExpandKey(key, key_expanded);
+
+    printf("Dumping AES-128 Encrypted Shellcode\n\n\n\"");
+    // MASTER LOOP
+    // Load groups of 16 bytes of shellcode into state[4][4]
+    if (shellcode_len % 16 == 0) {
+        // if shellcode is a multiple of 16 do NOT perform the extra encryption round full of
+        // padded bytes
+        for (iterations = 0; iterations < rounds; iterations++){
+
+            // Execute byte loading instructions for state
+            int i, j;
+            for (j = 0; j&lt;4; j++){
+                for (i = 0; i&lt;4; i++){
+                    if (shell_index &lt; shellcode_len) {
+                        // end of shellcode not reached. Store shellcode bytes normally.
+                        state[i][j] = shellcode[shell_index];
+                    }
+                    else {
+                        // Pad rest of matrix with 0x0f if end of shellcode reached.
+                        state[i][j] = 0x0f;
+                    }
+                    shell_index += 1;
+                }
+            }
+
+            // Execute Cipher with loaded state matrix
+            // Pass state and expanded key into cipher function over number of iterations
+            Cipher(state, key_expanded);
+
+            for (int c = 0; c&lt;4; c++){
+                for (int d = 0; d&lt;4; d++){
+                    printf("\\x%02x", state[d][c]);
+                }
+            }
+        } // end iterations loop
+    } // end shellcode_len modulo check
+    // else perform normal encryption routine
+    else {
+        for (iterations = 0; iterations <= rounds; iterations++){
+
+            // Execute byte loading instructions for state
+            int i, j;
+            for (j = 0; j&lt;4; j++){
+                for (i = 0; i&lt;4; i++){
+                    if (shell_index &lt; shellcode_len) {
+                        // end of shellcode not reached. Store shellcode bytes normally.
+                        state[i][j] = shellcode[shell_index];
+                    }
+                    else {
+                        // Pad rest of matrix with 0x0f if end of shellcode reached.
+                        state[i][j] = 0x0f;
+                    }
+                    shell_index += 1;
+                } // end i
+            } // end j
+
+            // Execute Cipher with loaded state matrix
+            // Pass state and expanded key into cipher function over number of iterations
+            Cipher(state, key_expanded);
+
+            for (int c = 0; c&lt;4; c++){
+                for (int d = 0; d&lt;4; d++){
+                    printf("\\x%02x", state[d][c]);
+                }
+            }
+        } // end iterations routine
+    }  // End MASTER LOOP
+
+    // end shellcode with double quote
+    printf("\"\n\n");
+    return 1;
+
+}
+										</code>
+									</pre>
+
+									<p>
+										Integrate the above code with all other dependant functions previously covered into a source file to compile. &nbsp;Shellcode from
+										<i>execve-stack.nasm</i> was encrypted with the key "<i>lookatthedefensetim</i>" to produce its encrypted form below. &nbsp;This
+										encrypted payload is the input parameter to the decryptor.
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/23-encryptor-demo.png" alt="" /></div></center><br>
+
+									<p>
+										The decryption main function should look quite similar to encryption above with a couple of additions. &nbsp;Because this program is
+										passing execution control to a memory location and not printing anything to stdout, a "no-no" function must be defined for the destination where
+										decrypted shellcode will go: into <code>ciphertext</code>. &nbsp;This memory location does not hold anything (yet), but will be filled with decrypted bytes as state
+										matrices are passed through the <i>Decrypt()</i> function; therefore, an additional index (<code>counter</code>) must be initialized and
+										used to index decrypted bytes for storage in <code>ciphertext</code>. &nbsp;An additional if-statement is added inside the for-loops to ensure
+										decryption stops after all encrypted bytes are processed.
+									</p>
+									<pre>
+										<code class="c-like" style=display:block;white-space:pre-wrap>
+int main(int argc, char **argv) {
+    /*
+    Main function needs to divide plaintext and keys into 16-byte blocks for operation by
+    Decrypt() function
+    */
+
+    unsigned char *encryption_key;
+    int encryption_key_length;
+    int shellcode_len = strlen(encrypted_shellcode);
+    int counter = 0;
+
+    // ciphertext[] is statically allocated in this instance. Can be changed using malloc()
+    unsigned char ciphertext[40] = {0};
+    // no-no function
+    int (*ret)() = (int(*)())ciphertext;
+
+    // Extract key parameter and get its length
+    encryption_key = (unsigned char *)argv[1];
+    encryption_key_length = strlen((char *)encryption_key);
+
+    if (encryption_key_length &lt; 16) {
+        printf("Key too small. Should be minimum 16 characters\n");
+        exit(-1);
+    }
+
+
+    // Number of full rounds.  Full meaning all 16 bytes of state[4][4] are filled
+    // with shellcode bytes and not padding.
+    int rounds = shellcode_len / 16;
+
+    // Index counters to traverse shellcode and key bytes. This is initialized to
+    // zero and set outside the loop
+    int shell_index = 0;
+    int key_index = 0;
+    // master loop counter
+    int iterations;
+
+    // Initialize state and key matrices
+    uint8_t state[4][4] = { 0 };
+    uint8_t key[4][4] = { 0 };
+
+    // Load key values from input encryption_key
+    for (int b = 0; b&lt;4; b++){
+        for (int a = 0; a&lt;4; a++){
+            key[a][b] = encryption_key[key_index];
+            key_index += 1;
+        }
+    }
+
+    // Expand the 4x4 key to AES-128 specified size
+    uint8_t key_expanded[44][4] = { 0 };
+    ExpandKey(key, key_expanded);
+
+    printf("Decrypting AES-128 Encrypted Shellcode.....\n\n\n");
+    // MASTER LOOP
+    // Load groups of 16 bytes of shellcode into state[4][4]
+    if (shellcode_len % 16 == 0) {
+
+        // if shellcode is a multiple of 16 do NOT perform the extra encryption round full of
+        // padded bytes; hence the '&lt;' operator.
+        for (iterations = 0; iterations &lt; rounds; iterations++){
+
+            // break loop once end of shellcode is reached
+            if (shell_index == shellcode_len) {
+                break;
+            }
+
+            // Load encrypted bytes into state[][]
+            int i, j;
+            for (j = 0; j&lt;4; j++){
+                for (i = 0; i&lt;4; i++){
+
+                    // Continue loading bytes into state[][] if end of encrypted shellcode not reached
+                    if (shell_index &lt; shellcode_len) {
+                        // end of shellcode not reached. Store shellcode bytes normally.
+                        state[i][j] = encrypted_shellcode[shell_index];
+                        shell_index += 1;
+                    }
+                } // end i
+            } // end j
+
+            // Execute Decrypt() with loaded state matrix
+            // Pass state and expanded key into Decrypt() function over number of iterations
+            Decrypt(state, key_expanded);
+
+            // Next step is to place state[d][c] bytes into ciphertext[] using counter as an index
+            for (int c = 0; c&lt;4; c++){
+                for (int d = 0; d&lt;4; d++){
+                    ciphertext[counter] = state[d][c];
+                    counter+= 1;
+                }
+            }
+        } // end iterations loop
+
+        // Force NULL byte placement at the very end of decrypted shellcode
+        ciphertext[counter] = 0x00;
+
+    } // end shellcode_len modulo check
+    // else perform normal routine that includes final round
+    else {
+            // Shellcode is padded and encrypted 16 bytes at a time so this block
+            // should not be reached......
+            for (iterations = 0; iterations <= rounds; iterations++){
+
+                // break loop once end of shellcode is reached
+                if (shell_index == shellcode_len) {
+                	break;
+                }
+
+                // Load encrypted bytes into state[][]
+                int i, j;
+                for (j = 0; j&lt;4; j++){
+                    for (i = 0; i&lt;4; i++){
+                        if (shell_index &lt; shellcode_len) {
+                            // end of shellcode not reached. Store shellcode bytes normally.
+                            state[i][j] = encrypted_shellcode[shell_index];
+                            shell_index += 1;
+                        }
+                    } // end i
+                } // end j
+
+                // Execute Decrypt() with loaded state matrix
+                // Pass state and expanded key into Decrypt() function over number of iterations
+                Decrypt(state, key_expanded);
+
+                // Next step is to place state[d][c] bytes into ciphertext[] using counter as an index
+                for (int c = 0; c&lt;4; c++){
+                    for (int d = 0; d&lt;4; d++){
+                        ciphertext[counter] = state[d][c];
+                        counter+= 1;
+                    }
+                }
+            } // end iterations loop
+    }  // End MASTER LOOP
+
+    printf("\n\n");
+    // call no-no function
+    ret();
+
+    return 1;
+
+}
+										</code>
+									</pre>
+
+									<p>
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/24-decryptor-demo.png" alt="" /></div></center><br>
 
 
 
