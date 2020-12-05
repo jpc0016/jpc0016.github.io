@@ -254,7 +254,6 @@ void RotWord(uint8_t wordIn[]){
 
     return;
 }
-
 												</code>
 											</pre>
 
@@ -275,7 +274,8 @@ void RotWord(uint8_t wordIn[]){
 											<a href="https://www.amazon.com/Cryptography-Network-Security-Principles-Practice/dp/0134444280/ref=sr_1_2?dchild=1&keywords=ISBN+13%3A+978-1-292-15858-7&qid=1606786625&sr=8-2" target="_blank" style="color:blue;">Cryptography and Network Security 7th Edition</a>
 											 on page 181 for the substitution boxes (S-boxes). &nbsp;The left four bits is the row lookup, and the right four bits is the column. &nbsp;These lookup tables are the heart of AES
 											 algorithm and rely on finite field mathematics, specifically Galois Field (GF) over 2<sup>8</sup>. &nbsp;The tables can be derived by calculating the multiplicative
-											 inverse over GF(2<sup>8</sup>), which is beyond the scope of this article. &nbsp;The S-boxes can be hardcoded in their own 16 x 16 byte matrices.
+											 inverse over GF(2<sup>8</sup>), which is beyond the scope of this article. &nbsp;The S-boxes can be hardcoded in their own 16 x 16 byte matrices and placed in a separate header file
+											 for inclusion: <code>#include "sbox.h"</code>.
 										</p>
 											<center><div class="image post"><img src="../images/slae/assignment7/8-sbox.png" alt="" /></div></center><br>
 
@@ -308,7 +308,7 @@ void RotWord(uint8_t wordIn[]){
 										<p>
 											Basically take <i>RotWord()</i>, change its argument, and rotate the rows by their proper offsets. &nbsp;For optimization, <i>RotWord()</i> could include
 											an integer parameter to express the number of positions to shift. &nbsp;If that is done, simply call <i>RotWord()</i> three times like this:
-											<i>RotWord(w1, 1)</i>; <i>RotWord(w2, 2)</i>; <i>RotWord(w3, 3)</i>; &nbsp;Below is the final code for <i>ShiftRows()</i>.
+											<i>RotWord(w1, 1)</i>; <i>RotWord(w2, 2)</i>; <i>RotWord(w3, 3)</i> and leave <i>w0</i> alone; &nbsp;Below is the final code for <i>ShiftRows()</i>.
 
 										</p>
 										<pre>
@@ -393,8 +393,9 @@ void AddRoundKey(uint8_t state[4][4], uint8_t key[4][4]){
 										</pre>
 
 										<p>
-											Compile and run the code using two test matrices. &nbsp;<a href="https://kavaliro.com/wp-content/uploads/2014/03/AES.pdf" target="_blank" style="color:blue;">Here</a>
-											 is the test case on page 4.
+											Compile and run the code using two test matrices. &nbsp;The
+											<a href="https://kavaliro.com/wp-content/uploads/2014/03/AES.pdf" target="_blank" style="color:blue;">test case</a>
+											 is on page 4.
 										</p>
 										<center><div class="image post"><img src="../images/slae/assignment7/13-addroundkey-demo.png" alt="" /></div></center><br>
 
@@ -1012,7 +1013,8 @@ int main(int argc, char **argv) {
 										decrypted shellcode will go: into <code>ciphertext</code>. &nbsp;This memory location does not hold anything (yet), but will be filled with decrypted bytes as state
 										matrices are passed through the <i>Decrypt()</i> function; therefore, an additional index (<code>counter</code>) must be initialized and
 										used to index decrypted bytes for storage in <code>ciphertext</code>. &nbsp;An additional if-statement is added inside the for-loops to ensure
-										decryption stops after all encrypted bytes are processed.
+										decryption stops after all encrypted bytes are processed. &nbsp;Since the encrypted shellcode is a multiple of 16 bytes, it will not
+										reach the outer else-statement. &nbsp;Finally, call the "no-no" function <code>ret();</code>.
 									</p>
 									<pre>
 										<code class="c-like" style=display:block;white-space:pre-wrap>
@@ -1028,7 +1030,7 @@ int main(int argc, char **argv) {
     int counter = 0;
 
     // ciphertext[] is statically allocated in this instance. Can be changed using malloc()
-    unsigned char ciphertext[40] = {0};
+    unsigned char ciphertext[100] = {0};
     // no-no function
     int (*ret)() = (int(*)())ciphertext;
 
@@ -1162,8 +1164,26 @@ int main(int argc, char **argv) {
 									</pre>
 
 									<p>
+										The final test case is a demonstration of the overall project and must be conducted on a 32-bit Linux machine since
+										the shellcode is written to target that architecture. &nbsp;As with all previous blog posts, compile the decryptor
+										with no stack protection and executable stack flags set. &nbsp;Run the decryptor with the same key and cry tears of
+										joy! &nbsp;\o/
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment7/24-decryptor-demo.png" alt="" /></div></center><br>
+
+									<p>
+										Now that basic functionality works for decrypting <i>execve-stack.nasm</i> shellcode, grab the decoder payload from the
+										<a href="https://thestunneddefense.com/pages/custom-encoding.html" target="_blank" style="color:blue;">custom encoder</a>
+										blog post and paste it into the encryptor. &nbsp;Encrypt with the same secret key. &nbsp;Make sure there are no spaces when
+										 making a double line string. &nbsp;This will create an inaccurate encryption!
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/25-encrypt-decoder.png" alt="" /></div></center><br>
+
+									<p>
+										Assign the encrypted shellcode to the appropriate variable in decryptor. &nbsp;Run the decryptor once again with the same
+										secret key and watch it unravel into a /bin/sh shell!
+									</p>
+									<center><div class="image post"><img src="../images/slae/assignment7/26-decrypt-decoder.png" alt="" /></div></center><br>
 
 
 
