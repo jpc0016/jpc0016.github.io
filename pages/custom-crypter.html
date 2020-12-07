@@ -59,7 +59,7 @@
                       <article id="first-post">
 												<a href="index.html"><img src="../images/gus.jpg" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Creating a Custom Crypter</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; December 8, 2020</h5>
+												<h5>&emsp; &emsp; &emsp; &emsp; December 7, 2020</h5>
                         <div class="box">
 
 													<br><h2>Contents</h2>
@@ -77,7 +77,7 @@
 														&emsp; &emsp;Good evening Tim and Aaron! &nbsp;The final post is about building a custom crypter that operates on encrypted shellcode to decrypt and
 														execute it at runtime. &nbsp;This will be a challenging assignment as crypters are typically above average in size. &nbsp;Much like encoding and
 														polymorphism, the purpose of encrypting shellcode is to hide it from defense mechanisms such as AntiVirus (AV) and Intrusion Detection Systems (IDSs).
-														 &nbsp;A quick review of encryption is below:<br><br>
+														 &nbsp;A quick overview of encryption is below:<br><br>
 
 														Encryption is a fundamental building block of computer security in which plaintext is scrambled into unreadable form using a key and sometimes
 														an Initialization Vector (IV). &nbsp;Scrambling sophistication depends on an encryption scheme's algorithm. &nbsp;Some algorithms have more
@@ -98,9 +98,11 @@
 			<br><section id="POC"><h2>Drafting the Proof of Concept</h2></section>
 
 											<p>
-												&emsp; &emsp;Similar to bind and reverse shells, a Proof of Concept (PoC) is developed using a higher level language. &nbsp;The difference this time is
+												&emsp; &emsp;Similar to <a href="https://thestunneddefense.com/pages/shell-bind-tcp.html" target="_blank" style="color:blue;">bind</a> and
+												<a href="https://thestunneddefense.com/pages/shell-reverse-tcp.html" target="_blank" style="color:blue;">reverse</a> shells, a Proof of Concept (PoC) is
+												developed using a higher level language. &nbsp;The difference this time is
 												that no assembly will be coded as a result of the PoCs produced. &nbsp;This is because decryptors require many more assembly instructions
-												 than decoders. &nbsp;It is simply infeasable to write a decryptor in x86 assembly when shellcode must often meet a length requirement.<br>
+												 than decoders. &nbsp;It is simply infeasable to write a decryptor in x86 assembly when shellcode must often meet length requirements.<br>
 												&emsp; &emsp;Based on the graph above, both an encryptor and decryptor need to be produced. &nbsp;They can be developed in Python or C due to their common
 												handling of bytes. &nbsp;Both programs must take a key string as a parameter. &nbsp;Luckily, the decryptor will be similar to the encryptor; just
 												backwards! &nbsp;Assignment constraints are below:<br>
@@ -112,19 +114,21 @@
 											</p>
 											<center><div class="image post"><img src="../images/slae/assignment7/3-algorithms.png" alt="" /></div></center><br>
 
-											<p>This project will be written in C to construct an Advanced Encryption Standard (AES) crypter in 128-bit mode. &nbsp;C was selected because the crypter
+											<p>
+												This project will be written in C to construct an Advanced Encryption Standard (AES) crypter in 128-bit mode. &nbsp;C was selected because the crypter
 											operates on bytes of data and C enables more control over 8-bit data types. &nbsp;128-bit mode was selected because it is easier to implement and has more open-source
 											 test cases. &nbsp;256-bit mode could be implemented as well; however, along with fewer test cases, 256-bit mode requires key padding based on whichever
 											 standard is used (ECB, CBC, CTR, etc.). &nbsp;Padding occurs to ensure the first 32 bytes of key data are filled when operating in 256-bit mode. &nbsp;This
 											  is because in 256-bit mode, the first 32 bytes of the key schedule are filled with bytes from the user-provided secret key and padded to meet 32 bytes
-												should the key come up short. &nbsp;In contrast, 128-bit mode only requires 16 bytes of the secret key. &nbsp;The next step is determining the general
-												makeup of AES then worry about 128-bit specific implementations.
-										</p>
+												should the key come up short. &nbsp;In contrast, 128-bit mode only requires 16 bytes of the secret key. &nbsp;Padding standards can also be implemented in
+												128 and 192 bit modes; however, it is much easier to enfore a minimum 16 character secret key! &nbsp;The next step is determining AES general
+												architecture before focusing on 128-bit specific implementations.
+											</p>
 
 			<br><section id="Outline"><h2>System Outline</h2></section>
 
 											<p>
-												&emsp; &emsp;Before jumping into any code, it is important to get a strategic view of AES in a systems engineering approach. &nbsp;What are sub-methods are used,
+												&emsp; &emsp;Before jumping into any code, it is important strategically view AES using a systems engineering approach. &nbsp;What sub-methods are used,
 												the data types, input and output, etc? &nbsp;The diagram below
 						(<a href="https://www.amazon.com/Cryptography-Network-Security-Principles-Practice/dp/0134444280/ref=sr_1_2?dchild=1&keywords=ISBN+13%3A+978-1-292-15858-7&qid=1606786625&sr=8-2" target="_blank" style="color:blue;">source</a>, pg 178)
 												illustrates a much needed breakdown of AES to determine number of functions to write. &nbsp;
@@ -132,11 +136,11 @@
 											<center><div class="image post"><img src="../images/slae/assignment7/4-aes-system.png" alt="" /></div></center><br>
 
 											<p>
-												There are ten encryption rounds (for 128-bit mode) made up of four functions in order: <i>Substitute bytes</i>, <i>Shift rows</i>, <i>Mix columns</i>, and
+												There are ten encryption rounds (in 128-bit mode) made up of four functions in order: <i>Substitute bytes</i>, <i>Shift rows</i>, <i>Mix columns</i>, and
 												<i>Add round key</i>. &nbsp;Note that <i>Mix columns</i> is omitted from the final encryption round. &nbsp;A similar removal also occurs in decryption when
 												<i>Inverse mix columns</i> is omitted.<br>
 												&emsp; &emsp;In addition to the above functions, AES uses a key expansion technique to transform 16 bytes of a user-supplied secret key into 44 words
-												(44 words x 4 bytes = 176 bytes) used during encryption rounds. &nbsp;The key expansion algorithm has internal functions of their own and can be observed below
+												(44 words x 4 bytes = 176 total bytes) used during encryption rounds. &nbsp;The key expansion algorithm has internal functions of their own and can be observed below
 					(<a href="https://www.amazon.com/Cryptography-Network-Security-Principles-Practice/dp/0134444280/ref=sr_1_2?dchild=1&keywords=ISBN+13%3A+978-1-292-15858-7&qid=1606786625&sr=8-2" target="_blank" style="color:blue;">source</a>, pg 191).
 											</p>
 											<center><div class="image post"><img src="../images/slae/assignment7/5-key-expansion.png" alt="" /></div></center><br>
@@ -144,20 +148,21 @@
 											<p>
 												The 16-byte key is saved in a 4x4 matrix with bytes grouped into words by columns, which may seem counterintuitive to naturally viewing data by rows. &nbsp;Every fourth word group
 												is sent through a function called <i>g()</i> which contains subfunctions: <i>Rotate Word</i> and <i>Substitute bytes</i>. &nbsp;The result is XORed by a round constant (RC<sub>j</sub>) in
-												the leftmost byte.
+												the leftmost byte to produce a final result.
 
 
 											</p>
 
 			<br><section id="Testing"><h2>Test Methodology</h2></section>
 											<p>
-												&emsp; &emsp;With a general outline in place, the question becomes "where to start?" &nbsp;This much code can be overwhelming if approached haphazardly. &nbsp;One
+												&emsp; &emsp;With a general outline in place, the question becomes "where to start?" &nbsp;This much code can be overwhelming if approached haphazardly. &nbsp;An easy
 												strategy is to write one function, preferably a simple one, and pass test values to observe its output. &nbsp;It also helps to know the expected output, which a simple
 												function further guarantees. &nbsp;For example, starting with <i>RotWord()</i> (Rotate word) is ideal because it is small, takes fewer input, and its expected output is
 												very predictable!<br>
 												&emsp; &emsp;Below is an example of testing the <i>SubBytes()</i> function. &nbsp;In practice, this function will take a 16 byte state matrix as input, look up the
-												sbox value of each byte, and replace that state matrix byte with its sbox lookup value. &nbsp;Check the returned state matrix by manually looking at the sbox value for each
-												byte. &nbsp;Although a bit tedious, it ensures a valid test case which is important when building the remaining program. &nbsp;Specifics of each function will be covered
+												sbox value of each byte, and replace that state matrix byte with its sbox lookup value. &nbsp;Check the returned state matrix by manually looking at the
+												<a href="https://en.wikipedia.org/wiki/Rijndael_S-box" target="_blank" style="color:blue;">s-box value</a> for each
+												byte. &nbsp;Although a bit tedious, it ensures a validated function which is critical when building the remaining program. &nbsp;Specifics of each function are covered
 												later.
 											</p>
 											<pre>
@@ -210,7 +215,7 @@ int main(){
 											<p>
 												The most important concept of this section is having a test setup that will ensure success. &nbsp;Test cases are incredibly important as well since they validate
 												working functions. &nbsp;<a href="https://kavaliro.com/wp-content/uploads/2014/03/AES.pdf" target="_blank" style="color:blue;">Encryption</a> and
-												<a href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197.pdf" target="_blank" style="color:blue;">decryption</a> (page 36) test values can be found their respective
+												<a href="https://nvlpubs.nist.gov/nistpubs/FIPS/NIST.FIPS.197.pdf" target="_blank" style="color:blue;">decryption</a> (page 36) test values can be found in their respective
 												 links. &nbsp;The encryption link includes a test case for key expansion as well. &nbsp;For more complicated functions like <i>Inverse Mix Columns</i>, test cases can be found
 												 <a href="http://www.infosecwriters.com/text_resources/pdf/AESbyExample.pdf" target="_blank" style="color:blue;">here</a> on page 8.<br>
 												 &emsp; &emsp;Finally when in doubt, use print statements. &nbsp;Data visualization goes a long way when it comes to fault isolation. &nbsp;Sometimes the most difficult part of
@@ -231,9 +236,9 @@ int main(){
 										 &nbsp;It is important to note in C, individual bytes are
 										handled using the <i>uint8_t</i> data type for "unsigned integer 8 bit." &nbsp;These integer types are defined in
 										<a href="https://www.gnu.org/software/libc/manual/html_node/Integers.html" target="_blank" style="color:blue;"><i>stdint.h</i></a>
-										so the header is required. &nbsp;In order for shifting to occur, the leftmost byte must be stored in a temporary location while the new positions are overwritten. &nbsp;Without
+										so the header is required: <code>#include &lt;stdint.h></code>. &nbsp;In order for shifting to occur, the leftmost byte must be stored in a temporary location while the new positions are overwritten. &nbsp;Without
 										 temporary storage, the leftmost byte will be overwritten and lost!<br>
-										&emsp; &emsp;A simple outline is to declare a uint8_t emporary variable, <i>temp</i>, and assign it the leftmost byte. &nbsp;Assign the leftmost byte position the value of
+										&emsp; &emsp;A simple outline is to declare a type uint8_t temporary variable, <i>temp</i>, and assign it the leftmost byte. &nbsp;Assign the leftmost byte position the value of
 										the next byte position. &nbsp;Once the rightmost position is reached, assign it the <i>temp</i> value. &nbsp;The resultant code is below!
 										</p>
 											<pre>
@@ -281,8 +286,8 @@ void RotWord(uint8_t wordIn[]){
 
 										<p>
 											Performing lookups on single bytes requires they be split apart. &nbsp;Performing this requires a couple definitions below. &nbsp;These definitions manipulate bit
-											shifting and ANDing with 0x0F to ensure only appropraite values are returned. &nbsp;For example <code>HI_NIBBLE(0x01)</code> equals 0 and <code>LO_NIBBLE(0x23)</code> equals
-											 3. &nbsp;These definitions ensure accurate S-box lookups for each value.
+											shifting and ANDing with 0x0F to ensure only appropriate values are returned. &nbsp;For example <code>HI_NIBBLE(0x5a)</code> equals 0x5 and <code>LO_NIBBLE(0x23)</code> equals
+											 0x3. &nbsp;These definitions ensure accurate S-box lookups for each value.
 										</p>
 											<pre>
 												<code class="c-like" style=display:block;white-space:pre-wrap>
@@ -301,7 +306,7 @@ void RotWord(uint8_t wordIn[]){
 											 &nbsp;Below is yet another example from
 											 <a href="https://www.amazon.com/Cryptography-Network-Security-Principles-Practice/dp/0134444280/ref=sr_1_2?dchild=1&keywords=ISBN+13%3A+978-1-292-15858-7&qid=1606786625&sr=8-2" target="_blank" style="color:blue;">Cryptography and Network Security 7th Edition</a>
 											  of how AES row shifting works on page 186. &nbsp;The first row is unchanged, the second row shifts left by one, the third row shifts left by two, and
-											  the last row shifts left by three (or right by one).
+											  the last row shifts left by three (or right by one). &nbsp;There is an inverse shift rows function in the decryptor. &nbsp;Instead of shifting bytes left, the function shifts bytes right.
 										</p>
 										<center><div class="image post"><img src="../images/slae/assignment7/10-shiftrows.png" alt="" /></div></center><br>
 
@@ -436,8 +441,10 @@ void AddRoundKey(uint8_t state[4][4], uint8_t key[4][4]){
 										&emsp; &emsp;Different implementations must be handled when multiplying by each number in mixer (0x01, 0x02, or 0x03). &nbsp;If the multiplied
 										 number from mixer is 0x01, simply multiply it with the state matrix value and store it into its result matrix spot. &nbsp;Things get interesting when
 										 multiplying by 0x02 or 0x03. &nbsp;Revisiting the finite field property, a simple bitwise left shift will mutliply a byte by two; however, it must also be XORed with
-										 0x1b if the leftmost bit is 1. &nbsp;0x1b is the bitwise expression of the irreducible polynomial x<sup>8</sup> + x<sup>4</sup> + x<sup>3</sup> + x + 1.
-										  &nbsp;All of this can be handled using if-statements and checking for a high nibble greater than 0x8. &nbsp;Perform the same check when 0x03 is
+										 0x1b if the leftmost bit is 1. &nbsp;0x1b is the bitwise expression of the irreducible polynomial x<sup>8</sup> + x<sup>4</sup> + x<sup>3</sup> + x + 1 over 8 bits because
+										 0x1b = 0001 1011 = (0)x<sup>7</sup> + (0)x<sup>6</sup> + (0)x<sup>5</sup> + (1)x<sup>4</sup> + (1)x<sup>3</sup> + (0)x<sup>2</sup>(1)x<sup>1</sup> + (1)x<sup>0</sup>.
+										 &nbsp;Note that (1)x<sup>8</sup> is cut out because the finite field is over 8 bits.
+										 &nbsp;All of this can be handled using if-statements and checking for a high nibble greater than 0x8. &nbsp;Perform the same check when 0x03 is
 										  multiplied. &nbsp;The only addition is XORing the result with the state value one more time to get a multiplication of 0x03. &nbsp;Below is the resultant code.
 
 
@@ -511,7 +518,7 @@ void MixColumns(uint8_t state[4][4]){
 									<center><div class="image post"><img src="../images/slae/assignment7/16-mixcolumns-demo.png" alt="" /></div></center><br>
 
 									<p>
-										Inverse Mix columns operates the same way although a small challenge is presented: the numbers to multiply with are much larger
+										Inverse Mix columns operates the same way although a small challenge is presented: the numbers to multiply are much larger
 										(0x09, 0x0b, 0x0d, and 0x0e). &nbsp;Luckily
 										<a href="http://www.infosecwriters.com/text_resources/pdf/AESbyExample.pdf" target="_blank" style="color:blue;">InfosecWriters</a> published
 										a couple tables on page 8 to help multiply over finite fields. &nbsp;These lookup tables similar to the S-boxes above. &nbsp;For each value being multiplied,
@@ -606,18 +613,18 @@ void InvMixColumns(uint8_t state[4][4]){
 			-->
 									<p>
 										&emsp; &emsp;Key expansion consists of using the earlier "easy" functions as building blocks; however, these functions are only used on every
-										fourth word. &nbsp;More logic must be built out in key expansion to handle all other words. &nbsp;Below is the algorithm from the most reliable source,
+										fourth word. &nbsp;More logic must be built out in key expansion to handle the other words. &nbsp;Below is the algorithm from the most reliable source,
 										<a href="https://www.amazon.com/Cryptography-Network-Security-Principles-Practice/dp/0134444280/ref=sr_1_2?dchild=1&keywords=ISBN+13%3A+978-1-292-15858-7&qid=1606786625&sr=8-2" target="_blank" style="color:blue;">Cryptography and Network Security 7th Edition</a>
 										 from page 191.
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment7/19-keyexpansion-algorithm.png" alt="" /></div></center><br>
 
 									<p>
-									Because this is AES-128 bit, the first four words of the key are simply the first 16 bytes of the user provided key. &nbsp;This assignment is easy
+									Because this is AES-128 mode, the first four words of the key are simply the first 16 bytes of the user provided key. &nbsp;This assignment is easy
 									and is handled with a simple XOR operation looping over the words. &nbsp;Words 4 to 44 require an XOR of the previous word and its [i - 4] indexed
 									word. &nbsp;Because of the special function implemented every fourth word, the previous word must be stored in a temporary word regardless.
 									 &nbsp;Checking every fourth word is handled by a modulo operation in an if-statement allowing the program to branch to the <i>g()</i> function.
-									  &nbsp;Call <i>RotWord()</i> and <i>SubWord()</i> in order then XOR with the round constant mapped by <i>Rcon[i/4]</i>. &nbsp;Rcon is an array
+									  &nbsp;In <i>g()</i>, call <i>RotWord(temp)</i> and <i>SubWord(temp)</i> in order then XOR with the round constant mapped by <i>Rcon[i/4]</i>. &nbsp;Rcon is an array
 									  of round constants expresssed as "the exponentiation of 2 to a user-specified value" over a finite field
 									  (<a href="https://cryptography.fandom.com/wiki/Rijndael_key_schedule" target="_blank" style="color:blue;">source</a>). &nbsp;Its definition can
 									  be copied from the source but only the first 11 values are needed. &nbsp;Below is the AES-128 implementation of <i>ExpandKey()</i>. &nbsp;Further
@@ -627,6 +634,7 @@ void InvMixColumns(uint8_t state[4][4]){
 
 									<pre>
 										<code class="c-like" style=display:block;white-space:pre-wrap>
+const uint8_t Rcon[16] = {0x8d, 0x01, 0x02, 0x04, 0x08, 0x10, 0x20, 0x40, 0x80, 0x1b, 0x36, 0x6c, 0xd8, 0xab, 0x4d, 0x9a};
 
 // Cipher transformation that takes all of the columns of the state and mixes their data to produce new columns
 // Algorithm source: `brainkart.com/article/AES-Key-Expansion_8410/`
@@ -680,7 +688,7 @@ void ExpandKey(uint8_t key[4][4], uint8_t word[44][4]){
 									<p>
 										&emsp; &emsp;Return to the <a href="https://thestunneddefense.com/pages/custom-crypter.html#Outline" target="_blank" style="color:blue;">system outline</a>
 										 once all subfunctions have been written and tested. &nbsp;Encryption and decryption functions must occur in an iterated fashion according to the
-										 outline. &nbsp;Furthermore, these rounds all happen on 16 byte blocks of data at a time. &nbsp;This means another function is required to implement encryption
+										 outline. &nbsp;Furthermore, all rounds happen on 16 byte blocks of data at a time. &nbsp;This means another function is required to implement encryption
 										 rounds for every 16 bytes of data that gets encrypted.<br>
 										 &emsp; &emsp;Before any encryption rounds happen, <i>AddRoundKey()</i> is called with the first four words of the key schedule. &nbsp;Then functions
 										 <i>SubBytes()</i>, <i>ShiftRows()</i>, <i>MixColumns()</i>, and <i>AddRoundKey()</i> are called in a row nine times. &nbsp;The tenth round omits
@@ -1172,10 +1180,11 @@ int main(int argc, char **argv) {
 									<center><div class="image post"><img src="../images/slae/assignment7/24-decryptor-demo.png" alt="" /></div></center><br>
 
 									<p>
-										Now that basic functionality works for decrypting <i>execve-stack.nasm</i> shellcode, grab the decoder payload from the
+										Now that basic functionality works for decrypting <i>execve-stack.nasm</i> shellcode, grab the decoder payload
+										(starts with "\xeb\x33\x5e....") from the
 										<a href="https://thestunneddefense.com/pages/custom-encoding.html" target="_blank" style="color:blue;">custom encoder</a>
-										blog post and paste it into the encryptor. &nbsp;Encrypt with the same secret key. &nbsp;Make sure there are no spaces when
-										 making a double line string. &nbsp;This will create an inaccurate encryption!
+										blog post and paste it into the encryptor. &nbsp;Encrypt with the same secret key. &nbsp;Enure there are no spaces when
+										 making a double line string as this will create an inaccurate encryption!
 									</p>
 									<center><div class="image post"><img src="../images/slae/assignment7/25-encrypt-decoder.png" alt="" /></div></center><br>
 
@@ -1190,12 +1199,12 @@ int main(int argc, char **argv) {
 		<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
 
 									<p>
-										&emsp; &emsp;Conclusion goes here
+										&emsp; &emsp;This concludes everything involving shellcode encryption/decryption as well as the final SLAE assignment. &nbsp;The
+										assignment presented a fantastic opportunity for low-level development on a larger scale. &nbsp;From here, the only improvements
+										needed could be integrating 192 and 256 versions of AES including further refinement of key expansion. &nbsp;Things get more
+										sophisticated and confusing when introducing more obfuscation and scrambling methods. &nbsp;Since there are no more SLAE assignments
+										for follow up, Pentester Academy's Certified Red Team Professional (CRTP) content will likely be next. &nbsp;Until next time Tim!
 									</p>
-									<!--<center><div class="image post"><img src="../images/slae/assignment7/.png" alt="" /></div></center><br>-->
-
-
-
 
 
 									<p>
