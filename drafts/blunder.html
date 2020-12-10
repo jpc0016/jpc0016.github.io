@@ -45,11 +45,11 @@
                       <article id="first-post">
 												<a href="index.html"><img src="../images/ground.png" class="avatar" alt="avatar"> </img></a>
                         <h2>&emsp; Blunder Writeup</h2>
-												<h5>&emsp; &emsp; &emsp; &emsp; November 3, 2020</h5>
+												<h5>&emsp; &emsp; &emsp; &emsp; December 9, 2020</h5>
                         <div class="box">
-                          <p>&emsp; &emsp; Good evening Tim and Aaron, "Blunder" is the box we will walkthrough today! &nbsp;This machine stunned me most of the time but was able to power through with some
-														Linux-fu! &nbsp;I ran into trouble due to exploits requiring certain credentials, which were tricky to find. &nbsp;A significant
-														amount of time was also spent finding the correct privilege escalation method. &nbsp;A remediation section is included as usual.
+                          <p>&emsp; &emsp; Good evening Tim and Aaron, <i>Blunder</i> is the box we will walk through today! &nbsp;This machine stunned me most of the time but was able to power through with some
+							Linux-fu! &nbsp;I ran into trouble due to exploits requiring certain credentials, which were tricky to find. &nbsp;A significant
+							amount of time was also spent finding the correct privilege escalation method.
                            </p>
 
 													 <center><div class="image post"><img src="../images/blunder/blunder.png" alt="" /></div></center><br>
@@ -61,17 +61,15 @@
 													 <a href="#Exploit" style="color:blue;">Exploitation</a><br>
 													 <a href="#User" style="color:blue;">Privesc to User</a><br>
 													 <a href="#Root" style="color:blue;">Privesc to Root</a><br>
-													 <a href="#Remediation" style="color:blue;">Remediation</a><br>
 													 <a href="#Thoughts" style="color:blue;">Thoughts</a><br><br><br>
 
 
 
 								<br><section id="Enumeration"><h2>Initial Enumeration</h2></section>
 													 <p>
-														 &emsp; &emsp;As usual, I started by launching initial and OS nmap scans on Blunder's IP. &nbsp;Results show ports 22 and 80 are open. &nbsp;OS scan results show leaked header information
-														 from both ports and early versions of Linux as the target OS. &nbsp;According to port enumeration, Ubuntu is the most likely flavor of Linux with high confidence. &nbsp;Port 22
-														 reveals <i>OpenSSH 7.2p2</i> and some ssh-hostkey information. &nbsp;Port 80 reveals <i>Apache httpd 2.4.18</i> running on the back end. &nbsp;As with previous machines, header
-														 and service information are unnecessarily disclosed which is a pentest report finding.
+														 &emsp; &emsp;As usual, I started by launching initial and OS nmap scans on Blunder's IP. &nbsp;Results show ports 21 and 80, but only port 80 is open. &nbsp;OS scan results
+														  show leaked header information revealing <i>Apache httpd 2.4.18</i> running on the back end and Linux 2.6.x as the target OS. &nbsp;According to port enumeration,
+														  Ubuntu is the most likely flavor of Linux with high confidence. &nbsp;Attempting an FTP connection returns an unfriendly "connection refused" message.
 													 </p>
 													 <center><div class="image post"><img src="../images/blunder/1-nmap-initial.png" alt=""/></div></center>
 													 <center><div class="image post"><img src="../images/blunder/2-nmap-OS.png" alt=""/></div></center><br>
@@ -79,169 +77,202 @@
 
 							<br><section id="HTTP"><h2>Examine HTTP</h2></section>
 					 									<p>
-					 									&emsp; &emsp;Port 80 was open so I decided to test the machine on a web browser and navigated to <i>https://10.10.10.191/</i> in Firefox. &nbsp;The
+					 									&emsp; &emsp;Since port 80 was the only open port, I dumped the IP address <code>http://10.10.10.191/</code> into Firefox to inspect hosted content. &nbsp;The
 					 									result was a blog powered by Bludit Content Management System (CMS). &nbsp;I clicked around to find clues, hints, or otherwise insightful information
 														leading to vulnerabilities.
 					 									</p>
-					 									<center><div class="image post"><img src="../images/blunder/3-bludit-blog.png" alt=""/></div></center>
+					 									<center><div class="image post"><img src="../images/blunder/3-bludit-blog.png" alt=""/></div></center><br>
 
 														<p>
-
+														Clicking blog post headers only opened pages with just their articles. &nbsp;So there is not much information to use at the moment. &nbsp;Inspecting page sources also
+														led to nowhere. &nbsp;Open dirbuster and run it against the target machine.
 														</p>
+														<center><div class="image post"><img src="../images/blunder/4-dirbuster.png" alt=""/></div></center><br>
+
+														<p>
+														Dirbuster finds a few pages that we have seen before. &nbsp;Eventually it finds an interesting <i>admin</i> directory at <code>http://10.10.10.191/admin/</code>.
+														</p>
+														<center><div class="image post"><img src="../images/blunder/5-admin.png" alt=""/></div></center><br>
+
+														<p>
+														Navigate to the <i>admin</i> directory in Firefox to find a login page.
+														</p>
+														<center><div class="image post"><img src="../images/blunder/6-login-page.png" alt=""/></div></center><br>
 
 
 							<br><section id="Foothold"><h2>Gaining Foothold</h2></section>
 
 					 									<p>
-					 									&emsp; &emsp;Returning to the blog's home page, I noticed a typo in the introduction paragraph.
+					 									&emsp; &emsp;Continue searching through dirbuster and opening pages. &nbsp;I eventually found an interesting file, <i>todo.txt</i> located in
+														the root directory at <code>http://10.10.10.191/todo.txt</code>
 					 									</p>
-					 									<center><div class="image post"><img src="../images/blunder/3-hello-world.png" alt=""/></div></center><br>
-					 									<center><div class="image post"><img src="../images/blunder/4-try-dev.png" alt=""/></div></center><br>
+					 									<center><div class="image post"><img src="../images/blunder/7-todo-dirbuster.png" alt=""/></div></center><br>
+					 									<center><div class="image post"><img src="../images/blunder/8-todo-contents.png" alt=""/></div></center><br>
 
 														<p>
-															Running <i>dirbuster</i> on the root folder revealed only a few directories that provided little information.
+														Inspect the contents to reveal a few insights to how the CMS is managed. &nbsp;FTP was turned off and we confirmed it earlier when failing to connect
+														over port 21. &nbsp;Old users have been removed according to this list which is problematic. &nbsp;Login credentials are priority right now to gain initial
+														foothold to <code>http://10.10.10.191/admin/</code>. &nbsp;However, notice the last bullet mentioning someone named 'fergus.' &nbsp;This person sounds like
+														a more permanent user in the CMS like a system administrator.<br>
+														&emsp; &emsp;With a likely username candidate, a password must be found. &nbsp;There is a Kali tool called
+														<a href="https://tools.kali.org/password-attacks/cewl" target="_blank" style="color:blue;"><i>CeWL</i></a>, which spiders over a URL to generate
+														 wordlists for password crackers like <i>john</i>. &nbsp;Run the command below against <i>Blunder</i> with the following parameters: <i>-d 2</i> means
+														 crawl up to 2 directories deep; <i>-m 5</i> defines a 5 character minimum; and <i>-w blunder.txt</i> is the output word list. &nbsp;Run <i>less</i> on
+														 the wordlist to inspect it.
 					 									</p>
-					 									<center><div class="image post"><img src="../images/blunder/5-dirbuster-results.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/blunder/9-cewl-run.png" alt="" /></div></center><br>
+														<center><div class="image post"><img src="../images/blunder/10-cewl-list.png" alt="" /></div></center><br>
 
 														<p>
-															During this time I investigated exploits for <i>Apache 2.4.18</i> but found none that fit my use case. &nbsp;They were almost all local privilege escalation
-															or Denial of Service (DoS) exploits. &nbsp;With few leads, I went back to the Hello World page to inspect the html source code. &nbsp;An interesting directory
-															appeared in a comment.
+														After some trouble with <i>hydra</i> and <i>patator</i>, I looked for Bludit specific exploits and came across a
+														<a href="https://rastating.github.io/bludit-brute-force-mitigation-bypass/" target="_blank" style="color:blue;">brute force script</a>.
+														 &nbsp;The script is designed to bypass brute force security by spoofing the source IP address in the header. &nbsp;This is done by generating
+														 unique header values before making a login attempt.<br>
+														 &emsp; &emsp;Modify the parameters at the top of the script. &nbsp;Note the host must not have a '/' at the end or the login URL will be
+														 incorrectly parsed as <code>http://10.10.10.191//admin/login</code>. &nbsp;Since the password list is long (243 entries to be exact),
+														 it should be opened as a file, iterated, stripped, and appended that way.
 					 									</p>
-					 									<center><div class="image post"><img src="../images/blunder/6-nibbleblog-path.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/blunder/11-poc-meta.png" alt="" /></div></center><br>
 
 														<p>
-															Append the directory to the ip address to reveal a backend home page. &nbsp;
+														Due to a traceback error with the <i>group()</i> method, I also modified the script to use a try-except block to handle the error.
 					 									</p>
-					 									<center><div class="image post"><img src="../images/blunder/7-nibbleblog-home.png" alt="" /></div></center><br>
+					 									<center><div class="image post"><img src="../images/blunder/12-poc-tryexcept.png" alt="" /></div></center><br>
+
+														<p>
+														Run the script and wait for it to find the password.
+					 									</p>
+					 									<center><div class="image post"><img src="../images/blunder/13-password-found.png" alt="" /></div></center><br>
+
+														<p>
+														Enter the credentials and log into the Bludit dashboard!
+					 									</p>
+					 									<center><div class="image post"><img src="../images/blunder/14-logged-in.png" alt="" /></div></center><br>
 
 
 
 								<br><section id="Exploit"><h2>Exploitation</h2></section>
 
 												<p>
-													&emsp; &emsp;After successfully logging into the backend dashboard, I played around with the directory to find interesting pages. &nbsp;There were many pages to uncover so I referred to
-													the <a href="https://www.cvedetails.com/cve/CVE-2015-6967/" target="_blank" style="color:blue;">CVE page</a> of my earlier found exploit. &nbsp;On the page was a
-													<a href="https://curesec.com/blog/article/blog/NibbleBlog-403-Code-Execution-47.html" target="_blank" style="color:blue;">blog post</a> describing a
-													manual Proof of Concept (PoC) for exploiting <i>CVE-2015-6967</i>. &nbsp;Basically <i>nibbleblog</i> fails to check file extensions when uploading files (images in this case), which would
-													allow attackers to upload malicious executables. &nbsp;With that in mind, I confirmed the existence of an image uploading function in the <i>My image</i> plugin.
+													&emsp; &emsp;After successfully logging into the admin dashboard, I played around with links to find interesting pages or interfaces. &nbsp;I encountered
+													an image uploader at <code>http://10.10.10.191/admin/new-content</code>. &nbsp;This matches with earlier findings from searchsploit, particularly the first
+													exploit. &nbsp;It is ruby which means it is in Metasploit.
 												</p>
-												<center><div class="image post"><img src="../images/blunder/18-select-image.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/blunder/15-image-upload.png" alt="" /></div></center>
+												<center><div class="image post"><img src="../images/blunder/16-searchsploit.png" alt="" /></div></center><br>
 
 												<p>
-													The next step is to produce a payload to upload in the system. &nbsp;I tried <i>msfvenom</i> first but the payload failed for an unknown reason. &nbsp;Netcat would receive a connection from it
-													but no shell would pop up! That payload command comes from <a href="https://netsec.ws/?p=331" target="_blank" style="color:blue;">netsec</a> under the <i>PHP</i> header in case you want to
-													attempt. &nbsp;I instead googled <i>"php reverse shell"</i> and pulled up the first result.
+													Open Metasploit, search for "bludit", and load the exploit module with <code>use 0</code>.
 
 												</p>
-												<center><div class="image post"><img src="../images/blunder/19-php-reverse.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/blunder/17-load-module.png" alt="" /></div></center><br>
 
 												<p>
-													Download <i>php-reverse-shell.php</i> and change lines 49 and 50 to your listener IP and listener port number. &nbsp;Save the file as <i>image.php</i>
+													Set the options. &nbsp;A php reverse shell payload is automatically provided for us which is very convenient since the website is built on
+													php! &nbsp;Note: do not change the <i>targeturi</i> option. &nbsp;The exploit requires '/' and anything else causes <i>.htaccess</i> to not be
+													deleted.
+
 												</p>
-												<center><div class="image post"><img src="../images/blunder/20-change-parameters.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/blunder/18-add-options.png" alt="" /></div></center><br>
 
 												<p>
-													The payload is ready for action! &nbsp;Upload it to nibbleblog. &nbsp;Ignore the warnings per the blog post. &nbsp;<i>image.php</i> is uploaded to the
-													directory <i>/content/private/plugins/my_image/</i>.
+													Run the exploit!
 												</p>
-												<center><div class="image post"><img src="../images/blunder/21-upload-messages.png" alt="" /></div></center>
-												<center><div class="image post"><img src="../images/blunder/22-image-location.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/blunder/19-run.png" alt="" /></div></center><br>
+
+
+
+							<br><section id="User"><h2>Privesc to User</h2></section>
 
 												<p>
-												 Make sure to start a netcat listener on the desired port before invoking your payload. &nbsp;Click on <i>image.php</i> to receive a shell! &nbsp;Navigate to the home directory to
-												 dump flag contents!
+													&emsp; &emsp;Check the system information to confirm we have low level account access.
 												</p>
-												<center><div class="image post"><img src="../images/blunder/23-nibbler.png" alt="" /></div></center>
-												<center><div class="image post"><img src="../images/blunder/24-user-flag.png" alt="" /></div></center><br>
-
-
-
-								<br><section id="User"><h2>Privesc to User</h2></section>
+												<center><div class="image post"><img src="../images/blunder/20-getuid.png" alt="" /></div></center><br>
 
 												<p>
-													&emsp; &emsp;Once a foothold was established, I began post-exploitation enumeration to find interesting files and permissions. &nbsp;I decided to look inside <i>personal.zip</i>
-													because it looked intersting and stuck out. &nbsp;I unzipped it and discovered a shell script called <i>monitor.sh</i>.
+													Continue enumerating the file system both on the backend and in <i>/var/www</i> where the website is hosted. &nbsp;Below are a couple of notable
+													user accounts: <i>hugo</i> and <i>shaun</i>.
 												</p>
-												<center><div class="image post"><img src="../images/blunder/26-personal-unzip.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/blunder/21-usernames.png" alt="" /></div></center><br>
 
 												<p>
-													I ran the script to inspect behavior but nothing interesting happened besides telling me what I already know; however, the green colored output gave me a clue about what to research. &nbsp;I
-													suspected the text changed color due to <i>monitor.sh</i> running with elevated privileges.
+													Look into hugo to find the user flag text file, but it cannot be opened due to low permissions.
 												</p>
-												<center><div class="image post"><img src="../images/blunder/27-run-monitor.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/blunder/22-userflag-fail.png" alt="" /></div></center><br>
 
 												<p>
-													While researching Linux privilege escalation methods, I encountered this <a href="https://medium.com/schkn/linux-privilege-escalation-using-text-editors-and-files-part-1-a8373396708d" target="_blank" style="color:blue;">blog post</a>
-													showing a very handy trick. &nbsp;Scenario 1 describes how to use sudo-enabled files to open system-level tools like <i>/bin/bash</i>. &nbsp;If you have write and execute permissions to a file that
-													runs with elevated privileges, you can add commands such as system calls to get what you want. &nbsp;Use <i>sudo -l</i> to run this check. &nbsp;In our case, <i>monitor.sh</i> runs with root
-													permissions! &nbsp;And most importantly, <i>monitor.sh</i> will NOT request a password when executing with sudo!
+													Continue enumerating the web content files in <i>/var/www/</i> to find an unsalted password in
+													<i>/var/www/bludit-3.10.0a/bl-content/databases/users.php</i>. &nbsp;
+													<a href="https://www.tunnelsup.com/hash-analyzer" target="_blank" style="color:blue;">Hash Analyzer</a> says this is a SHA1 hash type. &nbsp;Because the hash
+													is unsalted, it can simply be brute forced in a decryptor.
 												</p>
-												<center><div class="image post"><img src="../images/blunder/28-check-sudo.png" alt="" /></div></center><br>
-
-
-
-												<br><section id="User"><h2>Privesc to User</h2></section>
-
-																<p>
-																	Since we have ownership over the file, use bash commands to overwrite the contents of <i>monitor.sh</i>. &nbsp;In my case it was only three lines of code: the shebang line, a welcome message, and a
-																	call to the bash shell in interactive mode. &nbsp;This means whatever is written in <i>monitor.sh</i> will be executed as root if sudo is invoked.
-																</p>
-																<center><div class="image post"><img src="../images/blunder/29-manipulate-monitor.png" alt="" /></div></center><br>
-
-																<p>
-																	&emsp; &emsp;Once <i>monitor.sh</i> has been overwritten, I ran it with sudo permissions. &nbsp;<code>sudo bash monitor.sh</code> did not work for some reason but <i>./</i> notation
-																	was fine. &nbsp;A root shell was acquired! &nbsp;Navigate to the <i>/root/</i> directory and dump the flag!
-																</p>
-																<center><div class="image post"><img src="../images/blunder/30-root-whoami.png" alt="" /></div></center>
-																<center><div class="image post"><img src="../images/blunder/31-root-flag.png" alt="" /></div></center><br>
-
-
-
-
-								<br><section id="Remediation"><h2>Remediation</h2></section>
+												<center><div class="image post"><img src="../images/blunder/23-usersphp.png" alt="" /></div></center><br>
 
 												<p>
-												&emsp; &emsp;Once again, this server contains default credentials which were tried on just the third password attempt. &nbsp;Although a security lockdown is in place, it is not enough to overcome
-												the laziness of default credentials. &nbsp;Fixing this is low-hanging fruit.<br>
-												&emsp; &emsp;The initial vulnerability in this writeup stems from Nibbleblog's <i>My image</i> plugin not checking for acceptable file extensions.
-												&nbsp;OWASP produced a <a href="https://owasp.org/www-community/vulnerabilities/Unrestricted_File_Upload" target="_blank" style="color:blue;">guide</a> on unrestricted file uploads, their risk factors,
-												and various methods to mitigate them. &nbsp;Whitelisting file types is the easiest method in this case. &nbsp;This was remediated in Nibbleblog v4.0.5 and you can see the change in
-												<i>/nibbleblog/admin/controllers/plugins/config.bit</i> at line 19
-												(<a href="https://github.com/dignajar/nibbleblog/blob/master/admin/controllers/plugins/config.bit" target="_blank" style="color:blue;">source code</a>). &nbsp;The image upload function now
-												checks for valid file extensions (jpg, gif, or png) before continuing. &nbsp;If you need this implemented in a function or pure PHP, StackOverflow also has some
-												<a href="https://stackoverflow.com/questions/2486329/how-can-i-only-allow-certain-filetypes-on-upload-in-php" target="_blank" style="color:blue;">sample code</a> to implement.
+													Use google to find a SHA1 decryption engine. &nbsp;I used <a href="https://md5decrypt.net/en/Sha1/#answer" target="_blank" style="color:blue;">md5decrypt</a>
+													 since it is easy and supports SHA1.
 												</p>
-												<center><div class="image post"><img src="../images/blunder/32-extension-check.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/blunder/24-crack-hash.png" alt="" /></div></center><br>
 
 												<p>
-												The post-exploitation vulnerability is straightforward to fix. &nbsp;You can either disable NOPASSWD in the sudoers file (<i>/etc/sudoers</i>) or comment out the line with a '#'. &nbsp;One
-												of two things will happen: the former forces a root password to be requested every time a user runs <i>sudo</i>. &nbsp;The latter option removes sudo privileges entirely. &nbsp;Find the line
-												containing <i>nibbler</i>:<br><br>
-												<code>nibbler ALL=(ROOT) NOPASSWD:/home/nibbler/personal/stuff/monitor.sh</code><br><br>
-												&nbsp;Remove "NOPASSWD" or comment out the line with a '#'; whichever makes the system owner comfortable. &nbsp;Use
-												<i>visudo -f /etc/sudoers</i> to edit the file since it protects against many failure modes
-												(<a href="https://serverfault.com/questions/615034/disable-nopasswd-sudo-access-for-ubuntu-user-on-an-ec2-instance" target="_blank" style="color:blue;">source</a>).
+													Step into a shell from meterpreter and switch to user hugo with the new password.
 												</p>
-												<center><div class="image post"><img src="../images/blunder/33-sudoers.png" alt="" /></div></center><br>
+												<center><div class="image post"><img src="../images/blunder/25-elevate-hugo.png" alt="" /></div></center><br>
 
 												<p>
-												Finally, the machine leaked header information again through nmap scans. &nbsp;I addressed this solution in Jerry's
-												<a href="https://thestunneddefense.com/pages/jerry.html#Remediation" target="_blank" style="color:blue;"><i>Remediation</i> section</a>. &nbsp;Doing this for SSH is not quite the same. &nbsp;You
-												cannot hide the version number of the SSH daemon; however, you can obfuscate the linux version by adding <i>"DebianBanner no"</i> to <i>/etc/ssh/sshd_config</i> then restart the process with
-												<i>/etc/init.d/ssh_restart</i>.<br>
-												&emsp; &emsp;The overall solution for the above vulnerabilities is upgrading to the latest Nibbleblog version. &nbsp;However according to their current
-												<a href="https://github.com/dignajar/nibbleblog" target="_blank" style="color:blue;">repository</a>, Nibbleblog is no longer supported. &nbsp;Its original author, Diego Najar, has moved on to its
-												successor platform: <a href="https://github.com/bludit/bludit" target="_blank" style="color:blue;">Bludit CMS</a>. &nbsp;Therefore migrating the blog to a supported platform is ideal.
+													Return to hugo's home folder to dump the user flag.
 												</p>
+												<center><div class="image post"><img src="../images/blunder/26-user-flag.png" alt="" /></div></center><br>
+
+
+
+								<br><section id="Root"><h2>Privesc to Root</h2></section>
+
+											<p>
+												&emsp; &emsp;Before moving onto root, upgrade from a dumb terminal using the below python command.
+											</p>
+											<center><div class="image post"><img src="../images/blunder/27-terminal-upgrade.png" alt="" /></div></center><br>
+
+											<p>
+												I ran <i>sudo -l</i> after not seeing anything from <i>history</i>. &nbsp;There was a peculiar looking line at the bottom showing
+												<code>(ALL, !root)</code>. &nbsp;This stood out to me so ran it by google and received an interesting
+												<a href="https://www.tunnelsup.com/hash-analyzer" target="_blank" style="color:blue;">exploit-db page</a>. &nbsp;It even provided
+												 a sudo version number on the link. &nbsp;Based on the title, this is also a Linux exploit where local access is
+												 required. &nbsp;We already have this with hugo's account.
+											</p>
+											<center><div class="image post"><img src="../images/blunder/28-sudo-l.png" alt="" /></div></center>
+											<center><div class="image post"><img src="../images/blunder/29-not-root.png" alt="" /></div></center><br>
+
+											<p>
+												Verify the version of sudo meets exploit requirements. &nbsp;Version 1.8.25 is less than 1.8.27 so this appears to be a strong
+												candidate.
+											</p>
+											<center><div class="image post"><img src="../images/blunder/30-sudo-version.png" alt="" /></div></center><br>
+
+											<p>
+												Click the exploit-db and review the body. &nbsp;Because of how hugo's sudo permissions are written, hugo can pass -1 to the
+												-u parameter and elevate privileges to root. &nbsp;This is due to the Runas specification set to <b>ALL</b> first even though
+												"!root" is also listed. &nbsp;Due to how sudo uses system calls, passing -1 in "#uid notation" (#-1) returns 0 which is the
+												uid of root. &nbsp;Sudo already runs as root so passing a negative number causes "no change" to the UID.
+											</p>
+											<center><div class="image post"><img src="../images/blunder/31-explanation.png" alt="" /></div></center><br>
+
+											<p>
+												Run the command in the red box to invoke a root shell!
+											</p>
+											<center><div class="image post"><img src="../images/blunder/32-get-root.png" alt="" /></div></center><br>
+
+											<p>
+												Navigate to root and dump the flag!
+											</p>
+											<center><div class="image post"><img src="../images/blunder/33-root-flag.png" alt="" /></div></center><br>
 
 
 
 								<br><section id="Thoughts"><h2>Thoughts</h2></section>
 												<p>
-													&emsp; &emsp;<i>Blunder</i> is a tricky box with many rabbitholes to fall into. &nbsp;This machine took some time due to proper enumeration and temptation to fall into its many rabbitholes.
-													&nbsp;As difficulty of HTB machines increase, system enumeration becomes much more important. &nbsp;I suspect Open Source Intelligence (OSINT) methods could play an increasingly important
-													role in later boxes. &nbsp;Overall I rate this box a 4/10 difficulty due to the number of possible pitfalls encountered. &nbsp;I also submitted separate ratings for each flag; user
+													&emsp; &emsp;<i>Blunder</i> is a tricky box with many pitfalls. &nbsp;This machine took some time due to proper enumeration and getting past the initial foothold phase.
+													&nbsp;Overall I rate this box a 4/10 difficulty due to the weird CTF-y way of getting through the admin login page. &nbsp;I also submitted separate ratings for each flag; user
 													flag is 4/10 while root receives a lower score of 3/10.
 												</p><br>
 
