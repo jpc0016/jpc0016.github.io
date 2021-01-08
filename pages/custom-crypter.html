@@ -721,8 +721,8 @@ void Cipher(uint8_t state[4][NB], uint8_t keySchedule[44][NB]){
         }
     }
 
-	// Call first instance of AddRoundKey() before continuing with normal rounds
-	AddRoundKey(state, inputKey);
+    // Call first instance of AddRoundKey() before continuing with normal rounds
+    AddRoundKey(state, inputKey);
 
     // Perform encryption rounds
     // Call SubBytes(), ShiftRows(), MixColumns(), and AddRoundKey() 13 times
@@ -740,8 +740,8 @@ void Cipher(uint8_t state[4][NB], uint8_t keySchedule[44][NB]){
             }
         }
 
-            // This index should be a multiple of 4 increasing from 4 up to 40
-            AddRoundKey(state, inputKey);
+        // This index should be a multiple of 4 increasing from 4 up to 40
+        AddRoundKey(state, inputKey);
 
     } // end round iterations loop
 
