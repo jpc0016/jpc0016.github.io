@@ -537,7 +537,7 @@ uint8_t inverse_mixer[4][4] = { {0x0e, 0x0b, 0x0d, 0x09},
 // Cipher transformation that takes all of the columns of the state and mixes their data to produce new columns
 void InvMixColumns(uint8_t state[4][4]){
 
-    // Execute Inverse MixColumns function per source: `http://infosecwriters.com/text_resources/pdf/AESbyExample.pdf` pgs. 8-9
+    // Execute Inverse MixColumns function: `http://infosecwriters.com/text_resources/pdf/AESbyExample.pdf` pgs. 8-9
     int i, j, k;
     uint8_t result[4][4] = { 0 };
     uint8_t L_state, L_invmixer, byte;
