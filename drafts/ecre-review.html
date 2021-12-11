@@ -30,7 +30,7 @@
 							<li><a href="../stories.html">Stories</a></li>
 							<li><a href="../references.html">Links</a></li>
 						</ul>
-						<ul class="icons">
+						<ul class="icons alt">
 							<!--<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>-->
 							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
 							<li><a href="https://twitter.com/___J0hn___" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
@@ -47,9 +47,6 @@
 									<!--
 									Post body goes here.
 									-->
-                  <!--
-                  Solving slae question 1
-                  -->
                   <section class="post">
                     <body>
                       <article id="first-post">
@@ -77,7 +74,8 @@
 							<section id="Experience"><h2>Preparation</h2></section>
 												<p>
 													 &emsp; &emsp;The <a href="https://twitter.com/kyrecon" target="_blank" style="color:blue;">instructor</a>
-													  covers the material entirely in a Windows XP Virtual Machine (VM). &nbsp;This is not required and Windows 7 works perfectly fine.
+													  covers the material entirely in a Windows XP Virtual Machine (VM). &nbsp;This is not required and Windows 7 works perfectly
+														fine, but you can definitely use an XP VM to follow along with the instructor.
 													 &nbsp;I covered most of the course using FlareVM on Windows 10, but had to switch to Windows 7 for the multithreaded
 													 applications lesson due to some Application Programming Interface (API) used. &nbsp;The primary tools used in
 													 the course are:
@@ -102,10 +100,12 @@
 														instructions needed to execute the exam.
 														<center><div class="image post"><img src="../images/ecre/engagement.png" width="500" alt="" /></div></center><br>
 														&emsp; &emsp;The eCRE exam is administered in two parts: A multple choice quiz and a hands-on reversing challenge. &nbsp;Part 1
-														is the multiple choice quiz. &nbsp;You need to get an 88% (40/45 questions correct) in 90 minutes to advance to Part 2.
+														is the multiple choice quiz, which is formatted exactly
+														like the eLearnSecurity Junior Penetration Tester (eJPT) quiz. &nbsp;You need to get an 88% (40/45 questions correct) in 90 minutes to advance to Part 2.
 														 &nbsp;Furthermore, you do <b>NOT</b> get a free retake after failing Part 1; only if you fail Part 2. &nbsp;This is probably
 														 the hardest part of the exam due to the tiny margin of error. &nbsp;Most exams allow a
-														 70% score to pass. &nbsp;Not this one! &nbsp;The exam is open book so it's best to have searchable notes on hand. &nbsp;
+														 70% score to pass. &nbsp;Not this one! &nbsp;The exam is open book so it's best to have searchable notes on hand. &nbsp;You will
+														 know your score immediately upon submission. &nbsp;
 														 Part 2 is the hands-on reversing challenge in which you have 24 hours to analyze a binary and
 														 submit a findings report. &nbsp;Part 2 must begin within 14 days of successfully completing Part 1.
 												</p>
@@ -114,17 +114,38 @@
 													<p>
 														&emsp; &emsp;Everything covered in REP is in the exam. &nbsp;Everything. &nbsp;Expect to see all material in the exam and
 														review any weak areas. &nbsp;During Part 1 I had notes on my left screen, the exam on my middle screen, and a web browser on my
-														right screen. &nbsp;In a pinch, I spun up my Exam VM to confirm the output of certain questions, which was very
-														convenient! &nbsp;Pay attention to the time throughout Part 1 because some questions, like obfuscation, are time
-														consuming. &nbsp;Although obfuscation is straightforward, it is
-														still time consuming during a 90 minute quiz so make sure you can quickly understand assembly instructions.<br>
-														&emsp; &emsp;Part 2 begins whenever you want within the 14 day window. &nbsp;
+														right screen. &nbsp;In a pinch, I spun up my Exam VM to confirm certain questions, which was very
+														convenient! &nbsp;Pay attention to the time during the quiz because some questions take time to solve. &nbsp;Obfuscation is one of them and although
+														it is straightforward, it is
+														still time consuming during a 90 minute quiz so make sure you can quickly understand assembly instructions. &nbsp;Overall,
+														 the quiz was not difficult on its own. &nbsp;It is simply made difficult by constraints such as time consuming questions and
+														 the high passing score required.<br>
+														&emsp; &emsp;Part 2 begins whenever you want within the 14 day window. &nbsp;You will download a zip file with the binary
+														and a README with a grading breakdown. &nbsp;The breakdown is self-explanatory and basically says don't use automated tools
+														or you will fail. &nbsp;Everything used in the course can be used for the exam so there is no need to worry. &nbsp;After
+														solving the challenge, you have to write a report on it as part of the 24 hours alotted. &nbsp;You can use any report template you
+														want as long as you answer all exam questions. &nbsp;My template is <a href="../file/ecre-template.docx" target="_blank" style="color:blue;">here</a>. &nbsp;
+														Once submitted, you wait up to 30 days for INE to grade your report. &nbsp;This one takes a while. &nbsp;I've heard eCPPT and eWPT
+														are graded much quicker at around 2 weeks, but it took 29 days to receive my score so be prepared to wait!
 													</p>
 
 
 							<section id="Experience"><h2>Takeaways</h2></section>
 													<p>
-														&emsp; &emsp;Everything
+														&emsp; &emsp;Even though this material is reverse engineering, it is not comprehensive of all reverse engineering topics. &nbsp;In
+														particular, this course covers <i>malware</i> reverse engineering. &nbsp;There are two other professional applications of reverse
+														engineering:<br>
+														<ul style="padding-left:100px">
+  														<li><i>Quality Assurance</i>: this is basically binary code assurance where software is validated at the low level. &nbsp;Think of traditional source code review but at the binary level.</li>
+  														<li><i>Binary Exploitation</i>: this is applied binary analysis that looks for flaws for potential exploitation. &nbsp;Topics here include fuzzing and symbolic execution.</li>
+														</ul>
+														Because this is malware-centric reverse engineering, Linux binaries are not covered in this course; only Windows PE
+														files. &nbsp;Perhaps they can be added if a v2.0 course were to be published. &nbsp;This course and certification are well suited to defensive
+														cyber practitioners, particularly malware analysts and incident responders. &nbsp;Furthermore, it is also a great course for anyone looking to learn assembly language, debugging tools,
+														 and reverse engineering workflows. &nbsp;I recommend doing this alongside or after Matt Kiely's
+														 <a href="https://academy.tcm-sec.com/p/practical-malware-analysis-triage" target="_blank" style="color:blue;">Practical Malware Analysis and Triage (PMAT) course</a>
+														  or <a href="https://www.giac.org/certifications/reverse-engineering-malware-grem/" target="_blank" style="color:blue;">GIAC Reverse Engineering Malware (GREM)</a>
+															if you're rich-rich.
 													</p>
                         </div>
 
@@ -132,32 +153,10 @@
                     </body>
                   </section>
 
-
-
-
-
-
-
-
 									<!--
 									End post body
 									-->
 
-									<!--
-									NEW POSTS GO ABOVE THIS LINE
-									-->
-
-
-
-
-
-
-									<!-- Remove Pagination
-							<div class="pagination"><a href="#"> 1 </a></div>
-							<div class="pagination"><a href="#"> 2 </a></div>
-							<div class="pagination"><a href="#"> 3 </a></div>
-							<div class="pagination"><a href="#"> 4 </a></div>
-							<div class="pagination"><a href="#"> 5 </a></div>-->
 							</div>
 					</div>
 
@@ -168,10 +167,10 @@
 
 							<section>
 								<h3>Social</h3>
-								<ul class="icons alt">
-									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+								<ul class="icons">
+									<!--<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>-->
 									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
-									<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://twitter.com/___J0hn___" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
 									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
 								</ul>
 							</section>
