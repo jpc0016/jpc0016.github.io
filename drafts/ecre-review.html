@@ -1,0 +1,198 @@
+<!DOCTYPE HTML>
+<!--
+	Review for REP/eCRE
+-->
+<html>
+	<head>
+		<link rel="icon" href="images/favicon.ico">
+		<title>The Post</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a class="logo">The Defense</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="../index.html">Home</a></li>
+							<li class="active"><a href="../posts.html">Posts</a></li>
+							<li><a href="../research.html">Research</a></li>
+							<li><a href="../stories.html">Stories</a></li>
+							<li><a href="../references.html">Links</a></li>
+						</ul>
+						<ul class="icons">
+							<!--<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>-->
+							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+							<li><a href="https://twitter.com/___J0hn___" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="wrapper">
+
+						<!-- Post -->
+
+									<!--
+									Post body goes here.
+									-->
+                  <!--
+                  Solving slae question 1
+                  -->
+                  <section class="post">
+                    <body>
+                      <article id="first-post">
+												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; eCRE Exam Review</h2>
+												<h5>&emsp; &emsp; &emsp; &emsp; December 13, 2021</h5>
+                        <div class="box">
+                          <p>&emsp; &emsp;Hi again Tim! &nbsp;It's been a stunning year since my last blog post and I'm making it up with a review of
+														eLearnSecurity's Certified Reverse Engineer (eCRE) exam since I recently passed! &nbsp;eCRE is the exam taken
+														after completing the Reverse Engineering Professional (REP) course from INE/eLearnSecurity. &nbsp;From their
+												<a href="https://elearnsecurity.com/product/ecre-certification/" target="_blank" style="color:blue;">certification page</a>,
+														a student can expect to learn the following:
+													</p>
+													<ul style="padding-left:100px">
+														<li>x86 32-bit Architecture</li>
+														<li>Windows Portable Executable (PE) Format</li>
+														<li>Analyzing contents of the stack</li>
+														<li>Analyzing detailed algorithms</li>
+														<li>Anti-debugging techniques (and how to bypass)</li>
+														<li>Obfuscation mechanisms (and how to bypass them)</li>
+														<li>Performing manual unpacking</li>
+														<li>Analyzing multi-threaded binaries</li>
+												</ul>
+
+							<section id="Experience"><h2>Preparation</h2></section>
+												<p>
+													 &emsp; &emsp;The <a href="https://twitter.com/kyrecon" target="_blank" style="color:blue;">instructor</a>
+													  covers the material entirely in a Windows XP Virtual Machine (VM). &nbsp;This is not required and Windows 7 works perfectly fine.
+													 &nbsp;I covered most of the course using FlareVM on Windows 10, but had to switch to Windows 7 for the multithreaded
+													 applications lesson due to some Application Programming Interface (API) used. &nbsp;The primary tools used in
+													 the course are:
+													 <ul style="padding-left:100px">
+ 														<li>OllyDbg</li>
+ 														<li>Import Reconstructor</li>
+ 														<li>OllyDump plugin</li>
+ 													</ul>
+												You can use other debuggers such as Immunity or x32dbg if you're more comfortable. &nbsp;They have the same CPU
+												layout as OllyDbg. &nbsp;After finishing the course material, exam preparation is straightforward. &nbsp;Ensure you
+												reverse each challenge binary at least twice and get comforatble reversing them without referencing the videos. &nbsp;
+												Shortly before the exam, I migrated everything over to the Windows 7 VM (titled "Exam") to ensure the smoothest
+												exam environment. &nbsp;As a bonus, I read the Processes, Threads, and Memory Management chapters of
+<a href="https://www.amazon.com/Modern-Operating-Systems-Andrew-Tanenbaum/dp/013359162X/ref=asc_df_013359162X/?tag=hyprod-20&linkCode=df0&hvadid=312118197030&hvpos=&hvnetw=g&hvrand=14847711059638668986&hvpone=&hvptwo=&hvqmt=&hvdev=c&hvdvcmdl=&hvlocint=&hvlocphy=9012720&hvtargid=pla-434723086294&psc=1" target="_blank" style="color:blue;">Modern Operating Systems 4th Edition</a>
+												by Andrew Tanenbaum.
+												</p>
+
+
+							<section id="Exam"><h2>Exam Format</h2></section>
+												<p>
+														&emsp; &emsp;You will get a pdf exam manual after paying for the voucher. &nbsp;It will provide all
+														instructions needed to execute the exam.
+														<center><div class="image post"><img src="../images/ecre/engagement.png" width="500" alt="" /></div></center><br>
+														&emsp; &emsp;The eCRE exam is administered in two parts: A multple choice quiz and a hands-on reversing challenge. &nbsp;Part 1
+														is the multiple choice quiz. &nbsp;You need to get an 88% (40/45 questions correct) in 90 minutes to advance to Part 2.
+														 &nbsp;Furthermore, you do <b>NOT</b> get a free retake after failing Part 1; only if you fail Part 2. &nbsp;This is probably
+														 the hardest part of the exam due to the tiny margin of error. &nbsp;Most exams allow a
+														 70% score to pass. &nbsp;Not this one! &nbsp;The exam is open book so it's best to have searchable notes on hand. &nbsp;
+														 Part 2 is the hands-on reversing challenge in which you have 24 hours to analyze a binary and
+														 submit a findings report. &nbsp;Part 2 must begin within 14 days of successfully completing Part 1.
+												</p>
+
+							<section id="Experience"><h2>Exam Experience</h2></section>
+													<p>
+														&emsp; &emsp;Everything covered in REP is in the exam. &nbsp;Everything. &nbsp;Expect to see all material in the exam and
+														review any weak areas. &nbsp;During Part 1 I had notes on my left screen, the exam on my middle screen, and a web browser on my
+														right screen. &nbsp;In a pinch, I spun up my Exam VM to confirm the output of certain questions, which was very
+														convenient! &nbsp;Pay attention to the time throughout Part 1 because some questions, like obfuscation, are time
+														consuming. &nbsp;Although obfuscation is straightforward, it is
+														still time consuming during a 90 minute quiz so make sure you can quickly understand assembly instructions.<br>
+														&emsp; &emsp;Part 2 begins whenever you want within the 14 day window. &nbsp;
+													</p>
+
+
+							<section id="Experience"><h2>Takeaways</h2></section>
+													<p>
+														&emsp; &emsp;Everything
+													</p>
+                        </div>
+
+                      </article>
+                    </body>
+                  </section>
+
+
+
+
+
+
+
+
+									<!--
+									End post body
+									-->
+
+									<!--
+									NEW POSTS GO ABOVE THIS LINE
+									-->
+
+
+
+
+
+
+									<!-- Remove Pagination
+							<div class="pagination"><a href="#"> 1 </a></div>
+							<div class="pagination"><a href="#"> 2 </a></div>
+							<div class="pagination"><a href="#"> 3 </a></div>
+							<div class="pagination"><a href="#"> 4 </a></div>
+							<div class="pagination"><a href="#"> 5 </a></div>-->
+							</div>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+
+						<section class="split contact">
+
+							<section>
+								<h3>Social</h3>
+								<ul class="icons alt">
+									<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>
+									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a href="https://twitter.com/JohnGuy_01" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net" target="_blank">HTML5 UP</a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>

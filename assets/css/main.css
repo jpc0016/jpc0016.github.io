@@ -186,7 +186,7 @@ input, select, textarea {
 		font-weight: 900;
 		line-height: 1.5;
 		letter-spacing: 0.075em;
-		text-transform: uppercase;
+		/* text-transform: uppercase; */
 		margin: 0 0 1rem 0;
 	}
 
@@ -232,7 +232,7 @@ input, select, textarea {
 		font-weight: 900;
 		line-height: 1;
 		letter-spacing: 0.02em;
-		text-transform: uppercase;
+		/* text-transform: uppercase; */
 		margin: 0 0 1rem 0;
 		/* font-size: 1.50rem; */
 		font-size:1.5vw;
