@@ -1,0 +1,215 @@
+<!DOCTYPE HTML>
+<!--
+	This is the default template for all
+  posts pages.
+-->
+<html>
+	<head>
+		<link rel="icon" href="../images/favicon.ico">
+
+		<!-- Change Page title -->
+		<title>The Post</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a class="logo">The Defense</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="../index.html">Home</a></li>
+							<li class="active"><a href="../posts.html">Posts</a></li>
+							<li><a href="../research.html">Research</a></li>
+							<li><a href="../stories.html">Stories</a></li>
+							<li><a href="../references.html">Links</a></li>
+						</ul>
+						<ul class="icons">
+							<!--<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>-->
+							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+							<li><a href="https://twitter.com/___J0hn___" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="wrapper">
+
+                  <section class="post">
+                    <body>
+                      <article id="first-post">
+												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; ANALYSIS OF CONTI RANSOMWARE</h2>
+												<h5>&emsp; &emsp; &emsp; &emsp; December 30, 2021</h5>
+                        <div class="box">
+                          <p>&emsp; &emsp; Good evening Tim and Aaron! &nbsp;After completing the eCRE exam, I ran through the rest of
+														Practical Malware Analysis and Triage (PMAT) and it was stunningly good! &nbsp;The "final exam" of the course
+														is to pick any malware sample and generate an analysis report on it covering all topics from the course.
+														 &nbsp;Because I like doing things on hard-mode, like Auburn's offense, I chose to perform a deep-dive
+														 analysis of a malware sample from Conti Ransomware group.
+											 		</p>
+													<br><h2>Contents</h2>
+													<a href="#Review" style="color:blue;">Initial Review and Setup</a><br>
+													<a href="#Basic-Static" style="color:blue;">Basic Static Analysis</a><br>
+													<a href="#Basic-Dynamic" style="color:blue;">Basic Dynamic Analysis</a><br>
+													<a href="#Advanced-Static" style="color:blue;">Advanced Static Analysis</a><br>
+													<a href="#Advanced-Dynamic" style="color:blue;">Advanced Dynamic Analysis</a><br>
+													<a href="#Signatures" style="color:blue;">Signatures</a><br>
+													<a href="#YARA" style="color:blue;">YARA Rules</a><br>
+													<a href="#Report" style="color:blue;">Report Generation</a><br>
+													<a href="#Thoughts" style="color:blue;">Thoughts and Lessons Learned</a><br><br>
+
+				<br><section id="Review"><h2>Initial Review and Setup</h2></section>
+
+                         <p>
+													 &emsp; &emsp; Use the Virtual Machine (VM) environment setup from PMAT with FlareVM and REMnux on the same
+													 isolated network.
+												 </p>
+												 <!-- Show 2 machines (FlareVM <> REMnux) pointing to eachother on a virtual network. -->
+                  <center><div class="image post"><img src="../images/conti/1-setup.png" alt="" /></div></center><br>
+
+												<p>
+													Go to the <a href="https://samples.vx-underground.org/samples/Families/Conti/" target="_blank" style="color:blue;">Conti</a> page in VX-Underground's samples directory
+													and download the sample from 11/20/2021. &nbsp;Download it inside FlareVM or use a shared folder in your hypervisor to transfer the sample to your
+													analyst machine. &nbsp;You may need to temporarily turn off <i>Real-time Protection</i> in Windows.
+												</p>
+												<!-- Show the sample link in vx-underground -->
+							 <center><div class="image post"><img src="../images/conti/2-sample.png" alt="" /></div></center><br>
+
+							 					<p>
+													Once on the system, double click and extract the file to your desktop (or wherever). &nbsp;Password is in the image
+													below and is standard across all samples. &nbsp;Rename and de-fang the sample and you're ready to go!
+												</p>
+							<center><div class="image post"><img src="../images/conti/3-password.jpg" width="500" alt="" /></div></center><br>
+
+
+				<br><section id="Basic-Static"><h2>Basic Static Analysis</h2></section>
+                         <p>
+													 &emsp; &emsp;Step 1 of basic static analysis is to confirm the malware's hash and submit to VirusTotal.
+													  &nbsp;Open a cmder window and start powershell inside it. &nbsp;Then run
+														<code>Get-FileHash -Algorithm SHA256 $contiSample</code>.<br>
+														&emsp; &emsp; The
+													 second step of basic static analysis is my favorite. &nbsp;We will run the classic <i>strings</i> tool,
+													 except the functionality is wrapped in something better: <i>floss.exe</i> . &nbsp;Open
+												 </p>
+
+
+				<br><section id="Basic-Dynamic"><h2>Basic Dynamic Analysis</h2></section>
+												 <p>
+												 	&emsp; &emsp; Basic Dynamic Analysis
+												 </p>
+
+				<br><section id="Advanced-Static"><h2>Advanced Static Analysis</h2></section>
+								 					<p>
+								 						&emsp; &emsp; Advanced Static Analysis
+								 					</p>
+
+				<br><section id="Advanced-Dynamic"><h2>Advanced Dynamic Analysis</h2></section>
+													<p>
+													 &emsp; &emsp; Advanced Dynamic Analysis
+													</p>
+
+
+				<br><section id="Signatures"><h2>Signatures</h2></section>
+													<p>
+														&emsp; &emsp; Signatures
+													</p>
+
+				<br><section id="YARA"><h2>YARA Rules</h2></section>
+													<p>
+														&emsp; &emsp; YARA
+													</p>
+
+			<br><section id="Report"><h2>Report Generation</h2></section>
+													<p>
+														&emsp; &emsp; Report submission
+													</p>
+
+
+			<br><section id="Thoughts"><h2>Thoughts and Lessons Learned</h2></section>
+													<p>
+														&emsp; &emsp; Lessons learned.
+													</p>
+
+
+
+                        </div>
+
+                      </article>
+                    </body>
+                  </section>
+
+
+
+
+
+
+
+
+									<!--
+									End post body
+									-->
+
+									<!--
+									NEW POSTS GO ABOVE THIS LINE
+									-->
+
+
+
+
+
+
+									<!-- Remove Pagination
+							<div class="pagination"><a href="#"> 1 </a></div>
+							<div class="pagination"><a href="#"> 2 </a></div>
+							<div class="pagination"><a href="#"> 3 </a></div>
+							<div class="pagination"><a href="#"> 4 </a></div>
+							<div class="pagination"><a href="#"> 5 </a></div>-->
+							</div>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+
+						<section class="split contact">
+
+							<section>
+								<h3>Social</h3>
+								<ul class="icons alt">
+									<!--<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>-->
+									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a href="https://twitter.com/___J0hn___" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net" target="_blank">HTML5 UP</a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
