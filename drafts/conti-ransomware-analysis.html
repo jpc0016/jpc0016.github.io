@@ -73,7 +73,8 @@
 
                          <p>
 													 &emsp; &emsp; Use the Virtual Machine (VM) environment setup from PMAT with FlareVM and REMnux on the same
-													 isolated network.
+													 isolated network. &nbsp;Ensure REMnux has <i>inetsim</i> installed and configured to resolve DNS requests. &nbsp;Configure the
+													 local IP (10.0.0.3) as the DNS server in <code>/etc/inetsim/inetsim.conf</code>.
 												 </p>
 												 <!-- Show 2 machines (FlareVM <> REMnux) pointing to eachother on a virtual network. -->
                   <center><div class="image post"><img src="../images/conti/1-setup.png" width="600" alt="" /></div></center><br>
@@ -115,22 +116,75 @@
 												 </p>
 						<center><div class="image post"><img src="../images/conti/6-floss.png" width="1000" alt="" /></div></center><br>
 
-						<p>
-							&emsp; &emsp; Next is to inspect the file's PE header for anything suspicious.
-					 </p>
-<center><div class="image post"><img src="../images/conti/7-pe.png" width="1000" alt="" /></div></center><br>
+													<p>
+														&emsp; &emsp; Next is to inspect the file's PE header for anything suspicious. &nbsp;Below are benign imports found using PE-bear.
+					 							</p>
+					 <center><div class="image post"><img src="../images/conti/7-pe.png" width="1000" alt="" /></div></center><br>
 
-
-
-
-
-
+												<p>
+													&emsp; &emsp;The file header shows this is a 32-bit PE with i386 architecture. &nbsp;Since this is a recent sample, the creation date
+													is earlier in 2021 before the leak. &nbsp;Further down are section header names including the Relative Virtual Address (RVA) of the
+													entry point. &nbsp;Only the .gfids section stuck out but it's the section name added by VisualStudio v14.0, providing an indicator of
+													how the binary was compiled.
+												</p>
+						<center><div class="image post"><img src="../images/conti/8-file-header.png" width="900" alt="" /></div></center>
+						<center><div class="image post"><img src="../images/conti/9-sections.png" width="900" alt="" /></div></center><br>
 
 
 				<br><section id="Basic-Dynamic"><h2>Basic Dynamic Analysis</h2></section>
 												 <p>
-												 	&emsp; &emsp; Basic Dynamic Analysis
+												 	&emsp; &emsp;The fun starts here since malware is detonated! &nbsp;This phase is done twice: once with <i>inetsim</i>, and once without it. &nbsp;This is to
+													observe differences in network indicators and potential propagation attempts. &nbsp;Open <i>inetsim</i> in the REMnux terminal with:
+													<code>inetsim</code>. &nbsp;Repeat for WireShark: <code>sudo wireshark</code> and collect on the ethernet interface.<br>
+													&emsp; &emsp;Start analysis without <i>inetsim</i>. &nbsp;Open WireShark on REMnux and Procmon on FlareVM. &nbsp;In Procmon, click the blue
+													filter button. &nbsp;Copy and paste the malware name into "Process Name is" and click Add. &nbsp;Procmon will now look only for conti activities.
 												 </p>
+						<center><div class="image post"><img src="../images/conti/10-procmon-filter.png" width="500" alt="" /></div></center><br>
+
+													<p>
+													&emsp; &emsp;	Once set up, right click the sample and "Run as administrator". &nbsp;Procmon immediately lights up with activity!
+													</p>
+						<center><div class="image post"><img src="../images/conti/11-procmon-initial.png" width="1000" alt="" /></div></center><br>
+
+													<p>
+														&emsp; &emsp;It takes a few minutes, but conti starts encrypting everything on the filesystem. &nbsp;You can tell by scrolling down
+														the Procmon window and noticing <i>cryptsp.dll</i> being loaded. &nbsp;That and the VM begins slowing down!
+													</p>
+						<center><div class="image post"><img src="../images/conti/12-cryptsp.png" width="1000" alt="" /></div></center><br>
+
+													<p>
+														&emsp; &emsp;
+													</p>
+						<center><div class="image post"><img src="../images/conti/13-ryuk.png" width="1000" alt="" /></div></center><br>
+
+						<p>
+							&emsp; &emsp;
+						</p>
+<center><div class="image post"><img src="../images/conti/13-ryuk-more.png" width="1000" alt="" /></div></center><br>
+
+						<p>
+							&emsp; &emsp;
+						</p>
+<center><div class="image post"><img src="../images/conti/14-readme.png" width="300" alt="" /></div></center><br>
+
+<p>
+	&emsp; &emsp;
+</p>
+<center><div class="image post"><img src="../images/conti/15-readme-page.png" width="1000" alt="" /></div></center><br>
+
+<p>
+	&emsp; &emsp;
+</p>
+<center><div class="image post"><img src="../images/conti/16-process-tree.png" width="1000" alt="" /></div></center><br>
+
+<p>
+	&emsp; &emsp;
+</p>
+<center><div class="image post"><img src="../images/conti/17-conhost.png" width="1000" alt="" /></div></center><br>
+
+
+
+
 
 				<br><section id="Advanced-Static"><h2>Advanced Static Analysis</h2></section>
 								 					<p>
