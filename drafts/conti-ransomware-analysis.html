@@ -76,7 +76,7 @@
 													 isolated network.
 												 </p>
 												 <!-- Show 2 machines (FlareVM <> REMnux) pointing to eachother on a virtual network. -->
-                  <center><div class="image post"><img src="../images/conti/1-setup.png" alt="" /></div></center><br>
+                  <center><div class="image post"><img src="../images/conti/1-setup.png" width="600" alt="" /></div></center><br>
 
 												<p>
 													Go to the <a href="https://samples.vx-underground.org/samples/Families/Conti/" target="_blank" style="color:blue;">Conti</a> page in VX-Underground's samples directory
@@ -84,11 +84,11 @@
 													analyst machine. &nbsp;You may need to temporarily turn off <i>Real-time Protection</i> in Windows.
 												</p>
 												<!-- Show the sample link in vx-underground -->
-							 <center><div class="image post"><img src="../images/conti/2-sample.png" alt="" /></div></center><br>
+							 <center><div class="image post"><img src="../images/conti/2-download.png" alt="" /></div></center><br>
 
 							 					<p>
 													Once on the system, double click and extract the file to your desktop (or wherever). &nbsp;Password is in the image
-													below and is standard across all samples. &nbsp;Rename and de-fang the sample and you're ready to go!
+													below and is standard across all samples.
 												</p>
 							<center><div class="image post"><img src="../images/conti/3-password.jpg" width="500" alt="" /></div></center><br>
 
@@ -96,12 +96,35 @@
 				<br><section id="Basic-Static"><h2>Basic Static Analysis</h2></section>
                          <p>
 													 &emsp; &emsp;Step 1 of basic static analysis is to confirm the malware's hash and submit to VirusTotal.
-													  &nbsp;Open a cmder window and start powershell inside it. &nbsp;Then run
+													  &nbsp;Open a cmder window and start a powershell instance. &nbsp;Then run
 														<code>Get-FileHash -Algorithm SHA256 $contiSample</code>.<br>
-														&emsp; &emsp; The
-													 second step of basic static analysis is my favorite. &nbsp;We will run the classic <i>strings</i> tool,
-													 except the functionality is wrapped in something better: <i>floss.exe</i> . &nbsp;Open
+													</p>
+						<center><div class="image post"><img src="../images/conti/4-sha256.png" width="1000" alt="" /></div></center><br>
+
+													<p>
+						 							&emsp; &emsp;Once confirmed, copy the hash into VirusTotal and watch it light up like a Christmas tree!
+												</p>
+						<center><div class="image post"><img src="../images/conti/5-virustotal.png" width="1100" alt="" /></div></center><br>
+
+													<p>
+														&emsp; &emsp; The second step of basic static analysis is my favorite. &nbsp;We will run the classic <i>strings</i> tool,
+													 except the functionality is wrapped in something better: <i>floss.exe</i> . &nbsp;Open cmder and run
+													 <code>floss.exe -n 7 conti.exe > floss.txt</code> to grab strings at least 7 characters long. &nbsp;The API calls don't stick
+													 out much. &nbsp;Aside from that, there are a few very long strings which indicate the presence of encryption. &nbsp;There are some
+													 ms-win-core APIs further down which indicate the malware was written in C#.
 												 </p>
+						<center><div class="image post"><img src="../images/conti/6-floss.png" width="1000" alt="" /></div></center><br>
+
+						<p>
+							&emsp; &emsp; Next is to inspect the file's PE header for anything suspicious.
+					 </p>
+<center><div class="image post"><img src="../images/conti/7-pe.png" width="1000" alt="" /></div></center><br>
+
+
+
+
+
+
 
 
 				<br><section id="Basic-Dynamic"><h2>Basic Dynamic Analysis</h2></section>
