@@ -1,0 +1,187 @@
+<!DOCTYPE HTML>
+<!--
+	This is the default template for all
+  posts pages.
+-->
+<html>
+	<head>
+		<link rel="icon" href="../images/favicon.ico">
+
+		<!-- Change Page title -->
+		<title>The Post</title>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no" />
+		<link rel="stylesheet" href="../assets/css/main.css" />
+		<noscript><link rel="stylesheet" href="../assets/css/noscript.css" /></noscript>
+	</head>
+	<body class="is-preload">
+
+		<!-- Wrapper -->
+			<div id="wrapper">
+
+				<!-- Header -->
+					<header id="header">
+						<a class="logo">The Defense</a>
+					</header>
+
+				<!-- Nav -->
+					<nav id="nav">
+						<ul class="links">
+							<li><a href="../index.html">Home</a></li>
+							<li class="active"><a href="../posts.html">Posts</a></li>
+							<li><a href="../research.html">Research</a></li>
+							<li><a href="../stories.html">Stories</a></li>
+							<li><a href="../references.html">Links</a></li>
+						</ul>
+						<ul class="icons">
+							<!--<li><a href="mailto:" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>-->
+							<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+							<li><a href="https://twitter.com/___J0hn___" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+							<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+						</ul>
+					</nav>
+
+				<!-- Main -->
+					<div id="main">
+						<div class="wrapper">
+
+						<!-- Post -->
+
+									<!--
+									Post body goes here.
+									-->
+                  <!--
+                  Solving root-me.org cracking challenges using Ghidra
+                  -->
+                  <section class="post">
+                    <body>
+                      <article id="first-post">
+												<a href="index.html"><img src="../images/chirs.png" class="avatar" alt="avatar"> </img></a>
+                        <h2>&emsp; Microcorruption: Santa Cruz</h2>
+												<h5>&emsp; &emsp; &emsp; &emsp; April 20, 2022</h5>
+                        <div class="box">
+                          <p>&emsp; &emsp; Hello again hacker fam! This is part one of a series of hardware CTF challenges brought to you by <a href="https://microcorruption.com/" target="_blank" style="color:blue;">Microcorruption</a>.
+														&nbsp;Microcorruption is a
+														wargame site that specializes in low-level hardware debugging. &nbsp;I highly recommend creating an account for practice. &nbsp;You will also need to learn the basics of the MSP430 microcontroller, which is the device
+													that controls the challenge locks. &nbsp;View their <a href="https://microcorruption.com/about" target="_blank" style="color:blue;">About</a> page for more information.
+												 </p>
+
+                         <p>This challenge is a bit more intermediate and assumes some basic knowledge of assembly language, stack layout, and the memory dump window in regards to brevity. &nbsp;Earlier Microcorruption challenges
+													 have featured only 1 user input prompt before continuing with reverse engineering; however, the Santa Cruz room prompts the user for both the username and the password. &nbsp;This will be important later.
+													  &nbsp;The first step is to input dummy input and observe program activity as a result. &nbsp;Enter 'c' to start the program and enter '123456789abcdef' as the username input
+												 </p>
+                         <center><div class="image post"><img src="../images/santa-cruz/1-initialuserinput.png" alt="" /></div></center><br>
+
+                         <p>
+													 &emsp; &emsp; Enter 'f' twice to return from the <i>signal interrupt</i> and <i>getsn</i> functions and return to the main <i>logic</i> function. &nbsp;The rest of the program continues
+													 as shown below. &nbsp;There is a bit more important content when scrolling down, but the jump instructions become important shortly. &nbsp;Inspecting the assembly listing, there are two calls
+													 to <i>strcpy</i>. &nbsp;
+												 </p>
+												 <center><div class="image post"><img src="../images/santa-cruz/2-listing.png" alt="" /></div></center><br>
+
+												 <p>
+													 &emsp; &emsp;Inspecting the assembly listing, there are two calls to <i>strcpy</i>. &nbsp;The first call copies the username input from one address (2404) to another (43a2). &nbsp;Respective
+													 parameters are stored in r14 and r15 for source and destination addresses. &nbsp;Notice the location around address 43a2 is unpopulated before the call.
+												 </p>
+												 <center><div class="image post"><img src="../images/santa-cruz/3-beforestrcpy.png" alt="" /></div></center><br>
+
+												 <p>
+													 &emsp; &emsp;Then the username input is moved after the <i>strcpy</i> call.
+												 </p>
+												 <center><div class="image post"><img src="../images/santa-cruz/4-afterstrcpy.png" alt="" /></div></center><br>
+
+												 <p>
+													 &emsp; &emsp;Shortly afterwards, another call is made to <i>getsn</i> to get the password. &nbsp;Since this is the first pass of the program, enter the alphabet in all
+													  uppercase as the password and hit <i>send</i>. &nbsp;Hit 'f' twice to get back to the main <i>login</i> function.
+												 </p>
+												 <center><div class="image post"><img src="../images/santa-cruz/5-initialpassword.png" alt="" /></div></center><br>
+
+												 <p>
+													 &emsp; &emsp;Another <i>strcpy</i> function call follows, which moves the user-supplied password to another location in memory. &nbsp;This time the string is copied to a location
+													 just after the username destination (43b5).
+												 </p>
+												 <center><div class="image post"><img src="../images/santa-cruz/6-strcpyagain.png" alt="" /></div></center><br>
+
+												 <p>
+													 &emsp; &emsp;The first jump instruction is encountered. &nbsp;Upon dynamic analysis, it performs a simple loop to check for the end of 
+												 </p>
+												 <center><div class="image post"><img src="../images/santa-cruz/7-.png" alt="" /></div></center><br>
+
+												 <pre>
+												 	<code class="language-python" style=display:block;white-space:pre-wrap>
+# Code body
+
+												 	</code>
+												 </pre>
+
+
+                        </div>
+
+                      </article>
+                    </body>
+                  </section>
+
+
+
+
+
+
+
+
+									<!--
+									End post body
+									-->
+
+									<!--
+									NEW POSTS GO ABOVE THIS LINE
+									-->
+
+
+
+
+
+
+									<!-- Remove Pagination
+							<div class="pagination"><a href="#"> 1 </a></div>
+							<div class="pagination"><a href="#"> 2 </a></div>
+							<div class="pagination"><a href="#"> 3 </a></div>
+							<div class="pagination"><a href="#"> 4 </a></div>
+							<div class="pagination"><a href="#"> 5 </a></div>-->
+							</div>
+					</div>
+
+				<!-- Footer -->
+					<footer id="footer">
+
+						<section class="split contact">
+
+							<section>
+								<h3>Social</h3>
+								<ul class="icons alt">
+									<!--<li><a href="mailto:jpc0016@uah.edu" class="icon fa-paper-plane-o" target="_blank"><span class="label">Gmail</span></a></li>-->
+									<li><a href="https://github.com/jpc0016" class="icon fa-github" target="_blank"><span class="label">GitHub</span></a></li>
+									<li><a href="https://twitter.com/___J0hn___" class="icon fa-twitter" target="_blank"><span class="label">Twitter</span></a></li>
+									<li><a href="https://stackoverflow.com/users/11770689/jpc0016?tab=profile" class="icon fa-stack-overflow" target="_blank"><span class="label">StackOverflow</span></a></li>
+								</ul>
+							</section>
+						</section>
+					</footer>
+
+				<!-- Copyright -->
+					<div id="copyright">
+						<ul><li>&copy; Untitled</li><li>Design: <a href="https://html5up.net" target="_blank">HTML5 UP</a></li></ul>
+					</div>
+
+			</div>
+
+		<!-- Scripts -->
+			<script src="assets/js/jquery.min.js"></script>
+			<script src="assets/js/jquery.scrollex.min.js"></script>
+			<script src="assets/js/jquery.scrolly.min.js"></script>
+			<script src="assets/js/browser.min.js"></script>
+			<script src="assets/js/breakpoints.min.js"></script>
+			<script src="assets/js/util.js"></script>
+			<script src="assets/js/main.js"></script>
+
+	</body>
+</html>
